@@ -1,7 +1,7 @@
 # 项目进度账本
 # 最后更新: 2026-06-11T20:50:00+08:00
 # 当前阶段: Phase 1 — 着色器管道概念验证
-# 完成度: 18/124 任务 (14.5%)
+# 完成度: 19/124 任务 (15.3%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -44,7 +44,7 @@
 | P1.1 | 编写 test_slang_dxil.sh (Path A 端到端) | ✅ | 2026-06-12T00:25:47+08:00 | tools/test_slang_dxil.sh 4/4 PASS |
 | P1.2 | 编写 test_glslang_spirv.sh (Path C SPIR-V) | ✅ | 2026-06-12T00:32:21+08:00 | tools/test_glslang_spirv.sh 8/8 PASS |
 | P1.3 | 编写 test_slang_spirv.sh (Slang→SPIR-V) | ✅ | 2026-06-12T00:40:20+08:00 | tools/test_slang_spirv.sh 8/8 PASS |
-| P1.4 | 编写 test_spirv_cross_msl.sh (Path C 端到端) | ⬜ | — | — |
+| P1.4 | 编写 test_spirv_cross_msl.sh (Path C 端到端) | ✅ | 2026-06-12T00:44:10+08:00 | tools/test_spirv_cross_msl.sh 10/10 PASS |
 | P1.5 | 编写 test_slang_metal.sh (Path B 尝试) | ⬜ | — | — |
 | P1.6 | 真实游戏顶点着色器 Path A 测试 | ⬜ | — | — |
 | P1.7 | 真实游戏片段着色器 Path A 测试 | ⬜ | — | — |
@@ -252,9 +252,9 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 124
-- 已完成: 18 (14.5%)
+- 已完成: 19 (15.3%)
 - 进行中: 0
 - 阻塞: 0
-- 待开始: 106
+- 待开始: 105
 - 当前阶段: Phase 1 — 着色器管道概念验证
 - 下一任务: P1.1 — 编写 test_slang_dxil.sh

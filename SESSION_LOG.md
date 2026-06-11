@@ -91,3 +91,19 @@
   - Slang 生成的 SPIR-V 比 glslangValidator 小 43%（584 vs 1016 bytes），优化更激进
   - 两种编译器输出均通过 spirv-val 验证
 - **Commit**: `feat(tools): P1.3 Slang→SPIR-V 验证脚本 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.4 Path C 端到端验证脚本 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.4 完成，test_spirv_cross_msl.sh 10/10 PASS
+- **变更**:
+  - 编写 tools/test_spirv_cross_msl.sh：GLSL→SPIR-V→opt→MSL 全流程
+  - 顶点着色器：1016 bytes SPIR-V → 447 bytes MSL (25 行)
+  - 片段着色器：1144→888 bytes SPIR-V → 617 bytes MSL (24 行)
+  - MSL 输出包含 metal_stdlib + vertex/fragment 关键字
+- **关键发现**:
+  - spirv-cross MSL 输出紧凑有效，包含完整 Metal 着色器结构
+  - MSL→metallib 需完整 Xcode (xcrun metal)，当前 CLT 环境暂不可用，非阻塞
+- **Commit**: `feat(tools): P1.4 Path C 端到端验证脚本 [done]`
