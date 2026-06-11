@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Metal 后端 v4.0 — 完整方案 · 工具集 · 路线图</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --outer-bg: #E4E1DC; --page-bg: #FDFCF9; --surface: #FFFFFF;
+  --border: #E8E6E2; --divider: #C5C0BA;
+  --text-primary: #151515; --text-body: #3D3D3D; --text-secondary: #717171;
+  --hero-bg: #EDE8DE; --hero-deco: #C8BB9F; --hero-deco2: #A99778;
+  --success-bg: #E8FBCF; --success-fg: #3D4826;
+  --warning-bg: #FFF0DC; --warning-fg: #E47700;
+  --info-bg: #DEE5F7; --info-fg: #3E54CE;
+  --error-bg: #FDECEA; --error-fg: #C4433A;
+  --neutral-bg: #FDF9F2; --neutral-fg: #7C746F;
+  --code-bg: #F5F4F1;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter Tight',sans-serif; background:var(--outer-bg);
+  color:var(--text-body); font-size:14px; line-height:1.6;
+  display:flex; justify-content:center; padding:24px 16px;
+}
+.page { max-width:1200px; width:100%; background:var(--page-bg); border-radius:24px; overflow:hidden; box-shadow:0 2px 24px rgba(0,0,0,0.06); }
+.hero {
+  background:var(--hero-bg); padding:48px 48px 40px; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; width:260px; height:190px;
+  top:-30px; right:-20px; background:var(--hero-deco); opacity:0.13;
+  border-radius:50% 50% 45% 55% / 55% 45% 55% 45%; transform:rotate(20deg);
+}
+.hero::after {
+  content:''; position:absolute; width:200px; height:140px;
+  bottom:-20px; left:8%; background:var(--hero-deco2); opacity:0.10;
+  border-radius:40% 60% 55% 45% / 60% 40% 60% 40%; transform:rotate(-15deg);
+}
+.hero-content { position:relative; z-index:1; }
+.hero-eyebrow { font-size:12px; font-weight:500; color:var(--hero-deco2); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+.hero-title { font-size:32px; font-weight:700; color:var(--text-primary); letter-spacing:-0.01em; margin-bottom:12px; line-height:1.2; }
+.hero-subtitle { font-size:15px; color:var(--text-secondary); max-width:700px; line-height:1.5; }
+.hero-divider { border:none; border-top:0.5px solid rgba(169,151,120,0.3); margin:24px 0; }
+.hero-stats { display:flex; gap:40px; flex-wrap:wrap; }
+.hero-stat-value { font-family:'Noto Serif',serif; font-size:48px; font-weight:500; color:var(--text-primary); letter-spacing:-0.02em; line-height:1; }
+.hero-stat-label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.section { padding:36px 48px; }
+.section-alt { padding:36px 48px; background:var(--hero-bg); }
+
+/* Toolset section special styling */
+.section-toolset { padding:36px 48px; background:#FAF9F7; }
+.toolset-header { font-size:17px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.toolset-header .icon { font-size:20px; }
+
+/* Tool Card */
+.tool-card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:10px; padding:16px 20px; margin-bottom:10px;
+}
+.tool-card:hover { box-shadow:0 1px 8px rgba(0,0,0,0.05); border-color:var(--divider); }
+.tool-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.tool-name { font-size:14px; font-weight:600; color:var(--text-primary); font-family:'JetBrains Mono',monospace; }
+.tool-category { display:flex; gap:6px; flex-wrap:wrap; }
+.tool-desc { font-size:13px; color:var(--text-body); line-height:1.5; margin-bottom:8px; }
+.tool-cmd {
+  font-size:12px; font-family:'JetBrains Mono',monospace;
+  background:var(--code-bg); color:var(--text-body);
+  padding:8px 12px; border-radius:6px; overflow-x:auto;
+  white-space:pre-wrap; word-break:break-all; line-height:1.5;
+  margin:6px 0;
+}
+.tool-params { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+
+/* Nav TOC */
+.toc { background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:20px 24px; margin:24px 0; }
+.toc-title { font-size:14px; font-weight:600; color:var(--text-primary); margin-bottom:12px; }
+.toc-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px 24px; }
+.toc-item { font-size:13px; color:var(--text-body); }
+.toc-item a { color:var(--text-body); text-decoration:none; }
+.toc-item a:hover { text-decoration:underline; }
+
+.section-title { font-size:17px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.section-subtitle { font-size:12px; color:var(--text-secondary); margin-bottom:16px; }
+.section-rule { border:none; border-top:0.5px solid var(--border); margin-bottom:24px; }
+.card-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.card-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+@media (max-width:768px) {
+  .card-grid,.card-grid-3 { grid-template-columns:1fr; }
+  .toc-grid { grid-template-columns:1fr 1fr; }
+  .hero { padding:32px 24px; }
+  .section,.section-alt,.section-toolset { padding:24px 16px; }
+  .hero-title { font-size:24px; }
+  .hero-stats { gap:24px; }
+  .hero-stat-value { font-size:36px; }
+  body { padding:0; }
+  .page { border-radius:0; }
+}
+.card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:12px; padding:20px 24px; transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.card-title { font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.card-meta { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+.card-body { font-size:14px; color:var(--text-body); line-height:1.6; }
+.pill { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; }
+.pill-success { background:var(--success-bg); color:var(--success-fg); }
+.pill-info { background:var(--info-bg); color:var(--info-fg); }
+.pill-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.pill-error { background:var(--error-bg); color:var(--error-fg); }
+.pill-neutral { background:var(--neutral-bg); color:var(--neutral-fg); }
+.pill-devkit { background:#FFEAA7; color:#6D5C00; }
+.alert { border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+.alert-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.alert-body { font-size:13px; line-height:1.6; }
+.alert-info { background:var(--info-bg); color:var(--info-fg); }
+.alert-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.alert-success { background:var(--success-bg); color:var(--success-fg); }
+.table-wrap { overflow-x:auto; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { font-size:12px; font-weight:500; color:var(--text-secondary); text-align:left; padding:8px 12px; border-bottom:1px solid var(--divider); }
+td { padding:10px 12px; border-bottom:0.5px solid var(--border); color:var(--text-body); }
+tr:last-child td { border-bottom:none; }
+tr.row-highlight { background:rgba(169,151,120,0.06); }
+
+.flow-container { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:16px 0; }
+.flow-box { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; padding:10px 16px; font-size:12px; font-weight:500; text-align:center; color:var(--text-primary); }
+.flow-arrow { font-size:16px; color:var(--text-secondary); flex-shrink:0; }
+
+.highlight-box {
+  background: linear-gradient(135deg, rgba(200,187,159,0.12), rgba(169,151,120,0.05));
+  border: 1px solid rgba(169,151,120,0.2);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+}
+
+.timeline { position:relative; padding-left:28px; margin:16px 0; }
+.timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:var(--divider); }
+.tl-item { position:relative; margin-bottom:18px; }
+.tl-item::before { content:''; position:absolute; left:-22px; top:4px; width:10px; height:10px; border-radius:50%; border:2px solid var(--hero-deco2); background:var(--surface); }
+.tl-label { font-size:12px; font-weight:600; color:var(--hero-deco2); }
+.tl-content { font-size:13px; margin-top:4px; }
+
+/* Tool category icons */
+.cat-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.cat-disasm { background:var(--info-bg); color:var(--info-fg); }
+.cat-compile { background:var(--warning-bg); color:var(--warning-fg); }
+.cat-validate { background:var(--success-bg); color:var(--success-fg); }
+.cat-debug { background:var(--error-bg); color:var(--error-fg); }
+.cat-build { background:var(--neutral-bg); color:var(--neutral-fg); }
+.cat-test { background:#EDE8F3; color:#6F5FA8; }
+.cat-ref { background:#FFEAA7; color:#6D5C00; }
+
+.footer {
+  background:var(--hero-bg); padding:40px 48px 32px; position:relative; overflow:hidden;
+}
+.footer::before {
+  content:''; position:absolute; width:220px; height:150px;
+  bottom:-40px; right:-30px; background:var(--hero-deco2); opacity:0.1;
+  border-radius:55% 45% 60% 40% / 40% 55% 45% 60%;
+}
+.footer-content { position:relative; z-index:1; }
+.footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px; }
+.footer-brand { font-size:15px; font-weight:600; color:var(--text-primary); }
+.footer-label { font-size:12px; color:var(--text-secondary); }
+.footer-links { font-size:13px; color:var(--text-body); }
+.footer-links a { color:var(--text-body); text-decoration:underline; }
+.footer-divider { border:none; border-top:0.5px solid rgba(169,151,120,0.3); margin:20px 0; }
+.footer-bottom { display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); flex-wrap:wrap; }
+
+/* Agent-friendly tool reference format */
+.agent-tool-ref {
+  background:var(--code-bg); border:0.5px solid var(--border);
+  border-radius:8px; padding:12px 16px; margin-top:8px; font-size:12px;
+  font-family:'JetBrains Mono',monospace; white-space:pre-wrap; line-height:1.6;
+}
+
+/* Tool index */
+.tool-index { counter-reset:tool-counter; }
+.tool-index .tool-card { counter-increment:tool-counter; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">技术调研报告 v4.0 · 2026 年 6 月 · 完整方案</p>
+    <h1 class="hero-title">Switch 模拟器原生 Metal 后端<br>完整技术方案、工具集与路线图</h1>
+    <p class="hero-subtitle">
+      整合 deko3d · UAM · Slang · dxmt 四大开源方案；新增独立工具集章节，涵盖反汇编、编译、验证、调试、构建、测试全链路工具。
+    </p>
+    <hr class="hero-divider">
+    <div class="hero-stats">
+      <div><div class="hero-stat-value">21</div><div class="hero-stat-label">收录工具</div></div>
+      <div><div class="hero-stat-value">7</div><div class="hero-stat-label">工具分类</div></div>
+      <div><div class="hero-stat-value">6</div><div class="hero-stat-label">技术路线</div></div>
+      <div><div class="hero-stat-value">v4</div><div class="hero-stat-label">报告版本</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="section">
+  <div class="toc">
+    <div class="toc-title">📑 报告目录</div>
+    <div class="toc-grid">
+      <div class="toc-item"><a href="#ch1">一、dxmt 技术栈</a></div>
+      <div class="toc-item"><a href="#ch2">二、deko3d/UAM 技术栈</a></div>
+      <div class="toc-item"><a href="#ch3">三、Slang 技术栈</a></div>
+      <div class="toc-item"><a href="#ch4">四、六条技术路线对比</a></div>
+      <div class="toc-item"><a href="#ch5">五、新推荐架构（GLSL+Slang+Metal）</a></div>
+      <div class="toc-item"><a href="#ch6">六、实施路线图</a></div>
+      <div class="toc-item"><a href="#ch7">七、集成策略</a></div>
+      <div class="toc-item"><a href="#ch8">八、测试策略</a></div>
+      <div class="toc-item"><a href="#ch9"><strong>九、🆕 完整工具集</strong></a></div>
+      <div class="toc-item"><a href="#ch10">十、风险评估</a></div>
+      <div class="toc-item"><a href="#ch11">十一、关键资源索引</a></div>
+      <div class="toc-item"><a href="#ch12">十二、结论与建议</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 1: DXMT === -->
+<div class="section" id="ch1">
+  <h2 class="section-title">一、DXMT — D3D11→Metal 翻译层</h2>
+  <p class="section-subtitle">核心可复用组件分析</p>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">项目概况</div>
+      <div class="card-meta">3Shain/dxmt · C++ · 1,087 stars · v0.80 · LGPL</div>
+      <div class="card-body" style="font-size:13px;">
+        DXMT 是 D3D11/D3D10 到 Metal 的直接翻译层，用于在 macOS/Wine 上运行 3D 应用。相比 DXVK+MoltenVK 的双翻译路径，DXMT 直接将 D3D11 翻译到 Metal，消除了 Vulkan 中间层。
+        <br><br><strong>架构分层：</strong>
+        <br>• <code>dxgi/</code> — DXGI 交换链和适配器
+        <br>• <code>d3d11/</code> — D3D11 Device/Context/Resource 完整实现
+        <br>• <code>dxmt/</code> — <strong>Metal 后端核心</strong>（Device/CommandQueue/Buffer/Texture/Presenter）
+        <br>• <code>airconv/</code> — <strong>DXBC→Metal AIR 着色器编译器</strong>
+        <br>• <code>winemetal/</code> — Wine 集成层（可选）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">可复用组件</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>① airconv（最核心）</strong><br>
+        • DXBC（SM5.0）→ LLVM IR → Metal AIR → MetalLib<br>
+        • 支持 VS/PS/CS/HS/DS/GS 全套着色器阶段<br>
+        • 曲面细分通过 Mesh Pipeline 模拟<br>
+        • 几何着色器有专用转换管线<br>
+        • 命令行工具：HLSL→MetalLib 离线编译<br><br>
+        <strong>② dxmt Metal 后端</strong><br>
+        • 完整的 MTLDevice/MTLCommandQueue 管理<br>
+        • Buffer/Texture/Sampler 生命周期<br>
+        • Presenter（MetalLayer + HDR + Gamma + MetalFX）<br>
+        • Fence 同步（MTLFence + intrapass barriers）<br>
+        • 着色器缓存 + 管线状态缓存
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 2: deko3d/UAM === -->
+<div class="section-alt" id="ch2">
+  <h2 class="section-title">二、deko3d + UAM — Maxwell 硬件知识体系</h2>
+  <p class="section-subtitle">devkitPro 生态下的 NVN 开源替代方案</p>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">deko3d（devkitPro/deko3d · C++ · 394 stars · Zlib）</div>
+      <div class="card-body" style="font-size:13px;">
+        deko3d 是 fincs 一年多 NVN 逆向工程的结晶，本质上是 Switch 自制软件的 NVN 替代品。<br><br>
+        <strong>对项目的核心价值：</strong><br>
+        • <strong>engine_3d.def</strong> — Maxwell 3D Engine 全部 200+ 寄存器的完整定义。RenderTarget、Viewport、Tessellation、Shader Stage、Zcull 等，每个寄存器都有精确的位域定义。→ <strong>NVN→Metal 命令映射的权威参考</strong><br>
+        • <strong>gpu_3d_state.cpp</strong> — Maxwell 3D 管线状态机实现<br>
+        • <strong>image_formats.cpp</strong> — 像素格式映射表<br>
+        • <strong>dk_shader.h</strong> — DKSH 着色器二进制格式规范<br>
+        • <strong>tic_generate.cpp</strong> / <strong>tsc_generate.cpp</strong> — 纹理/采样器控制块生成
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">UAM（devkitPro/uam · C++ · 25 stars · MIT）</div>
+      <div class="card-body" style="font-size:13px;">
+        UAM 是基于 Mesa GLSL 解析器 + Nouveau nv50_ir 后端的 Maxwell 着色器编译器。<br><br>
+        <strong>编译器管线：</strong><br>
+        GLSL → Mesa GLSL Parser → TGSI IR → nv50_ir → Maxwell GM107 SASS<br><br>
+        <strong>对项目的核心价值：</strong><br>
+        • <strong>正向验证：</strong>编写 GLSL → UAM 编译 → 获得已知 Maxwell 二进制 → 验证解码器<br>
+        • <strong>反向理解：</strong>nv50_ir 代码展示了每条 GLSL 操作如何映射到 Maxwell 指令<br>
+        • <strong>双发射调度：</strong>基于 karolherbst 的 dual_issue_v3 分支<br>
+        • <strong>指令编码参考：</strong>nv50_ir_emit_gm107.cpp 是 Maxwell 指令编码的权威实现
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 3: Slang === -->
+<div class="section" id="ch3">
+  <h2 class="section-title">三、Slang — 多目标着色器编译器</h2>
+  <p class="section-subtitle">NVIDIA 主导 · 5,364 stars · 支持 GLSL→MSL 直接编译</p>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">核心能力</div>
+      <div class="card-body" style="font-size:13px;">
+        Slang 是 NVIDIA 研究院 5+ 年持续投入的着色器语言和编译器。<br><br>
+        <strong>支持的输入：</strong>Slang 语言（类 HLSL）、HLSL、GLSL（兼容模块）<br>
+        <strong>支持的输出目标：</strong><br>
+        • D3D12 (DXIL) · D3D11 (HLSL) · Vulkan (SPIR-V)<br>
+        • 🆕 <strong>Metal (MSL)</strong> — 实验性但功能完整<br>
+        • CUDA (C++) · CPU (C++) · WebGPU (WGSL)
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Metal 后端详情</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>Metal MSL 代码生成能力：</strong><br>
+        • vertex/fragment/compute/mesh 着色器支持<br>
+        • 系统语义完整映射（SV_Position→[[position]] 等）<br>
+        • 资源类型映射（ConstantBuffer→constant*, Texture2D→texture2d）<br>
+        • 插值修饰符映射（nointerpolation→[[flat]] 等）<br>
+        • 专用 Metal IR 合法化 pass<br>
+        • 生成人类可读 MSL（保留原始标识符）<br><br>
+        <strong>Slang 编译管线：</strong><br>
+        Source → Slang IR → linkAndOptimizeIR → legalizeIRForMetal → MetalSourceEmitter → MSL 文本
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">🔑 Slang 对项目的决定性价值</div>
+    <div class="card-body" style="font-size:13px;">
+      Slang 消除了 v1.0 方案中最大的技术风险——<strong>自建 Maxwell IR→DXBC 着色器编译器</strong>。
+      因为 Ryujinx 已有 Maxwell→GLSL 管线，Slang 可直接接受 GLSL 输入并生成 MSL。
+      着色器翻译从"新建编译器（4-6 月）"变为"验证+适配已有管线（1-2 月）"。
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 4: Route Comparison === -->
+<div class="section-alt" id="ch4">
+  <h2 class="section-title">四、六条技术路线对比</h2>
+  <p class="section-subtitle">整合所有调研成果后的全面对比</p>
+  <hr class="section-rule">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>路线</th><th>着色器路径</th><th>命令路径</th><th>开发量</th><th>性能</th><th>风险</th><th>推荐度</th></tr></thead>
+      <tbody>
+        <tr class="row-highlight"><td><strong>1</strong></td><td><strong>GLSL→Slang→MSL</strong> 🆕</td><td>Maxwell→IR→GLSL→Slang→MSL</td><td>NVN→Metal（deko3d参考）</td><td><span class="pill pill-success">中低</span></td><td><span class="pill pill-success">★★★★★</span></td><td><span class="pill pill-success">低</span></td><td><span class="pill pill-success">⭐⭐⭐⭐⭐</span></td></tr>
+        <tr><td>2</td><td>NVN→D3D11→DXMT</td><td>Maxwell→IR→DXBC→airconv</td><td>NVN→D3D11→dxmt</td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-success">★★★★☆</span></td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-info">⭐⭐⭐⭐</span></td></tr>
+        <tr><td>3</td><td>airconv+自研Metal后端</td><td>Maxwell→IR→DXBC→airconv</td><td>NVN→自研Metal</td><td><span class="pill pill-error">高</span></td><td><span class="pill pill-success">★★★★★</span></td><td><span class="pill pill-error">高</span></td><td><span class="pill pill-info">⭐⭐⭐</span></td></tr>
+        <tr><td>4</td><td>SPIR-V→MSL</td><td>Maxwell→IR→SPIR-V→MSL</td><td>NVN→Vulkan→Metal</td><td><span class="pill pill-success">低</span></td><td><span class="pill pill-warning">★★★☆☆</span></td><td><span class="pill pill-success">低</span></td><td><span class="pill pill-info">⭐⭐⭐</span></td></tr>
+        <tr><td>5</td><td>GPTK桥接</td><td>N/A（闭源）</td><td>NVN→D3D11→D3DMetal</td><td><span class="pill pill-success">低</span></td><td><span class="pill pill-success">★★★★☆</span></td><td><span class="pill pill-error">高（法律）</span></td><td><span class="pill pill-warning">⭐⭐</span></td></tr>
+        <tr><td>6</td><td>Maxwell→MSL直接</td><td>Maxwell SASS→MSL</td><td>NVN→Metal</td><td><span class="pill pill-error">极高</span></td><td><span class="pill pill-success">★★★★★</span></td><td><span class="pill pill-error">极高</span></td><td><span class="pill pill-error">⭐</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- === CHAPTER 5: Architecture === -->
+<div class="section" id="ch5">
+  <h2 class="section-title">五、推荐架构：GLSL-Slang-Metal 直连方案</h2>
+  <p class="section-subtitle">结合 deko3d 参考 + Slang 编译器 + dxmt 基础设施</p>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title" style="color:var(--success-fg);">着色器编译管线</div>
+      <div class="card-body" style="font-size:13px;line-height:2.2;">
+        <strong>Stage 1: 解码</strong>（复用 Ryujinx Decoders/）<br>&nbsp;└ Maxwell SASS → 结构化 IR<br>
+        <strong>Stage 2: 翻译</strong>（复用 Ryujinx CodeGen/Glsl/）<br>&nbsp;└ 结构化 IR → GLSL 源代码<br>
+        <strong>Stage 3: 编译</strong>（🆕 Slang）<br>&nbsp;└ GLSL → Slang IR → MSL<br>
+        <strong>Stage 4: 二进制生成</strong>（Apple Metal Compiler）<br>&nbsp;└ MSL → MetalLib → GPU 可执行代码
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--info-fg);">命令翻译管线</div>
+      <div class="card-body" style="font-size:13px;line-height:2.2;">
+        <strong>Stage 1: 解析</strong>（deko3d engine_3d.def 参考）<br>&nbsp;└ NVN 命令缓冲 → Maxwell 寄存器操作<br>
+        <strong>Stage 2: 映射</strong>（新建 · 核心工作）<br>&nbsp;└ Maxwell 寄存器语义 → Metal API 调用<br>
+        <strong>Stage 3: 执行</strong>（Metal Runtime）<br>&nbsp;└ MTLCommandBuffer → MTLRenderCommandEncoder<br>
+        <strong>Stage 4: 基础设施</strong>（复用 dxmt）<br>&nbsp;└ Device/Queue/Buffer/Texture/Presenter
+      </div>
+    </div>
+  </div>
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">⏱️ 工作量对比</div>
+    <div class="card-body">
+      <table>
+        <tr><th></th><th>v1.0 (DXMT-only)</th><th>v4.0 (deko3d+Slang)</th><th>节省</th></tr>
+        <tr><td>着色器转换</td><td>4-6 月（新建DXBC编译器）</td><td>1-2 月（适配GLSL管线）</td><td><span class="pill pill-success">↓60-70%</span></td></tr>
+        <tr><td>命令映射</td><td>依赖D3D11推断</td><td>deko3d精确参考</td><td><span class="pill pill-success">精度↑</span></td></tr>
+        <tr><td>总体时间</td><td>11-16 月</td><td>7-10.5 月</td><td><span class="pill pill-success">↓~35%</span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 6: Roadmap === -->
+<div class="section-alt" id="ch6">
+  <h2 class="section-title">六、实施路线图</h2>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card"><div class="card-title"><span class="pill pill-info">Phase 1</span> 概念验证 · 1-1.5月</div><div class="card-body" style="font-size:13px;">• 搭建 slangc CLI 工具链<br>• Ryujinx 着色器 GLSL 输出提取<br>• slangc GLSL→MSL 编译验证<br>• deko3d engine_3d.def 寄存器表生成<br>• 单三角形 Metal 渲染验证<br><span class="pill pill-neutral">里程碑</span> Slang Metal 路径可行</div></div>
+    <div class="card"><div class="card-title"><span class="pill pill-warning">Phase 2</span> 核心实现 · 3-4月</div><div class="card-body" style="font-size:13px;">• Slang libslang 集成<br>• 全着色器阶段支持<br>• NVN→Metal 命令映射层<br>• dxmt 基础设施复用<br>• 着色器缓存<br><span class="pill pill-neutral">里程碑</span> 2D 游戏可运行</div></div>
+    <div class="card"><div class="card-title"><span class="pill pill-warning">Phase 3</span> 完善优化 · 2-3月</div><div class="card-body" style="font-size:13px;">• 边界情况+兼容性<br>• MetalFX 上采样<br>• 性能 Profile 优化<br>• 模拟器上游集成<br><span class="pill pill-neutral">里程碑</span> 3D 游戏≥30fps</div></div>
+    <div class="card"><div class="card-title"><span class="pill pill-success">Phase 4</span> 发布 · 1-2月</div><div class="card-body" style="font-size:13px;">• macOS 原生 UI<br>• CI/CD 自动化<br>• 文档+Beta 测试<br><span class="pill pill-neutral">里程碑</span> 公开发布</div></div>
+  </div>
+</div>
+
+<!-- === CHAPTER 7: Integration === -->
+<div class="section" id="ch7">
+  <h2 class="section-title">七、集成策略：渐进式三阶段</h2>
+  <p class="section-subtitle">不要一开始就 fork 模拟器</p>
+  <hr class="section-rule">
+  <div class="card-grid-3">
+    <div class="card">
+      <div class="card-title">Phase 1：独立验证工具</div>
+      <div class="card-meta"><span class="pill pill-success">推荐起步</span></div>
+      <div class="card-body" style="font-size:13px;">
+        开发 <strong>shader-validator</strong> CLI 工具。<br>输入：Ryujinx 缓存 → 解码 → Slang 编译 → Metal 离屏渲染。<br>输出：渲染结果 + 像素差异 + 性能指标。<br><br>• 不依赖模拟器启动<br>• 纯着色器翻译验证<br>• 可直接做 CI 自动化
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Phase 2：独立 Metal 后端库</div>
+      <div class="card-meta"><span class="pill pill-info">推荐中期</span></div>
+      <div class="card-body" style="font-size:13px;">
+        打包为 <strong>libswitch-metal.dylib</strong>。<br>C API 暴露，与 GL/Vulkan 后端接口对齐。<br><br>• 清晰模块边界<br>• 可独立测试<br>• 多模拟器可复用
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Phase 3：Astris Fork 集成</div>
+      <div class="card-meta"><span class="pill pill-warning">推荐后期</span></div>
+      <div class="card-body" style="font-size:13px;">
+        Fork Astris，实现 GAL IRenderer。<br>通过 P/Invoke 对接 C# ↔ C++。<br><br>• 完整游戏运行验证<br>• 复用 Astris UI/音频/输入
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 8: Testing === -->
+<div class="section-alt" id="ch8">
+  <h2 class="section-title">八、测试策略</h2>
+  <p class="section-subtitle">利用 Ryujinx 现有着色器缓存作为测试数据集</p>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📦 缓存复用</div>
+      <div class="card-body" style="font-size:13px;">
+        Ryujinx 缓存路径：<code>%appdata%/Ryujinx/games/[GameID]/cache/shader/</code><br>
+        <strong>guest.data</strong> → 原始 Maxwell 二进制（测试输入）<br>
+        <strong>shared.data</strong> → GLSL/SPIR-V 参考（测试预期输出）<br>
+        TOCG magic (guest.toc) / TOCS magic (shared.toc)<br>
+        BinarySerializer 类处理序列化
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏛️ 三层测试</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>单元测试：</strong>每个 Maxwell 指令至少一个测试<br>
+        <strong>集成测试：</strong>完整着色器管线端到端<br>
+        <strong>回归测试：</strong>游戏帧像素对比 + 性能基准<br><br>
+        每 Phase 有量化退出标准（编译成功率≥80%/95%、Metal 验证零错误、帧差异≤2%）
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== CHAPTER 9: 🆕 TOOLSET ========== -->
+<div class="section-toolset" id="ch9">
+  <div class="toolset-header">
+    <span style="font-size:22px;">🧰</span>
+    <span>九、完整工具集</span>
+  </div>
+  <p class="section-subtitle">涵盖反汇编、编译、验证、调试、构建、测试、参考七大类，共 21 个工具。已安装 devkitPro 工具链。</p>
+  <hr class="section-rule">
+
+  <!-- Quick Index -->
+  <div class="toc">
+    <div class="toc-title">工具分类索引</div>
+    <div class="toc-grid">
+      <div class="toc-item"><a href="#tool-disasm">9.1 反汇编/分析 (3)</a></div>
+      <div class="toc-item"><a href="#tool-compile">9.2 着色器编译 (4)</a></div>
+      <div class="toc-item"><a href="#tool-validate">9.3 验证/检查 (4)</a></div>
+      <div class="toc-item"><a href="#tool-debug">9.4 GPU 调试/帧捕获 (5)</a></div>
+      <div class="toc-item"><a href="#tool-build">9.5 构建/开发环境 (3)</a></div>
+      <div class="toc-item"><a href="#tool-test">9.6 测试框架/数据 (2)</a></div>
+      <div class="toc-item"><a href="#tool-ref">9.7 硬件参考/知识库 (4)</a></div>
+    </div>
+  </div>
+
+  <!-- 9.1 Disassemblers -->
+  <div id="tool-disasm">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-disasm">🔬</span> 9.1 反汇编 / 着色器分析工具
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-disasm" style="font-size:14px;">T1</span>
+        <span class="tool-name">envydis</span>
+        <div class="tool-category">
+          <span class="pill pill-info">envytools</span>
+          <span class="pill pill-neutral">反汇编器</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        将 Maxwell SASS（Shader Assembly）二进制反汇编为人类可读的汇编代码。支持 GM107（Maxwell Gen1）ISA 变体。envytools 是 NVIDIA GPU 逆向工程工具集的核心组件。
+      </div>
+      <div class="tool-cmd"># 反汇编 Maxwell 着色器二进制
+envydis -V gm107 shader_binary.bin
+
+# 指定输出文件
+envydis -V gm107 shader_binary.bin -o output.asm</div>
+      <div class="tool-params">
+        <strong>关键参数：</strong><code>-V gm107</code>（Maxwell ISA 变体）、<code>-o</code>（输出文件）<br>
+        <strong>安装：</strong><code>git clone https://github.com/envytools/envytools && cd envytools && make</code><br>
+        <strong>在项目中的角色：</strong>Phase 1-4。验证 Maxwell 着色器解码正确性。当渲染结果异常时，用 envydis 查看原始 SASS 确认解码器是否有误。<br>
+        <strong>Agent 调用建议：</strong>用于对比验证——将 envydis 输出与 Ryujinx IR 转储对比，确认解码正确性。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-disasm" style="font-size:14px;">T2</span>
+        <span class="tool-name">nvdisasm</span>
+        <div class="tool-category">
+          <span class="pill pill-neutral">NVIDIA CUDA Toolkit</span>
+          <span class="pill pill-neutral">反汇编器</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        NVIDIA 官方 GPU 反汇编器，随 CUDA Toolkit 分发。支持 Maxwell 及更新架构。比 envydis 覆盖更广的架构，但为闭源工具。
+      </div>
+      <div class="tool-cmd"># 反汇编 cubin/shader 文件
+nvdisasm shader.cubin
+
+# 显示控制流图
+nvdisasm -cfg shader.cubin</div>
+      <div class="tool-params">
+        <strong>安装：</strong>随 CUDA Toolkit 安装（<code>brew install cuda</code> 或从 NVIDIA 下载）<br>
+        <strong>在项目中的角色：</strong>辅助验证。当 envydis 输出不确定时用作交叉参考。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-disasm" style="font-size:14px;">T3</span>
+        <span class="tool-name">spirv-dis</span>
+        <div class="tool-category">
+          <span class="pill pill-info">SPIRV-Tools</span>
+          <span class="pill pill-neutral">反汇编器</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        将 SPIR-V 二进制模块反汇编为人类可读的文本格式。属于 Khronos SPIRV-Tools 工具集。
+      </div>
+      <div class="tool-cmd"># 反汇编 SPIR-V 二进制
+spirv-dis shader.spv -o shader.spvasm
+
+# 输出到 stdout
+spirv-dis shader.spv</div>
+      <div class="tool-params">
+        <strong>安装：</strong><code>brew install spirv-tools</code> 或随 Vulkan SDK 安装<br>
+        <strong>在项目中的角色：</strong>Phase 1-4。当通过 SPIR-V 路径验证时，反汇编查看 Slang 或 Ryujinx 生成的 SPIR-V 是否正确。<br>
+        <strong>Agent 调用建议：</strong>搭配 spirv-val 使用——先验证合法，再反汇编查看。
+      </div>
+    </div>
+  </div>
+
+  <!-- 9.2 Compilers -->
+  <div id="tool-compile" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-compile">⚙️</span> 9.2 着色器编译 / 转换工具
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-compile" style="font-size:14px;">T4</span>
+        <span class="tool-name">uam</span>
+        <div class="tool-category">
+          <span class="pill pill-devkit">devkitPro</span>
+          <span class="pill pill-warning">编译器</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        <strong>GLSL → Maxwell SASS 编译器。</strong>基于 Mesa GLSL 解析器 + Nouveau nv50_ir 后端。专为 deko3d API 设计。输出 .dksh 格式着色器模块。支持 Maxwell 双发射调度优化。
+      </div>
+      <div class="tool-cmd"># 编译 GLSL 着色器为 deko3d 着色器模块
+uam --stage=vert -o output.dksh shader.vert.glsl
+uam --stage=frag -o output.dksh shader.frag.glsl
+uam --stage=comp -o output.dksh shader.comp.glsl
+
+# 同时输出原始 Maxwell 字节码（用于对比验证）
+uam --stage=vert -o output.dksh --raw=raw.bin shader.vert.glsl
+
+# 同时输出中间 TGSI 代码（调试用）
+uam --stage=frag -o out.dksh --tgsi=intermediate.tgsi shader.frag.glsl</div>
+      <div class="tool-params">
+        <strong>支持的着色器阶段：</strong><code>vert</code> <code>tess_ctrl</code> <code>tess_eval</code> <code>geom</code> <code>frag</code> <code>comp</code><br>
+        <strong>安装：</strong>devkitPro pacman: <code>(sudo) (dkp-)pacman -S switch-uam</code><br>
+        <strong>在项目中的角色：</strong><span class="pill pill-success">核心工具</span>。Phase 1-4。正向验证解码器正确性。编写已知 GLSL → UAM 编译 → 获得参考 Maxwell 二进制 → 与 Ryujinx 缓存中的真实游戏着色器对比。<br>
+        <strong>Agent 调用建议：</strong>用于生成测试用例——编写最小 GLSL 着色器，编译为 Maxwell SASS，验证我们的解码器能正确还原为等价 GLSL。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-compile" style="font-size:14px;">T5</span>
+        <span class="tool-name">slangc</span>
+        <div class="tool-category">
+          <span class="pill pill-warning">编译器</span>
+          <span class="pill pill-success">核心</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        <strong>Slang 命令行编译器。</strong>支持 Slang/HLSL/GLSL 输入，多目标输出（SPIR-V/DXIL/MSL/GLSL/CUDA/C++）。这是连接 Ryujinx GLSL 输出和 Metal MSL 的关键桥梁。
+      </div>
+      <div class="tool-cmd"># GLSL → Metal MSL
+slangc shader.glsl -target metal -entry main -stage vertex -o shader.metal
+
+# GLSL → SPIR-V（用于交叉验证）
+slangc shader.glsl -target vulkan -entry main -stage vertex -o shader.spv
+
+# HLSL → Metal MSL
+slangc shader.hlsl -target metal -entry VSmain -stage vertex -o shader.metal
+
+# 带调试信息
+slangc shader.glsl -target metal -g -o shader.metal</div>
+      <div class="tool-params">
+        <strong>关键参数：</strong><code>-target metal</code>（Metal MSL 输出）、<code>-entry</code>（入口函数）、<code>-stage</code>（vertex/fragment/compute/mesh）<br>
+        <strong>安装：</strong>从 <a href="https://github.com/shader-slang/slang/releases" target="_blank">GitHub Releases</a> 下载预编译二进制<br>
+        <strong>在项目中的角色：</strong><span class="pill pill-success">核心工具</span>。Phase 1-4。着色器翻译管线的核心编译器。Ryujinx GLSL → Slang → MSL → Metal。<br>
+        <strong>Agent 调用建议：</strong>每次 Ryujinx 输出 GLSL 后立即调用 slangc 编译为 MSL，检查编译是否成功。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-compile" style="font-size:14px;">T6</span>
+        <span class="tool-name">glslangValidator</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Khronos glslang</span>
+          <span class="pill pill-warning">编译器+验证器</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        Khronos 官方 GLSL→SPIR-V 参考编译器。验证 GLSL 源代码合法性并编译为 SPIR-V。支持 GLSL/HLSL 输入。
+      </div>
+      <div class="tool-cmd"># GLSL → SPIR-V
+glslangValidator -V shader.vert -o shader.vert.spv
+glslangValidator -V shader.frag -o shader.frag.spv
+
+# 仅验证 GLSL（不生成 SPIR-V）
+glslangValidator shader.vert</div>
+      <div class="tool-params">
+        <strong>安装：</strong><code>brew install glslang</code> 或随 Vulkan SDK 安装<br>
+        <strong>在项目中的角色：</strong>Phase 1-4。验证 Ryujinx 输出的 GLSL 代码是合法 GLSL。<br>
+        <strong>Agent 调用建议：</strong>每次 Ryujinx 输出 GLSL 后先用 glslangValidator 检查合法性，再传给 Slang。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-compile" style="font-size:14px;">T7</span>
+        <span class="tool-name">spirv-cross</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Khronos SPIRV-Cross</span>
+          <span class="pill pill-neutral">格式转换</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        SPIR-V 到多种着色语言的转换器。支持输出 GLSL、HLSL、MSL（Metal Shading Language）、反射 JSON。用于交叉验证 Slang 生成的 MSL 是否正确。
+      </div>
+      <div class="tool-cmd"># SPIR-V → Metal MSL
+spirv-cross shader.spv --msl --output shader_msl.metal
+
+# SPIR-V → GLSL
+spirv-cross shader.spv --output shader.glsl
+
+# SPIR-V → 反射信息（用于验证资源绑定）
+spirv-cross shader.spv --reflect --output reflect.json</div>
+      <div class="tool-params">
+        <strong>安装：</strong><code>brew install spirv-cross</code> 或从 <a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank">GitHub</a> 构建<br>
+        <strong>在项目中的角色：</strong>Phase 1-3。交叉验证工具。将同一 GLSL 通过 glslangValidator→SPIR-V→spirv-cross→MSL 和 Slang→MSL 两条路径对比 MSL 输出质量。<br>
+        <strong>Agent 调用建议：</strong>当 Slang 生成 MSL 有问题时，用 spirv-cross 生成替代 MSL 作为参考。
+      </div>
+    </div>
+  </div>
+
+  <!-- 9.3 Validators -->
+  <div id="tool-validate" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-validate">✅</span> 9.3 验证 / 检查工具
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-validate" style="font-size:14px;">T8</span>
+        <span class="tool-name">spirv-val</span>
+        <div class="tool-category">
+          <span class="pill pill-info">SPIRV-Tools</span>
+          <span class="pill pill-success">验证器</span>
+        </div>
+      </div>
+      <div class="tool-desc">SPIR-V 模块规范验证器。检查 SPIR-V 二进制是否符合 Khronos SPIR-V 规范。在 CI 流水线中自动运行。</div>
+      <div class="tool-cmd"># 验证 SPIR-V 二进制
+spirv-val shader.spv
+
+# 指定目标环境
+spirv-val --target-env vulkan1.3 shader.spv</div>
+      <div class="tool-params">
+        <strong>安装：</strong><code>brew install spirv-tools</code><br>
+        <strong>Agent 调用建议：</strong>每次生成 SPIR-V 后自动调用。退出码非零 = 非法 SPIR-V。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-validate" style="font-size:14px;">T9</span>
+        <span class="tool-name">MTL_SHADER_VALIDATION</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Apple</span>
+          <span class="pill pill-success">运行时验证</span>
+        </div>
+      </div>
+      <div class="tool-desc">Apple Metal 着色器运行时验证层。启用后检测着色器执行期间的错误（越界访问、nil 纹理等）。仅在调试构建中启用。</div>
+      <div class="tool-cmd"># 编译时启用 Metal 着色器验证
+export MTL_SHADER_VALIDATION=1
+
+# 或在 Xcode Scheme 中启用：
+# Product → Scheme → Edit Scheme → Run → Options → Metal Shader Validation</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>Phase 1-3 始终启用。CI 中强制开启。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-validate" style="font-size:14px;">T10</span>
+        <span class="tool-name">MTL_DEBUG_LAYER</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Apple</span>
+          <span class="pill pill-success">API 验证</span>
+        </div>
+      </div>
+      <div class="tool-desc">Apple Metal API 调用验证层。检查 Metal API 的非法使用（资源创建错误、命令编码错误等）。</div>
+      <div class="tool-cmd"># 启用 Metal API 调试层
+export MTL_DEBUG_LAYER=1</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>Phase 1-3 始终启用。捕获所有 Metal API 误用。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-validate" style="font-size:14px;">T11</span>
+        <span class="tool-name">DXMT 内置验证</span>
+        <div class="tool-category">
+          <span class="pill pill-neutral">dxmt</span>
+          <span class="pill pill-info">日志/捕获</span>
+        </div>
+      </div>
+      <div class="tool-desc">DXMT 内置的调试和验证功能。包括日志级别控制、着色器缓存验证、Metal 帧捕获热键。</div>
+      <div class="tool-cmd"># DXMT 调试环境变量
+export MTL_SHADER_VALIDATION=1
+export MTL_DEBUG_LAYER=1
+export MTL_CAPTURE_ENABLED=1
+export DXMT_CAPTURE_EXECUTABLE="game_executable_name"
+export DXMT_LOG_LEVEL=debug
+export DXMT_SHADER_CACHE=0           # 禁用缓存以测试新鲜编译</div>
+    </div>
+  </div>
+
+  <!-- 9.4 GPU Debuggers -->
+  <div id="tool-debug" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-debug">🐛</span> 9.4 GPU 调试 / 帧捕获工具
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-debug" style="font-size:14px;">T12</span>
+        <span class="tool-name">Xcode Metal Debugger</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Apple</span>
+          <span class="pill pill-success">核心</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        <strong>Apple 官方 GPU 调试器。</strong>功能包括：GPU 帧捕获、着色器逐行调试、资源检查、性能计数器和时间线。<strong>Metal 生态下 RenderDoc 不可用，这是唯一选择。</strong>
+      </div>
+      <div class="tool-cmd"># 启用 GPU 帧捕获（Xcode Scheme 设置）
+# Product → Scheme → Edit Scheme → Run → Options
+#   GPU Frame Capture: Enabled
+
+# 或在代码中编程式触发捕获
+MTLCaptureManager.shared().startCapture(with: device, 
+    commandQueue: queue, captureScope: scope)</div>
+      <div class="tool-params">
+        <strong>关键功能：</strong><br>• 帧捕获后的着色器逐行调试（断点、变量检查）<br>• 资源绑定检查（纹理、缓冲区内容可视化）<br>• 性能分析时间线（draw call 耗时排序）<br>• Shader 编辑后热重载<br>
+        <strong>Agent 调用建议：</strong>当渲染结果不正确时，捕获帧 → 定位到问题 draw call → 逐行调试着色器。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-debug" style="font-size:14px;">T13</span>
+        <span class="tool-name">Instruments GPU Trace</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Apple</span>
+          <span class="pill pill-neutral">性能分析</span>
+        </div>
+      </div>
+      <div class="tool-desc">Apple Instruments 中的 Metal System Trace 模板。提供 CPU+GPU 并行的可视化时间线、内存使用追踪和性能计数器。</div>
+      <div class="tool-cmd"># 启动 Instruments
+instruments -t "Metal System Trace" -D output.trace ./your_app</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>Phase 3。性能优化时使用，定位 CPU/GPU 瓶颈。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-debug" style="font-size:14px;">T14</span>
+        <span class="tool-name">DXMT Metal Capture</span>
+        <div class="tool-category">
+          <span class="pill pill-neutral">dxmt</span>
+          <span class="pill pill-info">帧捕获</span>
+        </div>
+      </div>
+      <div class="tool-desc">DXMT 内置的 Metal 帧捕获功能。复用 dxmt Metal 后端时可用。按 F10 热键生成捕获文件。</div>
+      <div class="tool-cmd">export DXMT_CAPTURE_EXECUTABLE="game_name"
+export MTL_CAPTURE_ENABLED=1
+# 运行应用，按 F10 捕获当前帧
+# 捕获文件保存在可执行文件同目录下</div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-debug" style="font-size:14px;">T15</span>
+        <span class="tool-name">自建像素差异分析工具</span>
+        <div class="tool-category">
+          <span class="pill pill-warning">自建</span>
+          <span class="pill pill-success">回归测试</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        自建命令行工具：将同一帧渲染到离屏 Metal 纹理 → 与 MoltenVK 路径参考帧做像素级对比 → 生成差异热力图和统计报告。
+      </div>
+      <div class="tool-cmd"># 用法示例（待实现）
+shader-validator --input cache/guest.data \
+                 --reference reference_frame.png \
+                 --output diff_report.html \
+                 --threshold 0.02</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>CI 回归测试。每次提交后自动运行，像素差异超过 2% 则告警。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-debug" style="font-size:14px;">T16</span>
+        <span class="tool-name">Apitrace</span>
+        <div class="tool-category">
+          <span class="pill pill-neutral">可选</span>
+          <span class="pill pill-neutral">调用追踪</span>
+        </div>
+      </div>
+      <div class="tool-desc">OpenGL 调用追踪和重放工具。用于对比 Ryujinx OpenGL 后端的渲染调用序列。</div>
+      <div class="tool-cmd"># 追踪 OpenGL 调用
+apitrace trace -a gl -o trace_file.apitrace ./ryujinx
+
+# 重放追踪
+qapitrace trace_file.apitrace</div>
+    </div>
+  </div>
+
+  <!-- 9.5 Build -->
+  <div id="tool-build" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-build">🔨</span> 9.5 构建 / 开发环境
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-build" style="font-size:14px;">T17</span>
+        <span class="tool-name">devkitPro + devkitA64</span>
+        <div class="tool-category">
+          <span class="pill pill-devkit">已安装</span>
+          <span class="pill pill-neutral">工具链</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        <strong>已安装在本地。</strong>包含 switch-dev 工具链（devkitA64、libnx、deko3d 库）。提供 UAM 着色器编译器和 deko3d 库头文件。
+      </div>
+      <div class="tool-cmd"># 确认安装
+dkp-pacman -Q | grep switch
+pacman -Q | grep uam
+# UAM 位置: $DEVKITPRO/tools/bin/uam
+# deko3d 头文件: $DEVKITPRO/portlibs/switch/include/deko3d.h</div>
+      <div class="tool-params">
+        <strong>用途：</strong>编译 UAM、访问 deko3d 头文件作为参考、交叉编译验证。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-build" style="font-size:14px;">T18</span>
+        <span class="tool-name">Xcode 16+ / Metal Toolchain</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Apple</span>
+          <span class="pill pill-success">必需</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        Xcode 16+ 包含 Metal 编译器（metal、metallib）、Metal 框架和 Metal Shader Converter。
+      </div>
+      <div class="tool-cmd"># 手动编译 Metal 着色器
+xcrun -sdk macosx metal -c shader.metal -o shader.air
+xcrun -sdk macosx metallib shader.air -o shader.metallib
+
+# 编译选项
+xcrun -sdk macosx metal -c -gline-tables-only shader.metal -o shader.air  # 带调试信息</div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-build" style="font-size:14px;">T19</span>
+        <span class="tool-name">Meson + LLVM 15</span>
+        <div class="tool-category">
+          <span class="pill pill-neutral">构建系统</span>
+        </div>
+      </div>
+      <div class="tool-desc">DXMT 和 UAM 使用的构建系统。LLVM 15 是 airconv 着色器编译器的依赖。</div>
+      <div class="tool-cmd"># 安装
+brew install meson llvm@15
+
+# dxmt 构建（Native）
+meson setup -Dnative_llvm_path=/usr/local/opt/llvm@15 build --buildtype release
+meson compile -C build</div>
+    </div>
+  </div>
+
+  <!-- 9.6 Test -->
+  <div id="tool-test" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-test">🧪</span> 9.6 测试框架 / 测试数据
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-test" style="font-size:14px;">T20</span>
+        <span class="tool-name">GoogleTest + GoogleMock</span>
+        <div class="tool-category">
+          <span class="pill pill-info">Google</span>
+          <span class="pill pill-success">C++ 测试框架</span>
+        </div>
+      </div>
+      <div class="tool-desc">C++ 单元测试和 Mock 框架。用于着色器解码器、寄存器映射表、命令翻译层的单元测试。</div>
+      <div class="tool-cmd"># 安装
+brew install googletest
+# 或通过 CMake FetchContent</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>CI 中每个 PR 自动运行。测试用例按着色器类型组织（test_decode_vertex、test_translate_compute 等）。
+      </div>
+    </div>
+
+    <div class="tool-card">
+      <div class="tool-header">
+        <span class="cat-icon cat-test" style="font-size:14px;">T21</span>
+        <span class="tool-name">Ryujinx Shader Cache 数据集</span>
+        <div class="tool-category">
+          <span class="pill pill-warning">测试数据</span>
+          <span class="pill pill-success">核心</span>
+        </div>
+      </div>
+      <div class="tool-desc">
+        从 Ryujinx 社区收集的着色器缓存，作为测试数据集。<br>
+        <strong>guest.data</strong> = Maxwell 原始二进制（输入）<br>
+        <strong>shared.data</strong> = GLSL/SPIR-V（参考输出）
+      </div>
+      <div class="tool-cmd"># 缓存位置
+# macOS: ~/Library/Application Support/Ryujinx/games/[GameID]/cache/shader/
+# 关键文件: guest.toc, guest.data, shared.toc, shared.data
+
+# 提取着色器
+# 使用 BinarySerializer 类解析 (TOCG magic, TOCS magic)
+# 按 offset + codeSize 切分 guest.data</div>
+      <div class="tool-params">
+        <strong>Agent 调用建议：</strong>构建自动化脚本，批量从缓存提取着色器 → 喂入翻译管线 → 记录成功率。
+      </div>
+    </div>
+  </div>
+
+  <!-- 9.7 Reference -->
+  <div id="tool-ref" style="margin-top:24px;">
+    <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span class="cat-icon cat-ref">📖</span> 9.7 硬件参考 / 知识库（非工具，但关键参考资源）
+    </h3>
+
+    <div class="tool-card">
+      <div class="tool-header"><span class="cat-icon cat-ref" style="font-size:14px;">R1</span><span class="tool-name">deko3d engine_3d.def</span><span class="pill pill-success">权威参考</span></div>
+      <div class="tool-desc">Maxwell 3D Engine 全部 200+ 寄存器的完整位域定义。NVN→Metal 命令映射的终极参考。路径：<a href="https://github.com/devkitPro/deko3d/blob/master/source/maxwell/engine_3d.def" target="_blank">deko3d/source/maxwell/engine_3d.def</a></div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-header"><span class="cat-icon cat-ref" style="font-size:14px;">R2</span><span class="tool-name">envytools Maxwell 文档</span><span class="pill pill-info">ISA 参考</span></div>
+      <div class="tool-desc">envytools 中包含的 NVIDIA GPU 逆向工程文档。Maxwell ISA 指令格式、编码和行为。路径：<a href="https://github.com/envytools/envytools/tree/master/docs" target="_blank">envytools/docs/</a></div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-header"><span class="cat-icon cat-ref" style="font-size:14px;">R3</span><span class="tool-name">UAM nv50_ir 代码生成器</span><span class="pill pill-success">指令编码参考</span></div>
+      <div class="tool-desc">Mesa/Nouveau 的 Maxwell 代码生成后端。nv50_ir_emit_gm107.cpp 是 Maxwell 指令编码的权威开源实现。路径：<a href="https://github.com/devkitPro/uam/blob/master/mesa-imported/codegen/nv50_ir_emit_gm107.cpp" target="_blank">uam/nv50_ir_emit_gm107.cpp</a></div>
+    </div>
+    <div class="tool-card">
+      <div class="tool-header"><span class="cat-icon cat-ref" style="font-size:14px;">R4</span><span class="tool-name">Ryujinx Maxwell Decoders</span><span class="pill pill-success">解码器参考</span></div>
+      <div class="tool-desc">Ryujinx 的 Maxwell 着色器解码器实现。路径：<a href="https://github.com/Stella-sea/ryujinx-admin/tree/canary/src/Ryujinx.Graphics.Shader/Decoders" target="_blank">Ryujinx.Graphics.Shader/Decoders/</a></div>
+    </div>
+  </div>
+
+  <!-- Agent Tool Map -->
+  <div class="highlight-box" style="margin-top:24px;">
+    <div class="card-title">🤖 Agent 工具调用速查表</div>
+    <div class="card-body" style="font-size:12px;">
+      <table>
+        <thead><tr><th>场景</th><th>调用工具</th><th>命令</th></tr></thead>
+        <tbody>
+          <tr><td>验证 Maxwell 解码</td><td>T1 envydis</td><td><code>envydis -V gm107 shader.bin</code></td></tr>
+          <tr><td>生成已知测试用例</td><td>T4 uam</td><td><code>uam --stage=vert -o out.dksh --raw=raw.bin test.glsl</code></td></tr>
+          <tr><td>验证 GLSL 合法性</td><td>T6 glslangValidator</td><td><code>glslangValidator shader.glsl</code></td></tr>
+          <tr><td>GLSL→SPIR-V</td><td>T6 glslangValidator</td><td><code>glslangValidator -V shader.glsl -o shader.spv</code></td></tr>
+          <tr><td>验证 SPIR-V 合法性</td><td>T8 spirv-val</td><td><code>spirv-val shader.spv</code></td></tr>
+          <tr><td>GLSL→MSL (核心)</td><td>T5 slangc</td><td><code>slangc shader.glsl -target metal -entry main -stage vertex -o shader.metal</code></td></tr>
+          <tr><td>交叉验证 MSL</td><td>T7 spirv-cross</td><td><code>spirv-cross shader.spv --msl --output ref.metal</code></td></tr>
+          <tr><td>编译 Metal 着色器</td><td>T18 xcrun metal</td><td><code>xcrun -sdk macosx metal -c shader.metal -o shader.air</code></td></tr>
+          <tr><td>GPU 帧捕获</td><td>T12 Xcode</td><td>Xcode → GPU Frame Capture 按钮</td></tr>
+          <tr><td>Metal 运行时验证</td><td>T9+T10 env</td><td><code>MTL_SHADER_VALIDATION=1 MTL_DEBUG_LAYER=1 ./app</code></td></tr>
+          <tr><td>性能 Profiling</td><td>T13 Instruments</td><td><code>instruments -t "Metal System Trace" ./app</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- === CHAPTER 10: Risk === -->
+<div class="section" id="ch10">
+  <h2 class="section-title">十、风险评估</h2>
+  <hr class="section-rule">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>风险</th><th>影响</th><th>概率</th><th>v1.0→v4.0 变化</th><th>缓解措施</th></tr></thead>
+      <tbody>
+        <tr><td>着色器转换技术难度</td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-warning">中低</span></td><td><span class="pill pill-success">↓ 显著降低</span></td><td>复用 Ryujinx GLSL 管线 + Slang</td></tr>
+        <tr><td>Slang Metal 后端稳定性</td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-warning">🆕</span></td><td>保留 spirv-cross 作为 fallback</td></tr>
+        <tr><td>NVN 命令映射精确度</td><td><span class="pill pill-error">高</span></td><td><span class="pill pill-success">低</span></td><td><span class="pill pill-success">↓ deko3d 提供参考</span></td><td>deko3d engine_3d.def 精确参考</td></tr>
+        <tr><td>几何着色器</td><td><span class="pill pill-error">高</span></td><td><span class="pill pill-warning">中</span></td><td><span class="pill pill-success">↓ 多路径可选</span></td><td>dxmt GS 模拟 + Slang mesh shader</td></tr>
+        <tr><td>Nintendo 法律风险</td><td><span class="pill pill-error">高</span></td><td><span class="pill pill-warning">中</span></td><td>—</td><td>仅开发翻译层，不分发密钥/固件</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- === CHAPTER 11: Resources === -->
+<div class="section-alt" id="ch11">
+  <h2 class="section-title">十一、关键资源索引</h2>
+  <hr class="section-rule">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>类型</th><th>Stars</th><th>许可证</th><th>角色</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/3Shain/dxmt" target="_blank">3Shain/dxmt</a></td><td>D3D11→Metal 翻译层</td><td>1,087</td><td>LGPL</td><td>Metal 后端基础设施</td></tr>
+        <tr><td><a href="https://github.com/shader-slang/slang" target="_blank">shader-slang/slang</a></td><td>多目标着色器编译器</td><td>5,364</td><td>Apache 2.0</td><td>🆕 GLSL→MSL 核心编译器</td></tr>
+        <tr><td><a href="https://github.com/devkitPro/deko3d" target="_blank">devkitPro/deko3d</a></td><td>Switch 自制 3D API</td><td>394</td><td>Zlib</td><td>🆕 Maxwell 寄存器参考</td></tr>
+        <tr><td><a href="https://github.com/devkitPro/uam" target="_blank">devkitPro/uam</a></td><td>GLSL→Maxwell 编译器</td><td>25</td><td>MIT</td><td>🆕 着色器验证参考</td></tr>
+        <tr><td><a href="https://github.com/devkitPro/dekotools" target="_blank">devkitPro/dekotools</a></td><td>deko3d 构建工具</td><td>3</td><td>Zlib</td><td>Maxwell 命令生成</td></tr>
+        <tr><td><a href="https://github.com/envytools/envytools" target="_blank">envytools</a></td><td>NVIDIA GPU 逆向工程</td><td>500+</td><td>MIT</td><td>envydis 反汇编器</td></tr>
+        <tr><td><a href="https://github.com/KhronosGroup/SPIRV-Tools" target="_blank">SPIRV-Tools</a></td><td>SPIR-V 工具集</td><td>900+</td><td>Apache 2.0</td><td>spirv-val/dis</td></tr>
+        <tr><td><a href="https://github.com/KhronosGroup/glslang" target="_blank">glslang</a></td><td>GLSL 参考编译器</td><td>3,000+</td><td>BSD</td><td>glslangValidator</td></tr>
+        <tr><td><a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank">SPIRV-Cross</a></td><td>SPIR-V 转换器</td><td>2,000+</td><td>Apache 2.0</td><td>交叉验证 MSL</td></tr>
+        <tr><td><a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">Astris</a></td><td>macOS Switch 模拟器</td><td>602</td><td>MIT</td><td>集成目标</td></tr>
+        <tr><td>Ryujinx (多镜像)</td><td>Switch 模拟器</td><td>3,000+</td><td>MIT</td><td>着色器 IR + GLSL 管线</td></tr>
+        <tr><td><a href="https://github.com/strato-emu/strato" target="_blank">Strato</a></td><td>Android Switch 模拟器</td><td>2,335</td><td>GPL</td><td>NVN 参考实现</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- === CHAPTER 12: Conclusion === -->
+<div class="section" id="ch12">
+  <h2 class="section-title">十二、结论与最终建议</h2>
+  <hr class="section-rule">
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title" style="color:var(--success-fg);">✅ 可行性</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>在 Apple Silicon Mac 上实现 Switch 模拟器的原生 Metal 后端是技术上可行的。</strong><br>
+        • deko3d/UAM + Slang + dxmt 三大开源方案形成完整工具链<br>
+        • 成功概率：<strong>80-90%</strong><br>
+        • 总时间估算：<strong>7-10.5 个月</strong><br>
+        • 推荐路线：<strong>GLSL→Slang→MSL 直连方案</strong>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 立即行动</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. <strong>搭建 slangc 工具链</strong>，验证 GLSL→MSL 编译<br>
+        2. <strong>从 Ryujinx 缓存提取测试数据集</strong><br>
+        3. <strong>安装 envytools</strong>，验证 Maxwell 反汇编<br>
+        4. <strong>用 UAM 生成已知测试用例</strong>，验证解码器<br>
+        5. <strong>构建 shader-validator CLI</strong>，自动化测试
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Switch Metal Backend 调研 v4.0</div>
+        <div class="footer-label">完整方案 · 工具集 · 21 个工具 · 7 大分类</div>
+      </div>
+      <div class="footer-links">
+        <strong>核心项目</strong><br>
+        <a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a> ·
+        <a href="https://github.com/shader-slang/slang" target="_blank">Slang</a> ·
+        <a href="https://github.com/devkitPro/deko3d" target="_blank">deko3d</a> ·
+        <a href="https://github.com/devkitPro/uam" target="_blank">UAM</a>
+      </div>
+      <div class="footer-links">
+        <strong>工具资源</strong><br>
+        <a href="https://github.com/envytools/envytools" target="_blank">envytools</a> ·
+        <a href="https://github.com/KhronosGroup/SPIRV-Tools" target="_blank">SPIRV-Tools</a> ·
+        <a href="https://github.com/KhronosGroup/glslang" target="_blank">glslang</a> ·
+        <a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">Astris</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>2026-06-11 · v4.0 · 21 个工具 · 完整方案</span>
+      <span>Generated by <a href="https://allyhub.com" target="_blank" style="color:var(--text-secondary);">AllyHub AI</a></span>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "-c", "Debug", "ryubing/src/Ryujinx/Ryujinx.csproj"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "verify-tools",
+      "command": "bash",
+      "type": "shell",
+      "args": ["tools/tools-verify.sh"],
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
+      "label": "build-metal-bridge",
+      "command": "make",
+      "type": "shell",
+      "args": ["-C", "libmetal_bridge"],
+      "problemMatcher": "$gcc",
+      "group": "build"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# 代码所有权配置
+# 最后匹配的分支规则生效
+
+# 所有文件默认所有者
+* @project-maintainer
+
+# 架构蓝图 — 需核心维护者审批
+.blueprint/ @project-maintainer
+
+# CI/CD 流水线
+.github/workflows/ @project-maintainer

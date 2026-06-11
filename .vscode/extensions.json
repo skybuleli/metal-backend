@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "ms-vscode.cpptools",
+    "ms-vscode.cmake-tools",
+    "vadimcn.vscode-lldb",
+    "rust-lang.rust-analyzer",
+    "yzhang.markdown-all-in-one",
+    "editorconfig.editorconfig"
+  ]
+}

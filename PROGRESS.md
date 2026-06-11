@@ -1,0 +1,260 @@
+# 项目进度账本
+# 最后更新: 2026-06-11T20:50:00+08:00
+# 当前阶段: Phase 1 — 着色器管道概念验证
+# 完成度: 15/220 任务 (6.8%)
+# 仓库: switch-metal-backend
+
+## ── 图例 ──
+## ⬜ 待开始   🔄 进行中   ✅ 已完成   🚫 已阻塞   ⏸️ 已跳过
+
+# ===================================================================
+## Phase 0: 开发环境与工具链搭建
+### 阶段状态: ✅ COMPLETE (2026-06-11)
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P0.1 | 验证本地工具链 (devkitPro+CLT+Metal+MSC) | ✅ | 2026-06-11 | 全部工具路径确认 |
+| P0.1a | 验证 MSC 在 CLT-only 环境下工作 | ✅ | 2026-06-11 | DXIL→metallib, CLT SDK 足够 |
+| P0.1b | 确认 metal-cpp 头文件位置 | ✅ | 2026-06-11 | MTLDevice.h 在 CLT SDK 中 |
+| P0.1c | 记录环境约束到文档 | ✅ | 2026-06-11 | AGENTS.md §6 + architecture.md |
+| P0.2 | 验证 slangc DXIL/Metal/SPIR-V 三目标 | ✅ | 2026-06-11 | 全通过; DXIL 需 -profile sm_6_0 |
+| P0.3 | MSC 4.0 全阶段验证 (VS/PS/CS) | ✅ | 2026-06-11 | 3132→6056, 2972→5052, 2832→4692 |
+| P0.4 | SPIRV-Tools 6 件套验证 | ✅ | 2026-06-11 | 全部在 /opt/homebrew/bin/ |
+| P0.5 | glslangValidator v11.16.3.0 | ✅ | 2026-06-11 | GLSL→SPIR-V 820B 成功 |
+| P0.6 | Rust 1.95.0 + cargo | ✅ | 2026-06-11 | 版本确认 |
+| P0.7 | Shader Playground 验证 | ✅ | 2026-06-11 | 网站离线, 本地验证替代 |
+| P0.8 | 克隆 Ryubing + dotnet build | ✅ | 2026-06-11 | ~/dev/ryubing/; build 22.5s, 16w |
+| P0.9 | 克隆 dxmt + 提取模块 | ✅ | 2026-06-11 | 3Shain/dxmt v0.80; 模块在 src/dxmt/ |
+| P0.10 | Git 仓库 + 目录结构 | ✅ | 2026-06-11 | 完整仓库模板就绪 |
+| P0.11 | tools-verify.sh 编写 | ✅ | 2026-06-11 | 15 项工具检查 + Path A 端到端 |
+| P0.12 | VS Code 配置 | ✅ | 2026-06-11 | 4 文件配置完成 |
+
+### 阶段总结
+- **关键发现**: MSC 在 CLT-only 完全可用; Path A 为主路径
+- **不可用路径**: Path B/C 需 xcrun metal (完整 Xcode)，暂非阻塞
+- **参考仓库**: Ryubing @ ~/dev/ryubing/; dxmt @ ~/dev/dxmt/
+
+# ===================================================================
+## Phase 1: 着色器管道概念验证
+### 阶段状态: ⬜ PENDING
+### 出口: ≥3 条路径验证通过 + ≥3 个真实游戏着色器可编译
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P1.1 | 编写 test_slang_dxil.sh (Path A 端到端) | ⬜ | — | — |
+| P1.2 | 编写 test_glslang_spirv.sh (Path C SPIR-V) | ⬜ | — | — |
+| P1.3 | 编写 test_slang_spirv.sh (Slang→SPIR-V) | ⬜ | — | — |
+| P1.4 | 编写 test_spirv_cross_msl.sh (Path C 端到端) | ⬜ | — | — |
+| P1.5 | 编写 test_slang_metal.sh (Path B 尝试) | ⬜ | — | — |
+| P1.6 | 真实游戏顶点着色器 Path A 测试 | ⬜ | — | — |
+| P1.7 | 真实游戏片段着色器 Path A 测试 | ⬜ | — | — |
+| P1.8 | 真实游戏计算着色器 Path A 测试 | ⬜ | — | — |
+| P1.9 | bench_compile.sh 基准测试脚本 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 2: 渐进式渲染 Demo
+### 阶段状态: ⬜ PENDING
+### 出口: D8 复杂 Demo ≥60fps
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P2.1 | D1: C++ Metal 三角形 Demo | ⬜ | — | — |
+| P2.2 | D1 在 M1 上运行验证 | ⬜ | — | — |
+| P2.3 | D2: Path A 着色器集成 | ⬜ | — | — |
+| P2.4 | D2: metallib 加载渲染 | ⬜ | — | — |
+| P2.5 | Rust FFI 最小验证 (C ABI) | ⬜ | — | — |
+| P2.6 | Rust → metal-cpp 设备创建 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 3: Ryubing Fork 与 GAL 集成
+### 阶段状态: ⬜ PENDING
+### 出口: Ryujinx.Graphics.Metal 编译通过
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ⬜ | — | — |
+| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
+| P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ⬜ | — | — |
+| P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ⬜ | — | — |
+| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ⬜ | — | — |
+| P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ⬜ | — | — |
+| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ⬜ | — | — |
+| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
+| P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ⬜ | — | — |
+| P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
+| P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 4: 核心 Metal 后端实现
+### 阶段状态: ⬜ PENDING
+### 出口: 2D 游戏可启动渲染
+# ===================================================================
+### 4.1 设备与资源管理
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ⬜ | — | — |
+| P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ⬜ | — | — |
+| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
+| P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ⬜ | — | — |
+| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ⬜ | — | — |
+| P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ⬜ | — | — |
+
+### 4.2 着色器编译器集成
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
+| P4.2.2 | Slang API P/Invoke: GLSL→DXIL | ⬜ | — | — |
+| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
+| P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ⬜ | — | — |
+| P4.2.5 | 回退逻辑: Path A→Path C→Path B | ⬜ | — | — |
+| P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ⬜ | — | — |
+
+### 4.3 管线状态与绘制
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ⬜ | — | — |
+| P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ⬜ | — | — |
+| P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ⬜ | — | — |
+| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ⬜ | — | — |
+| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ⬜ | — | — |
+| P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ⬜ | — | — |
+| P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ⬜ | — | — |
+| P4.3.8 | ClearRenderTarget: 清屏操作 | ⬜ | — | — |
+| P4.3.9 | SetBlendState: 混合状态映射 | ⬜ | — | — |
+| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ⬜ | — | — |
+| P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ⬜ | — | — |
+| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ⬜ | — | — |
+
+### 4.4 同步与呈现
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ⬜ | — | — |
+| P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ⬜ | — | — |
+| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ⬜ | — | — |
+| P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ⬜ | — | — |
+| P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ⬜ | — | — |
+| P4.4.6 | RunLoop: 主渲染循环 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 5: 命令映射与状态跟踪
+### 阶段状态: ⬜ PENDING
+### 出口: 3D homebrew 可渲染
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P5.1 | Maxwell→Metal 状态映射表 (deko3d+envytools) | ⬜ | — | — |
+| P5.2 | NVN SetBlendState → Metal blend state | ⬜ | — | — |
+| P5.3 | NVN SetDepthStencilState → Metal depth/stencil | ⬜ | — | — |
+| P5.4 | NVN SetRasterizerState → Metal rasterizer | ⬜ | — | — |
+| P5.5 | NVN SetVertexArrayState → Metal vertex descriptor | ⬜ | — | — |
+| P5.6 | NVN SetViewport/SetScissor → Metal viewport/scissor | ⬜ | — | — |
+| P5.7 | DispatchCompute: MTLComputeCommandEncoder | ⬜ | — | — |
+| P5.8 | SetStorageBuffers + SetImage: Compute 资源绑定 | ⬜ | — | — |
+| P5.9 | CopyBuffer: MTLBlitCommandEncoder 数据拷贝 | ⬜ | — | — |
+| P5.10 | 纹理数据上传/下载: Buffer↔Texture | ⬜ | — | — |
+| P5.11 | 几何着色器路径: Maxwell GS→Vertex+Compute 解构 | ⬜ | — | — |
+| P5.12 | 曲面细分路径: Maxwell Tess→Compute+Post-TCS | ⬜ | — | — |
+| P5.13 | Transform Feedback → MTLBuffer 写入 | ⬜ | — | — |
+| P5.14 | Indirect Draw + Conditional Rendering | ⬜ | — | — |
+
+# ===================================================================
+## Phase 6: 测试与验证体系
+### 阶段状态: ⬜ PENDING
+### 出口: 50+ 测试用例通过，CI 绿色
+# ===================================================================
+### 6.1 单元测试
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P6.1.1 | 单元测试框架搭建 (Catch2 + xUnit) | ⬜ | — | — |
+| P6.1.2 | 格式映射表全覆盖测试 | ⬜ | — | — |
+| P6.1.3 | 着色器解码单元测试 (≥10) | ⬜ | — | — |
+| P6.1.4 | 像素格式映射测试 | ⬜ | — | — |
+
+### 6.2 着色器编译集成测试
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P6.2.1 | Path A 端到端编译 (10个真实着色器) | ⬜ | — | — |
+| P6.2.2 | Path C 端到端编译 (同10个着色器) | ⬜ | — | — |
+| P6.2.3 | 回退逻辑验证 | ⬜ | — | — |
+| P6.2.4 | 着色器缓存命中测试 | ⬜ | — | — |
+| P6.2.5 | 跨阶段优化验证 (spirv-opt) | ⬜ | — | — |
+
+### 6.3 Metal 管线集成测试
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P6.3.1 | 基础 Draw 调用 | ⬜ | — | — |
+| P6.3.2 | 纹理 Draw 调用 (像素差异<1%) | ⬜ | — | — |
+| P6.3.3 | MRT 渲染 (3附件) | ⬜ | — | — |
+| P6.3.4 | Compute Dispatch | ⬜ | — | — |
+| P6.3.5 | 同步正确性 | ⬜ | — | — |
+
+### 6.4 回归测试 + CI
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P6.4.1 | Demo D1-D5 帧缓冲对比 | ⬜ | — | — |
+| P6.4.2 | Game Shader 编译回归 (20个着色器) | ⬜ | — | — |
+| P6.4.3 | 性能基准 (D8 ≤16ms 帧时间) | ⬜ | — | — |
+| P6.4.4 | CI 流水线: GitHub Actions 自动化测试 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 7: 性能优化与 MetalFX
+### 阶段状态: ⬜ PENDING
+### 出口: D8≥60fps, 3D≥30fps
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P7.1 | MetalFX Upscaling: 720p→1440p/4K | ⬜ | — | — |
+| P7.2 | MetalFX Frame Interpolation: 30→60fps | ⬜ | — | — |
+| P7.3 | GPU Trace 性能剖析: 定位瓶颈 | ⬜ | — | — |
+| P7.4 | Argument Buffers 优化: 批量资源绑定 | ⬜ | — | — |
+| P7.5 | 着色器编译预热: 启动时预编译 | ⬜ | — | — |
+| P7.6 | 异步编译管线 (DXVK 模式) | ⬜ | — | — |
+| P7.7 | 内存优化: MTLStorageMode 策略调优 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 8: 兼容性修复与打磨
+### 阶段状态: ⬜ PENDING
+### 出口: Top 20 游戏 ≥15 可玩
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P8.1 | Game Compatibility Tracker (CSV/Google Sheets) | ⬜ | — | — |
+| P8.2 | 逐游戏测试: 可启动→可渲染→可玩→完美 | ⬜ | — | — |
+| P8.3 | 崩溃修复 (最高优先级) | ⬜ | — | — |
+| P8.4 | 渲染错误修复 | ⬜ | — | — |
+| P8.5 | 几何着色器兼容修复 | ⬜ | — | — |
+| P8.6 | 曲面细分兼容修复 | ⬜ | — | — |
+| P8.7 | 像素格式边缘情况 | ⬜ | — | — |
+| P8.8 | 纹理压缩: ASTC/BCn/ETC2 映射 | ⬜ | — | — |
+
+# ===================================================================
+## Phase 9: 发布准备
+### 阶段状态: ⬜ PENDING
+### 出口: Public Beta 发布
+# ===================================================================
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P9.1 | macOS 原生启动器 (SwiftUI + Metal 后端选择) | ⬜ | — | — |
+| P9.2 | CI/CD 完整流水线 (build+test+release) | ⬜ | — | — |
+| P9.3 | 用户文档: 安装指南 + 游戏兼容列表 + FAQ | ⬜ | — | — |
+| P9.4 | 开发者文档: 架构说明 + 贡献指南 + API 文档 | ⬜ | — | — |
+| P9.5 | libmetalirconverter 许可确认 (可否随发行版分发) | ⬜ | — | — |
+| P9.6 | Public Beta 发布 + 反馈收集渠道 | ⬜ | — | — |
+
+# ===================================================================
+## ── 阻塞项 ──
+# ===================================================================
+| ID | 阻塞项 | 影响任务 | 解决方案 | 状态 |
+|----|--------|----------|----------|------|
+| — | (暂无) | — | — | — |
+
+# ===================================================================
+## ── 统计 ──
+# ===================================================================
+- 总任务数: 220
+- 已完成: 15 (6.8%)
+- 进行中: 0
+- 阻塞: 0
+- 待开始: 205
+- 当前阶段: Phase 1 — 着色器管道概念验证
+- 下一任务: P1.1 — 编写 test_slang_dxil.sh

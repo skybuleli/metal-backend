@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Metal 后端 v3.0 — 测试·调试·集成 完整方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --outer-bg: #E4E1DC; --page-bg: #FDFCF9; --surface: #FFFFFF;
+  --border: #E8E6E2; --divider: #C5C0BA;
+  --text-primary: #151515; --text-body: #3D3D3D; --text-secondary: #717171;
+  --hero-bg: #DDE3E8; --hero-deco: #9BADB0; --hero-deco2: #6E9298;
+  --success-bg: #E8FBCF; --success-fg: #3D4826;
+  --warning-bg: #FFF0DC; --warning-fg: #E47700;
+  --info-bg: #DEE5F7; --info-fg: #3E54CE;
+  --error-bg: #FDECEA; --error-fg: #C4433A;
+  --neutral-bg: #FDF9F2; --neutral-fg: #7C746F;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter Tight',sans-serif; background:var(--outer-bg);
+  color:var(--text-body); font-size:14px; line-height:1.6;
+  display:flex; justify-content:center; padding:24px 16px;
+}
+.page { max-width:1200px; width:100%; background:var(--page-bg); border-radius:24px; overflow:hidden; box-shadow:0 2px 24px rgba(0,0,0,0.06); }
+.hero {
+  background:var(--hero-bg); padding:48px 48px 40px; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; width:220px; height:160px;
+  top:-20px; left:5%; background:var(--hero-deco); opacity:0.15;
+  border-radius:55% 45% 60% 40% / 40% 55% 45% 60%; transform:rotate(-10deg);
+}
+.hero::after {
+  content:''; position:absolute; width:180px; height:130px;
+  bottom:-30px; right:8%; background:var(--hero-deco2); opacity:0.12;
+  border-radius:45% 55% 40% 60% / 55% 40% 60% 45%; transform:rotate(20deg);
+}
+.hero-content { position:relative; z-index:1; }
+.hero-eyebrow { font-size:12px; font-weight:500; color:var(--hero-deco2); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+.hero-title { font-size:32px; font-weight:700; color:var(--text-primary); letter-spacing:-0.01em; margin-bottom:12px; line-height:1.2; }
+.hero-subtitle { font-size:15px; color:var(--text-secondary); max-width:700px; line-height:1.5; }
+.hero-divider { border:none; border-top:0.5px solid rgba(110,146,152,0.3); margin:24px 0; }
+.hero-stats { display:flex; gap:40px; flex-wrap:wrap; }
+.hero-stat-value { font-family:'Noto Serif',serif; font-size:48px; font-weight:500; color:var(--text-primary); letter-spacing:-0.02em; line-height:1; }
+.hero-stat-label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.section { padding:36px 48px; }
+.section-alt { padding:36px 48px; background:var(--hero-bg); }
+.section-title { font-size:17px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.section-subtitle { font-size:12px; color:var(--text-secondary); margin-bottom:16px; }
+.section-rule { border:none; border-top:0.5px solid var(--border); margin-bottom:24px; }
+.card-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.card-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+@media (max-width:768px) {
+  .card-grid,.card-grid-3 { grid-template-columns:1fr; }
+  .hero { padding:32px 24px; }
+  .section,.section-alt { padding:24px 16px; }
+  .hero-title { font-size:24px; }
+  .hero-stats { gap:24px; }
+  .hero-stat-value { font-size:36px; }
+  body { padding:0; }
+  .page { border-radius:0; }
+}
+.card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:12px; padding:20px 24px; transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.card-title { font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.card-meta { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+.card-body { font-size:14px; color:var(--text-body); line-height:1.6; }
+.pill { display:inline-block; font-size:11px; font-weight:500; padding:3px 9px; border-radius:20px; }
+.pill-success { background:var(--success-bg); color:var(--success-fg); }
+.pill-info { background:var(--info-bg); color:var(--info-fg); }
+.pill-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.pill-error { background:var(--error-bg); color:var(--error-fg); }
+.pill-neutral { background:var(--neutral-bg); color:var(--neutral-fg); }
+.alert { border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+.alert-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.alert-body { font-size:13px; line-height:1.6; }
+.alert-info { background:var(--info-bg); color:var(--info-fg); }
+.alert-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.alert-success { background:var(--success-bg); color:var(--success-fg); }
+.table-wrap { overflow-x:auto; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { font-size:12px; font-weight:500; color:var(--text-secondary); text-align:left; padding:8px 12px; border-bottom:1px solid var(--divider); }
+td { padding:10px 12px; border-bottom:0.5px solid var(--border); color:var(--text-body); }
+tr:last-child td { border-bottom:none; }
+.flow-container { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:16px 0; }
+.flow-box { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; padding:10px 16px; font-size:12px; font-weight:500; text-align:center; color:var(--text-primary); }
+.flow-arrow { font-size:16px; color:var(--text-secondary); flex-shrink:0; }
+.highlight-box {
+  background: linear-gradient(135deg, rgba(155,173,176,0.12), rgba(110,146,152,0.06));
+  border: 1px solid rgba(110,146,152,0.2);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+}
+.timeline { position:relative; padding-left:28px; margin:16px 0; }
+.timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:var(--divider); }
+.tl-item { position:relative; margin-bottom:20px; }
+.tl-item::before { content:''; position:absolute; left:-22px; top:4px; width:10px; height:10px; border-radius:50%; border:2px solid var(--hero-deco2); background:var(--surface); }
+.tl-label { font-size:12px; font-weight:600; color:var(--hero-deco2); }
+.tl-content { font-size:13px; margin-top:4px; }
+
+.footer {
+  background:var(--hero-bg); padding:40px 48px 32px; position:relative; overflow:hidden;
+}
+.footer::before {
+  content:''; position:absolute; width:220px; height:150px;
+  bottom:-40px; right:-30px; background:var(--hero-deco2); opacity:0.1;
+  border-radius:55% 45% 60% 40% / 40% 55% 45% 60%;
+}
+.footer-content { position:relative; z-index:1; }
+.footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px; }
+.footer-brand { font-size:15px; font-weight:600; color:var(--text-primary); }
+.footer-label { font-size:12px; color:var(--text-secondary); }
+.footer-links { font-size:13px; color:var(--text-body); }
+.footer-links a { color:var(--text-body); text-decoration:underline; }
+.footer-divider { border:none; border-top:0.5px solid rgba(110,146,152,0.3); margin:20px 0; }
+.footer-bottom { display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); }
+.test-pyramid { display:flex; flex-direction:column; align-items:center; gap:8px; margin:16px 0; }
+.pyramid-layer { padding:12px 24px; border-radius:8px; font-size:13px; font-weight:500; text-align:center; color:var(--text-primary); }
+.pyramid-layer.l1 { width:90%; background:var(--info-bg); color:var(--info-fg); }
+.pyramid-layer.l2 { width:70%; background:var(--warning-bg); color:var(--warning-fg); }
+.pyramid-layer.l3 { width:50%; background:var(--success-bg); color:var(--success-fg); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">技术调研报告 v3.0 · 2026 年 6 月 · 测试·调试·集成</p>
+    <h1 class="hero-title">Switch 模拟器 Metal 后端<br>测试策略、调试工具链与集成方案</h1>
+    <p class="hero-subtitle">
+      回答三个关键工程问题：如何测试？用什么工具调试？以何种方式集成到现有模拟器生态？涵盖测试金字塔、着色器缓存复用、完整调试工具链以及分支策略。
+    </p>
+    <hr class="hero-divider">
+    <div class="hero-stats">
+      <div><div class="hero-stat-value">3</div><div class="hero-stat-label">测试层级（单元/集成/回归）</div></div>
+      <div><div class="hero-stat-value">8+</div><div class="hero-stat-label">调试/反汇编工具</div></div>
+      <div><div class="hero-stat-value">3</div><div class="hero-stat-label">集成策略选项</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Part 1: Testing Strategy -->
+<div class="section">
+  <h2 class="section-title">第一部分：测试策略</h2>
+  <p class="section-subtitle">每个阶段的进入/退出条件、测试用例设计与着色器缓存复用</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🏛️ 测试金字塔</div>
+      <div class="card-body">
+        <div class="test-pyramid">
+          <div class="pyramid-layer l1">单元测试 (Unit Tests) · 数量最大 · 运行最快<br><span style="font-size:11px;">着色器单个指令翻译 · 寄存器映射 · 格式转换</span></div>
+          <div class="pyramid-layer l2">集成测试 (Integration Tests) · 中等数量<br><span style="font-size:11px;">完整着色器编译管线 · NVN 命令→Metal 端到端</span></div>
+          <div class="pyramid-layer l3">回归测试 (Regression Tests) · 精选核心用例<br><span style="font-size:11px;">已知游戏着色器 · GPU 帧对比 · 性能基准</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📦 利用现有着色器缓存作为测试数据</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>关键发现：Ryujinx 的磁盘缓存可以直接作为测试数据集。</strong>
+        <br><br>
+        Ryujinx 着色器缓存位置：
+        <br><code>%appdata%/Ryujinx/games/[GameID]/cache/shader/</code>
+        <br><br>
+        <strong>缓存文件格式（已从源码确认）：</strong>
+        <br>• <code>guest.toc</code> + <code>guest.data</code> — 原始 Maxwell 着色器代码
+        <br>&nbsp;&nbsp;格式：TOCG magic, 包含每个着色器的偏移+大小+CB数据大小+哈希
+        <br>• <code>shared.toc</code> + <code>shared.data</code> — 翻译后的 Host 着色器
+        <br>&nbsp;&nbsp;格式：TOCS magic, 包含 CodeGenVersion 和编译产物
+        <br>• <code>BinarySerializer</code> 类处理序列化/反序列化
+        <br><br>
+        <strong>利用方式：</strong>
+        <br>1. 提取 guest.data 中的原始 Maxwell 二进制
+        <br>2. 喂入我们的着色器翻译管线
+        <br>3. 对比输出（与已知 Good-Known 结果对比）
+        <br>4. 使用 shared.data 中已有的 GLSL/SPIR-V 作为参考
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase-by-phase test conditions -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">📋 各阶段测试条件与退出标准</div>
+    <div class="card-body">
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-label">Phase 1: 概念验证 · 进入条件</div>
+          <div class="tl-content">
+            • 开发环境就绪（Xcode 16+、Metal Toolchain、Slang CLI、LLVM 15）<br>
+            • 从 Ryujinx 缓存成功提取 ≥10 个不同游戏的 Maxwell 着色器二进制<br>
+            • UAM 编译测试通过（验证 Maxwell 二进制合法性）
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 1: 概念验证 · 退出标准</div>
+          <div class="tl-content">
+            <strong>单元测试：</strong>≥50 个单指令着色器测试通过（mov, add, mul, tex, ld 等基础指令）<br>
+            <strong>集成测试：</strong>完整顶点+片段着色器对在 Metal GPU 上渲染三角形成功<br>
+            <strong>验证指标：</strong>像素级对比通过率 ≥95%（slangc 生成 MSL vs 参考 GLSL→SPIR-V→MSL）<br>
+            <strong>缓存测试：</strong>从 3 款不同游戏的缓存中提取的着色器编译成功率 ≥80%
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 2: 核心实现 · 进入条件</div>
+          <div class="tl-content">
+            • Phase 1 退出标准全部达标<br>
+            • Slang libslang 集成到构建系统<br>
+            • 从 deko3d engine_3d.def 生成 Maxwell 寄存器映射表<br>
+            • ≥100 个缓存着色器可用作测试数据集
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 2: 核心实现 · 退出标准</div>
+          <div class="tl-content">
+            <strong>单元测试：</strong>NVN→Metal 寄存器映射表 100% 覆盖 deko3d 定义的 3D Engine 寄存器<br>
+            <strong>集成测试：</strong>完整着色器阶段覆盖（VS/PS/CS/GS/HS/DS），每种 ≥20 个测试用例<br>
+            <strong>回归测试：</strong>≥5 款 2D 游戏可渲染首帧，无崩溃<br>
+            <strong>Metal 验证：</strong>MTL_SHADER_VALIDATION=1 零错误，MTL_DEBUG_LAYER=1 零警告
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 3: 完善优化 · 退出标准</div>
+          <div class="tl-content">
+            <strong>回归测试套件：</strong>≥20 款游戏着色器自动回归测试<br>
+            <strong>性能基准：</strong>fps ≥ MoltenVK 路径的 120%（目标）<br>
+            <strong>帧对比：</strong>与 MoltenVK 路径渲染差异 ≤2% 像素<br>
+            <strong>着色器覆盖率：</strong>从公开缓存库中提取的着色器编译成功率 ≥95%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test data pipeline -->
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">🔄 着色器缓存测试数据流水线</div>
+      <div class="card-body" style="font-size:13px;">
+        <div class="flow-container" style="justify-content:flex-start;padding:8px 0;">
+          <div class="flow-box">Ryujinx<br>guest.data</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">提取<br>Maxwell 二进制</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">解码为<br>结构化 IR</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">GLSL<br>（参考输出）</div>
+        </div>
+        <div class="flow-container" style="justify-content:flex-start;padding:4px 0 8px;">
+          <div class="flow-box" style="background:var(--info-bg);color:var(--info-fg);">Slang<br>GLSL→MSL</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="background:var(--info-bg);color:var(--info-fg);">MetalLib<br>（待验证）</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box">像素级<br>对比</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">✅/❌</div>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);">每发现一个编译失败或像素差异，自动归档为回归测试用例。</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 测试数据来源优先级</div>
+      <div class="card-body" style="font-size:13px;line-height:2.2;">
+        <strong>1. Ryujinx 磁盘缓存（最高优先级）</strong><br>
+        &nbsp;&nbsp;• 来自真实游戏运行，覆盖最广<br>
+        &nbsp;&nbsp;• guest.data 含原始 Maxwell 二进制<br>
+        &nbsp;&nbsp;• shared.data 含已验证的 GLSL/SPIR-V 参考<br>
+        <strong>2. UAM 编译器生成的着色器</strong><br>
+        &nbsp;&nbsp;• 编写标准 GLSL → 用 UAM 编译 → 获得已知 Maxwell 输出<br>
+        &nbsp;&nbsp;• 可用于验证解码器正确性<br>
+        <strong>3. 手工编写的最小测试</strong><br>
+        &nbsp;&nbsp;• 每个 Maxwell 指令至少一个测试<br>
+        &nbsp;&nbsp;• 覆盖边界条件
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Part 2: Debugging Tools -->
+<div class="section-alt">
+  <h2 class="section-title">第二部分：调试与反汇编工具链</h2>
+  <p class="section-subtitle">从 Maxwell SASS 反汇编到 Metal GPU 帧捕获的完整调试生态</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🔧 Maxwell 端：理解着色器输入</div>
+      <div class="card-body" style="font-size:13px;">
+        <table style="margin-top:8px;">
+          <tr><td><strong>envydis</strong></td><td style="color:var(--success-fg);">✅ 核心工具</td><td>NVIDIA Maxwell SASS 反汇编器。用法：<code>envydis -V gm107 shader.bin</code>。生成人类可读的 Maxwell 汇编代码。</td></tr>
+          <tr><td><strong>nvdisasm</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>NVIDIA 官方反汇编器（CUDA 工具包自带）。覆盖更多架构。</td></tr>
+          <tr><td><strong>UAM (nv50_ir)</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>Mesa/nouveau 的 Maxwell 代码生成器。nv50_ir_print.cpp 可打印 IR → 理解优化过程。</td></tr>
+          <tr><td><strong>nvcachetools</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>提取 NVIDIA GLCache 中的编译着色器进行分析。</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔄 中间层：验证着色器翻译</div>
+      <div class="card-body" style="font-size:13px;">
+        <table style="margin-top:8px;">
+          <tr><td><strong>spirv-val</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>SPIR-V 模块规范验证器。验证生成的 SPIR-V 合法性。</td></tr>
+          <tr><td><strong>spirv-dis</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>SPIR-V 二进制反汇编器。</td></tr>
+          <tr><td><strong>spirv-cross</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>SPIR-V → GLSL/MSL/HLSL 转换。用于交叉验证 Slang 输出。</td></tr>
+          <tr><td><strong>glslangValidator</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>GLSL→SPIR-V 编译器。验证 Ryujinx GLSL 输出的合法性。</td></tr>
+          <tr><td><strong>slangc --debug</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>Slang 编译器的调试输出模式。</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">🍎 Metal 端：验证渲染输出</div>
+      <div class="card-body" style="font-size:13px;">
+        <table style="margin-top:8px;">
+          <tr><td><strong>Xcode Metal Debugger</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>GPU 帧捕获、逐行着色器调试、资源检查。启用：Scheme → GPU Frame Capture。</td></tr>
+          <tr><td><strong>MTL_SHADER_VALIDATION</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>Metal 着色器运行时验证。环境变量 <code>MTL_SHADER_VALIDATION=1</code>。</td></tr>
+          <tr><td><strong>MTL_DEBUG_LAYER</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>Metal API 调用验证。环境变量 <code>MTL_DEBUG_LAYER=1</code>。</td></tr>
+          <tr><td><strong>MTL_CAPTURE_ENABLED</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>Metal 帧捕获开关。dxmt 已集成此功能。</td></tr>
+          <tr><td><strong>Instruments GPU Trace</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>CPU+GPU 时间线、内存使用、性能计数器。</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔗 端到端：全链路调试</div>
+      <div class="card-body" style="font-size:13px;">
+        <table style="margin-top:8px;">
+          <tr><td><strong>dxmt capture</strong></td><td style="color:var(--info-fg);">🟡 辅助</td><td>DXMT_CAPTURE_EXECUTABLE + F10 热键生成 Metal 帧捕获。</td></tr>
+          <tr><td><strong>Apitrace</strong></td><td style="color:var(--neutral-fg);">⚪ 可选</td><td>OpenGL 调用追踪（对比参考）。</td></tr>
+          <tr><td><strong>GPU 像素差异分析</strong></td><td style="color:var(--success-fg);">✅ 核心</td><td>自建工具：渲染同一帧到离屏纹理 → 像素级对比 → 差异热力图。</td></tr>
+        </table>
+        <div class="alert alert-info" style="margin-top:12px;">
+          <div class="alert-body" style="font-size:12px;">
+            <strong>注意：</strong>RenderDoc 不原生支持 Metal。苹果生态下的 GPU 调试必须使用 Xcode Metal Debugger。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Complete debug workflow -->
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">🔍 典型调试图：当渲染结果不正确时</div>
+    <div class="card-body" style="font-size:13px;">
+      <div class="flow-container" style="justify-content:flex-start;padding:8px 0;gap:6px;">
+        <div class="flow-box" style="font-size:11px;">1. Maxwell SASS<br>envydis 反汇编</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;">2. 解码器输出<br>Ryujinx IR dump</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;">3. GLSL 输出<br>glslangValidator 检查</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;">4. SPIR-V<br>spirv-val 验证</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;">5. MSL 输出<br>Slang 生成</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;">6. Metal 验证<br>MTL_SHADER_VALIDATION</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="font-size:11px;background:var(--success-bg);color:var(--success-fg);">7. 帧捕获<br>Xcode Debugger</div>
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+        每个环节都有独立的验证工具，可以在问题传播到下一个环节之前将其锁定。
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Part 3: Integration Strategy -->
+<div class="section">
+  <h2 class="section-title">第三部分：集成方式 — 如何介入现有模拟器</h2>
+  <p class="section-subtitle">分支策略、验证路径和最小可行集成的选择</p>
+  <hr class="section-rule">
+
+  <div class="card-grid-3">
+    <div class="card">
+      <div class="card-title">策略 A：独立库 + 适配层</div>
+      <div class="card-meta"><span class="pill pill-success">推荐</span></div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>做法：</strong>
+        <br>• Metal 后端作为独立 C/C++ 动态库开发
+        <br>• 通过 C API 暴露给上层
+        <br>• 编写适配层对接 Ryujinx/Astris 的 GAL 接口
+        <br>
+        <strong>优势：</strong>
+        <br>• 可在任何模拟器中使用
+        <br>• 独立测试和调试（不依赖模拟器启动）
+        <br>• 清晰的模块边界
+        <br>
+        <strong>劣势：</strong>
+        <br>• 需要多一层适配代码
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">策略 B：Astris fork 分支</div>
+      <div class="card-meta"><span class="pill pill-info">适用 Phase 2+</span></div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>做法：</strong>
+        <br>• Fork Astris（macOS 原生分支）
+        <br>• 在其 GPU 后端框架中新增 MetalBackend
+        <br>• 实现 GAL IRenderer 接口
+        <br>
+        <strong>优势：</strong>
+        <br>• 直接运行游戏验证
+        <br>• 复用 Astris 的 UI/音频/输入
+        <br>
+        <strong>劣势：</strong>
+        <br>• 依赖 Astris 上游更新
+        <br>• C# 与 Metal (ObjC/C++) 互操作复杂
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">策略 C：独立验证工具</div>
+      <div class="card-meta"><span class="pill pill-success">Phase 1 推荐</span></div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>做法：</strong>
+        <br>• 构建独立的着色器编译+渲染测试工具
+        <br>• 输入：Maxwell 着色器缓存文件
+        <br>• 输出：渲染结果 + 性能指标 + 差异报告
+        <br>
+        <strong>优势：</strong>
+        <br>• 最快启动（无需模拟器集成）
+        <br>• 专注验证着色器翻译核心
+        <br>• 可作为 CI 自动化测试
+        <br>
+        <strong>劣势：</strong>
+        <br>• 仅验证着色器，不验证 NVN 命令翻译
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">🎯 推荐路径：渐进式集成（三阶段）</div>
+    <div class="card-body" style="font-size:13px;">
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-label">Phase 1：策略 C — 独立验证工具</div>
+          <div class="tl-content">
+            开发 <code>shader-validator</code> 命令行工具。<br>
+            • 读取 Ryujinx 缓存 → 解码 Maxwell → Slang 编译 → Metal 渲染 → 离屏像素对比<br>
+            • 不需要运行任何模拟器，纯着色器翻译验证<br>
+            • 可作为 CI pipeline 中的自动化测试步骤
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 2：策略 A — 独立 Metal 后端库</div>
+          <div class="tl-content">
+            将验证过的着色器编译器和命令翻译逻辑打包为 <code>libswitch-metal.dylib</code>。<br>
+            • C API 设计，与 GL/Vulkan/Metal 后端接口对齐<br>
+            • 可从独立测试程序调用，验证完整渲染管线
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-label">Phase 3：策略 B — Astris/Ryujinx fork</div>
+          <div class="tl-content">
+            将 Metal 后端库集成到 Astris（或 Ryujinx 镜像）中。<br>
+            • 实现 <code>IRenderer</code> 接口 → 对接 GAL<br>
+            • 完整的游戏运行验证
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture diagram -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">🏗️ 模块架构与接口边界</div>
+    <div class="card-body">
+      <pre style="font-size:11px;line-height:1.8;margin:8px 0 0 0;font-family:'Inter Tight',monospace;overflow-x:auto;">
+┌─────────────────────────────────────────────────────────────┐
+│                 Astris / Ryujinx (C#)                        │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │           GAL (Graphics Abstraction Layer)            │   │
+│  │         IRenderer / IPipeline / IProgram ...          │   │
+│  └──────────┬───────────┬───────────┬───────────────────┘   │
+│             │ OpenGL    │  Vulkan   │  🆕 Metal             │
+│             │ Backend   │  Backend  │  Adapter (C# P/Invoke)│
+└─────────────┼───────────┼───────────┼───────────────────────┘
+              │           │           │
+  ════════════╪═══════════╪═══════════╪═══════════════════════
+              │           │           │  C API Boundary
+  ════════════╪═══════════╪═══════════╪═══════════════════════
+              │           │           │
+┌─────────────┴───────────┴───────────┴───────────────────────┐
+│            libswitch-metal.dylib (C++/ObjC)                  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
+│  │ Shader Compiler  │  │ NVN→Metal       │  │ Metal Runtime │ │
+│  │ • Maxwell Decode │  │ Command Mapper   │  │ • Device/Q    │ │
+│  │ • IR→GLSL (复用) │  │ (deko3d 参考)   │  │ • Buffer/Tex  │ │
+│  │ • Slang GLSL→MSL │  │ • RenderTarget   │  │ • Presenter   │ │
+│  │ • MetalLib Cache │  │ • Viewport       │  │ • MetalFX     │ │
+│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
+│                                                              │
+│  依赖：Slang · deko3d(def) · dxmt(metal infra) · Metal.fw    │
+└──────────────────────────────────────────────────────────────┘
+      </pre>
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+        C# ↔ C++ 边界通过 P/Invoke 或 C API 包装。着色器编译在 C++ 侧完成，GAL 接口在 C# 侧对接。
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Part 4: CI/CD -->
+<div class="section-alt">
+  <h2 class="section-title">第四部分：CI/CD 与自动化测试</h2>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🤖 自动化流水线</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>每个 PR / Commit 触发：</strong><br>
+        • 编译检查（ARM64 + x86_64）<br>
+        • 单元测试（GTest/Catch2）<br>
+        • Slang GLSL→MSL 冒烟测试（≥10 个基础着色器）<br>
+        • Metal 验证层检查（MTL_SHADER_VALIDATION=1）<br>
+        <br>
+        <strong>每日 Nightly：</strong><br>
+        • 全量着色器缓存回归测试<br>
+        • 像素级 GPU 渲染对比（与 MoltenVK 路径）<br>
+        • 性能基准采集和趋势图<br>
+        <br>
+        <strong>发布前：</strong><br>
+        • ≥5 款游戏完整帧渲染测试<br>
+        • 内存泄漏检测（ASan/LSan）<br>
+        • 着色器覆盖率报告 ≥95%
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 测试基础设施</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>测试框架：</strong><br>
+        • C++: GoogleTest (GTest) + Google Mock<br>
+        • Metal: 自建 Metal 测试 Harness<br>
+        • 着色器: 自定义 pytest 脚本<br>
+        <br>
+        <strong>测试数据管理：</strong><br>
+        • 从公开着色器缓存库（Ryujinx 社区共享）提取<br>
+        • 按游戏/着色器类型分类存储<br>
+        • Git LFS 管理大型二进制测试文件<br>
+        <br>
+        <strong>结果可视化：</strong><br>
+        • 编译成功率趋势图<br>
+        • 像素差异热力图<br>
+        • 性能回归告警
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Part 5: Key Tools Summary -->
+<div class="section">
+  <h2 class="section-title">第五部分：完整工具链清单</h2>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>工具</th><th>用途</th><th>阶段</th><th>来源</th><th>重要性</th></tr></thead>
+      <tbody>
+        <tr><td><strong>envydis</strong></td><td>Maxwell SASS 反汇编</td><td>开发/调试</td><td><a href="https://github.com/envytools/envytools" target="_blank">envytools</a></td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>UAM (nv50_ir)</strong></td><td>GLSL→Maxwell 编译器 / 指令参考</td><td>开发/验证</td><td><a href="https://github.com/devkitPro/uam" target="_blank">devkitPro/uam</a></td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>spirv-val</strong></td><td>SPIR-V 合法性验证</td><td>CI/测试</td><td><a href="https://github.com/KhronosGroup/SPIRV-Tools" target="_blank">SPIRV-Tools</a></td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>glslangValidator</strong></td><td>GLSL→SPIR-V / GLSL 验证</td><td>CI/测试</td><td><a href="https://github.com/KhronosGroup/glslang" target="_blank">glslang</a></td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>spirv-cross</strong></td><td>SPIR-V→MSL 交叉验证</td><td>测试/对比</td><td><a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank">SPIRV-Cross</a></td><td><span class="pill pill-info">重要</span></td></tr>
+        <tr><td><strong>Xcode Metal Debugger</strong></td><td>GPU 帧捕获 / 着色器逐行调试</td><td>调试</td><td>Apple (Xcode 内置)</td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>MTL_SHADER_VALIDATION</strong></td><td>Metal 着色器运行时验证</td><td>开发/CI</td><td>Apple (环境变量)</td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>MTL_DEBUG_LAYER</strong></td><td>Metal API 调用验证</td><td>开发/CI</td><td>Apple (环境变量)</td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>Instruments GPU Trace</strong></td><td>CPU+GPU 时间线 / 性能分析</td><td>优化</td><td>Apple (Xcode 内置)</td><td><span class="pill pill-info">重要</span></td></tr>
+        <tr><td><strong>dxmt capture</strong></td><td>Metal 帧捕获（F10 热键）</td><td>调试</td><td><a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a></td><td><span class="pill pill-info">重要</span></td></tr>
+        <tr><td><strong>GTest + GMock</strong></td><td>C++ 单元测试框架</td><td>开发/CI</td><td><a href="https://github.com/google/googletest" target="_blank">Google Test</a></td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>Ryujinx shader cache</strong></td><td>测试数据集</td><td>测试</td><td>Ryujinx 社区</td><td><span class="pill pill-success">核心</span></td></tr>
+        <tr><td><strong>nvdisasm</strong></td><td>NVIDIA 官方反汇编（辅助）</td><td>调试</td><td>CUDA Toolkit</td><td><span class="pill pill-neutral">可选</span></td></tr>
+        <tr><td><strong>Apitrace</strong></td><td>OpenGL 调用追踪（对比）</td><td>调试</td><td><a href="https://github.com/apitrace/apitrace" target="_blank">apitrace</a></td><td><span class="pill pill-neutral">可选</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Conclusion -->
+<div class="section-alt">
+  <h2 class="section-title">总结</h2>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title" style="color:var(--success-fg);">✅ 测试策略</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. <strong>测试金字塔</strong>：单元（指令级）→ 集成（着色器管线）→ 回归（游戏帧对比）<br>
+        2. <strong>充分利用现有缓存</strong>：Ryujinx 的 guest.data 可直接提取为测试数据，shared.data 提供 GLSL/SPIR-V 参考<br>
+        3. <strong>每个 Phase 有明确退出标准</strong>：量化指标（编译成功率、像素差异率、Metal 验证零错误）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--info-fg);">🔍 调试工具</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. <strong>全链路覆盖</strong>：Maxwell(envydis) → IR(spirv-val) → GLSL(glslangValidator) → MSL(Slang debug) → Metal(Xcode Debugger)<br>
+        2. <strong>Metal 专属</strong>：Xcode GPU Frame Capture + MTL_SHADER_VALIDATION + MTL_DEBUG_LAYER 三重保障<br>
+        3. <strong>RenderDoc 不可用</strong>：Metal 生态下必须使用 Apple 原生工具
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--warning-fg);">🔗 集成方式</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. <strong>渐进式</strong>：独立工具(Node) → 独立库(Lib) → 模拟器集成(Fork)<br>
+        2. <strong>Phase 1 不碰模拟器</strong>：用独立 shader-validator 工具验证核心着色器翻译<br>
+        3. <strong>Phase 2-3 再集成</strong>：先做 libswitch-metal.dylib，再通过 P/Invoke 对接 Astris 的 C# 层
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Switch Metal Backend 调研 v3.0</div>
+        <div class="footer-label">新增：测试策略 · 调试工具链 · 集成方案</div>
+      </div>
+      <div class="footer-links">
+        <strong>调试工具</strong><br>
+        <a href="https://github.com/envytools/envytools" target="_blank">envytools/envydis</a> ·
+        <a href="https://github.com/devkitPro/uam" target="_blank">UAM</a> ·
+        <a href="https://github.com/KhronosGroup/SPIRV-Tools" target="_blank">SPIRV-Tools</a> ·
+        <a href="https://github.com/KhronosGroup/glslang" target="_blank">glslang</a>
+      </div>
+      <div class="footer-links">
+        <strong>核心项目</strong><br>
+        <a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a> ·
+        <a href="https://github.com/shader-slang/slang" target="_blank">Slang</a> ·
+        <a href="https://github.com/devkitPro/deko3d" target="_blank">deko3d</a> ·
+        <a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">Astris</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>2026-06-11 · v3.0 · 测试·调试·集成 完整方案</span>
+      <span>Generated by <a href="https://allyhub.com" target="_blank" style="color:var(--text-secondary);">AllyHub AI</a></span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+</body>
+</html>

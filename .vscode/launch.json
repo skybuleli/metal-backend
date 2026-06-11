@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "启动 Ryujinx (Metal 后端)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/ryubing/src/Ryujinx/bin/Debug/net10.0/Ryujinx.dll",
+      "cwd": "${workspaceFolder}/ryubing",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "RYUJINX_GRAPHICS_BACKEND": "Metal"
+      }
+    },
+    {
+      "name": "调试 libmetal_bridge (lldb)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/libmetal_bridge/build/demos/d1_hello_triangle",
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false
+    }
+  ]
+}

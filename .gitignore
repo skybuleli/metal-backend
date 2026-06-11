@@ -1,0 +1,39 @@
+# macOS
+    .DS_Store
+    *.app
+    *.dSYM
+    *.xcuserdata
+    *.xcworkspace
+    DerivedData/
+
+    # Build outputs
+    build/
+    out/
+    *.o
+    *.dylib
+    *.metallib
+    *.air
+    *.diag
+
+    # IDE
+    .idea/
+    *.swp
+    *.swo
+    *.user
+    .vs/
+
+    # Dependencies
+    node_modules/
+    packages/
+
+    # Env
+    .env
+    *.log
+
+    # Shader cache
+    shader_cache/
+    !tests/fixtures/shader_cache/
+
+    # OS noise
+    Thumbs.db
+    

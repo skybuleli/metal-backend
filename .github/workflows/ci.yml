@@ -1,0 +1,72 @@
+name: CI — Build & Verify
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: 环境验证
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          brew install \
+            spirv-tools \
+            spirv-cross \
+            glslang \
+            cmake
+
+      - name: 运行工具链验证
+        run: bash tools/tools-verify.sh
+
+  build-bridge:
+    name: 构建 libmetal_bridge
+    runs-on: macos-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 CMake
+        run: |
+          cd src/libmetal_bridge
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 编译
+        run: |
+          cd src/libmetal_bridge
+          cmake --build build --config Release
+
+  build-demos:
+    name: 构建渲染 Demo
+    runs-on: macos-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 构建所有 Demo
+        run: |
+          cd src/demos
+          make all
+
+  lint:
+    name: 代码检查
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 类型检查
+        run: |
+          python3 -m py_compile tools/gen_next_task.py
+          python3 -m py_compile tools/verify_progress.py
+
+      - name: 验证 PROGRESS.md 格式
+        run: python3 tools/verify_progress.py
+
+      - name: Shell 脚本检查
+        run: shellcheck tools/*.sh
+        continue-on-error: true

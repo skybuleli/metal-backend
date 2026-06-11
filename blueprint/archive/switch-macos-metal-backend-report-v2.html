@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch 模拟器 Metal 后端 — 技术方案与路线调研 v2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --outer-bg: #E4E1DC; --page-bg: #FDFCF9; --surface: #FFFFFF;
+  --border: #E8E6E2; --divider: #C5C0BA;
+  --text-primary: #151515; --text-body: #3D3D3D; --text-secondary: #717171;
+  --hero-bg: #D7EDE2; --hero-deco: #8FC5A8; --hero-deco2: #5FA882;
+  --success-bg: #E8FBCF; --success-fg: #3D4826;
+  --warning-bg: #FFF0DC; --warning-fg: #E47700;
+  --info-bg: #DEE5F7; --info-fg: #3E54CE;
+  --error-bg: #FDECEA; --error-fg: #C4433A;
+  --neutral-bg: #FDF9F2; --neutral-fg: #7C746F;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter Tight',sans-serif; background:var(--outer-bg);
+  color:var(--text-body); font-size:14px; line-height:1.6;
+  display:flex; justify-content:center; padding:24px 16px;
+}
+.page { max-width:1200px; width:100%; background:var(--page-bg); border-radius:24px; overflow:hidden; box-shadow:0 2px 24px rgba(0,0,0,0.06); }
+.hero {
+  background:var(--hero-bg); padding:48px 48px 40px; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; width:260px; height:180px;
+  top:-30px; left:-20px; background:var(--hero-deco); opacity:0.15;
+  border-radius:60% 40% 70% 30% / 30% 60% 40% 70%; transform:rotate(-15deg);
+}
+.hero::after {
+  content:''; position:absolute; width:200px; height:140px;
+  bottom:-40px; right:15%; background:var(--hero-deco2); opacity:0.12;
+  border-radius:40% 60% 55% 45% / 60% 35% 65% 40%; transform:rotate(25deg);
+}
+.hero-content { position:relative; z-index:1; }
+.hero-eyebrow { font-size:12px; font-weight:500; color:var(--hero-deco2); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+.hero-title { font-size:32px; font-weight:700; color:var(--text-primary); letter-spacing:-0.01em; margin-bottom:12px; line-height:1.2; }
+.hero-subtitle { font-size:15px; color:var(--text-secondary); max-width:700px; line-height:1.5; }
+.hero-divider { border:none; border-top:0.5px solid rgba(95,168,130,0.3); margin:24px 0; }
+.hero-stats { display:flex; gap:40px; flex-wrap:wrap; }
+.hero-stat-value { font-family:'Noto Serif',serif; font-size:48px; font-weight:500; color:var(--text-primary); letter-spacing:-0.02em; line-height:1; }
+.hero-stat-label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+.section { padding:36px 48px; }
+.section-alt { padding:36px 48px; background:var(--hero-bg); }
+.section-title { font-size:17px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.section-subtitle { font-size:12px; color:var(--text-secondary); margin-bottom:16px; }
+.section-rule { border:none; border-top:0.5px solid var(--border); margin-bottom:24px; }
+.card-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:768px) {
+  .card-grid { grid-template-columns:1fr; }
+  .hero { padding:32px 24px; }
+  .section,.section-alt { padding:24px 16px; }
+  .hero-title { font-size:24px; }
+  .hero-stats { gap:24px; }
+  .hero-stat-value { font-size:36px; }
+  body { padding:0; }
+  .page { border-radius:0; }
+}
+.card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:12px; padding:20px 24px; transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.card-title { font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.card-meta { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+.card-body { font-size:14px; color:var(--text-body); line-height:1.6; }
+.pill { display:inline-block; font-size:11px; font-weight:500; padding:3px 9px; border-radius:20px; }
+.pill-success { background:var(--success-bg); color:var(--success-fg); }
+.pill-info { background:var(--info-bg); color:var(--info-fg); }
+.pill-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.pill-error { background:var(--error-bg); color:var(--error-fg); }
+.pill-neutral { background:var(--neutral-bg); color:var(--neutral-fg); }
+.alert { border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+.alert-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.alert-body { font-size:13px; line-height:1.6; }
+.alert-info { background:var(--info-bg); color:var(--info-fg); }
+.alert-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.alert-success { background:var(--success-bg); color:var(--success-fg); }
+.alert-error { background:var(--error-bg); color:var(--error-fg); }
+
+/* Flow */
+.flow-container { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; padding:16px 0; }
+.flow-box { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; padding:10px 16px; font-size:12px; font-weight:500; text-align:center; color:var(--text-primary); }
+.flow-arrow { font-size:16px; color:var(--text-secondary); flex-shrink:0; }
+
+/* KPI */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:16px; }
+.kpi { background:var(--surface); border:0.5px solid var(--border); border-radius:10px; padding:16px; }
+.kpi-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+.kpi-value { font-size:26px; font-weight:600; color:var(--text-primary); }
+
+/* Table */
+.table-wrap { overflow-x:auto; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { font-size:12px; font-weight:500; color:var(--text-secondary); text-align:left; padding:8px 12px; border-bottom:1px solid var(--divider); }
+td { padding:10px 12px; border-bottom:0.5px solid var(--border); color:var(--text-body); }
+tr:last-child td { border-bottom:none; }
+
+/* Route card */
+.route-card { background:var(--surface); border:0.5px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+.route-header { display:flex; align-items:flex-start; gap:16px; margin-bottom:16px; }
+.route-num { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0; }
+.route-num.r { background:var(--success-bg); color:var(--success-fg); }
+.route-num.v { background:var(--info-bg); color:var(--info-fg); }
+.route-num.e { background:var(--warning-bg); color:var(--warning-fg); }
+.route-title-group { flex:1; }
+.route-title { font-size:16px; font-weight:600; color:var(--text-primary); }
+.route-subtitle { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+.chart-wrap { position:relative; height:380px; margin-bottom:20px; }
+
+.footer {
+  background:var(--hero-bg); padding:40px 48px 32px; position:relative; overflow:hidden;
+}
+.footer::before {
+  content:''; position:absolute; width:220px; height:150px;
+  bottom:-40px; right:-30px; background:var(--hero-deco2); opacity:0.1;
+  border-radius:55% 45% 60% 40% / 40% 55% 45% 60%;
+}
+.footer-content { position:relative; z-index:1; }
+.footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px; }
+.footer-brand { font-size:15px; font-weight:600; color:var(--text-primary); }
+.footer-label { font-size:12px; color:var(--text-secondary); }
+.footer-links { font-size:13px; color:var(--text-body); }
+.footer-links a { color:var(--text-body); text-decoration:underline; }
+.footer-divider { border:none; border-top:0.5px solid rgba(95,168,130,0.3); margin:20px 0; }
+.footer-bottom { display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); }
+
+.highlight-box {
+  background: linear-gradient(135deg, rgba(143,197,168,0.15), rgba(95,168,130,0.08));
+  border: 1px solid rgba(95,168,130,0.25);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">技术调研报告 v2.0 · 2026 年 6 月 · 新增 deko3d + Slang 分析</p>
+    <h1 class="hero-title">Switch 模拟器原生 Metal 后端<br>技术路线与实现方案</h1>
+    <p class="hero-subtitle">
+      基于 dxmt、deko3d/UAM、Slang 三大开源方案，探索 Nintendo Switch 模拟器在 Apple Silicon 上实现原生 Metal 图形后端的可行路径。v2.0 新增 deko3d 和 Slang 的深度整合分析。
+    </p>
+    <hr class="hero-divider">
+    <div class="hero-stats">
+      <div><div class="hero-stat-value">6</div><div class="hero-stat-label">候选技术路线</div></div>
+      <div><div class="hero-stat-value">5,364</div><div class="hero-stat-label">Slang GitHub Stars</div></div>
+      <div><div class="hero-stat-value">v2.0</div><div class="hero-stat-label">新增 deko3d + Slang</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW: deko3d + Slang Deep Dive -->
+<div class="section">
+  <h2 class="section-title">零、新增方案：deko3d/UAM + Slang 联合技术栈</h2>
+  <p class="section-subtitle">本版报告新增的核心分析内容</p>
+  <hr class="section-rule">
+
+  <div class="highlight-box">
+    <div class="card-title" style="margin-bottom:8px;">🔑 关键洞察</div>
+    <div class="card-body">
+      <strong>deko3d + Slang 的组合从根本上改变了着色器翻译的技术路线选择。</strong>
+      <br>deko3d/UAM 提供了 Maxwell GPU 的完整知识体系（寄存器定义 + GLSL→Maxwell 编译器），
+      而 Slang 提供了从类 HLSL/GLSL 到 Metal MSL 的直接编译能力。
+      两者的结合使得从 Maxwell 着色器到 Metal 的转换可以<strong>绕开 DXBC 中间格式和 MoltenVK 翻译层</strong>，
+      形成一条近乎直接的路径。
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">📦 deko3d + UAM</div>
+      <div class="card-meta">devkitPro · C++ · 394 stars · Maxwell 硬件级知识</div>
+      <div class="card-body">
+        <strong>deko3d</strong> 是 Switch 自制软件的低级 3D 图形 API，本质上是 NVN 的开源替代品。
+        <br><br>
+        <strong>核心资产：</strong>
+        <br>• <code>engine_3d.def</code> — 完整的 Maxwell 3D Engine 寄存器定义（200+ 寄存器）
+        <br>• <code>gpu_3d_state.cpp</code> — GPU 3D 状态机实现
+        <br>• <code>image_formats.cpp</code> — 像素格式映射表
+        <br>• <code>dk_shader.h/cpp</code> — DKSH 着色器二进制格式
+        <br><br>
+        <strong>UAM</strong>（devkitPro/uam, 25 stars）是基于 Mesa GLSL 解析器 + Nouveau nv50_ir 后端的 Maxwell 着色器编译器：
+        <br>• 输入：GLSL（兼容 Mesa 19.0.8 特性）
+        <br>• 输出：原生 Maxwell SASS 机器码（.dksh）
+        <br>• 支持 Maxwell 双发射调度优化
+        <br>• Maxwell GM107 指令编码（emit_gm107.cpp）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔧 Slang 着色器语言</div>
+      <div class="card-meta">NVIDIA 主导 · C++ · 5,364 stars · 多目标编译器</div>
+      <div class="card-body">
+        <strong>Slang</strong> 是 NVIDIA 主导的开源着色器语言和编译器，支持"一次编写，到处运行"。
+        <br><br>
+        <strong>支持的输出目标：</strong>
+        <br>• D3D11 (HLSL) · D3D12 (DXIL) · Vulkan (SPIR-V)
+        <br>• <strong>Metal (MSL)</strong> — 实验性但功能完整
+        <br>• CUDA (C++) · CPU (C++) · WebGPU (WGSL)
+        <br><br>
+        <strong>Metal 后端能力：</strong>
+        <br>• 生成人类可读的 MSL 代码
+        <br>• vertex/fragment/compute/mesh 着色器
+        <br>• 完整的系统语义映射（SV_* → Metal [[attribute]]）
+        <br>• 资源类型映射（ConstantBuffer→constant*, Texture2D→texture2d）
+        <br>• IR 合法化 pass 专门针对 Metal 调整
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical bridge diagram -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title" style="margin-bottom:12px;">🔄 着色器转换路径对比</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">v1.0 报告中的推荐路线 vs 引入 deko3d+Slang 后的新路线</div>
+
+    <div style="margin-bottom:20px;">
+      <p style="font-size:13px;font-weight:600;margin-bottom:8px;">原推荐路线 (v1.0)：</p>
+      <div class="flow-container" style="justify-content:flex-start;padding:8px 0;">
+        <div class="flow-box" style="background:var(--warning-bg);color:var(--warning-fg);">Maxwell SASS</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Ryujinx IR</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--error-bg);color:var(--error-fg);">DXBC<br>(需新建)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">dxmt/airconv</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Metal AIR</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">Metal GPU</div>
+      </div>
+    </div>
+
+    <div>
+      <p style="font-size:13px;font-weight:600;margin-bottom:8px;">🆕 新推荐路线 (v2.0 · Slang)：</p>
+      <div class="flow-container" style="justify-content:flex-start;padding:8px 0;">
+        <div class="flow-box" style="background:var(--warning-bg);color:var(--warning-fg);">Maxwell SASS</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">Ryujinx IR<br>(已有)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--info-bg);color:var(--info-fg);">GLSL<br>(已有)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">Slang<br>编译器</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">MSL</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">Metal GPU</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:16px;">
+    <div class="alert-title">✅ 新路线的核心优势</div>
+    <div class="alert-body">
+      <strong>1. 消除 DXBC 中间层的开发工作：</strong>不再需要自己实现 Maxwell IR→DXBC 转换（这是 v1.0 方案中最大的技术和时间风险）。
+      <br><strong>2. 复用已有成熟管线：</strong>Ryujinx 已有 Maxwell→GLSL 的完整代码生成路径（CodeGen/Glsl/）。
+      <br><strong>3. Slang 的 Metal 后端由 NVIDIA 维护：</strong>5,364 stars，社区活跃，Metal MSL 生成质量有保障。
+      <br><strong>4. deko3d 提供硬件参考：</strong>当需要验证 Maxwell 着色器行为时，UAM 的 nv50_ir 后端是最终权威。
+      <br><strong>5. 整体工作量大幅降低：</strong>从 v1.0 方案的 11-16 个月可降至 <strong>7-10 个月</strong>。
+    </div>
+  </div>
+</div>
+
+<!-- Route comparison -->
+<div class="section-alt">
+  <h2 class="section-title">一、六条技术路线全景对比 (v2.0 更新)</h2>
+  <p class="section-subtitle">整合 deko3d 和 Slang 后的路线图谱</p>
+  <hr class="section-rule">
+
+  <div class="chart-wrap">
+    <canvas id="radarChart"></canvas>
+  </div>
+
+  <div class="table-wrap" style="margin-top:20px;">
+    <table>
+      <thead>
+        <tr><th>路线</th><th>着色器路径</th><th>命令路径</th><th>开发量</th><th>性能</th><th>风险</th><th>推荐</th></tr>
+      </thead>
+      <tbody>
+        <tr style="background:rgba(143,197,168,0.08);">
+          <td><strong>🆕 1. GLSL→Slang→MSL</strong></td>
+          <td>Maxwell→IR→GLSL→Slang→MSL</td>
+          <td>NVN→Metal (直连)</td>
+          <td><span class="pill pill-success">中低</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-success">⭐⭐⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>2. NVN→D3D11→DXMT</strong></td>
+          <td>Maxwell→IR→DXBC→airconv</td>
+          <td>NVN→D3D11→dxmt</td>
+          <td><span class="pill pill-warning">中等</span></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-info">⭐⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>3. airconv + 自研 Metal</strong></td>
+          <td>Maxwell→IR→DXBC→airconv</td>
+          <td>NVN→自研Metal后端</td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-info">⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>4. SPIR-V→MSL</strong></td>
+          <td>Maxwell→IR→SPIR-V→MSL</td>
+          <td>NVN→Vulkan→Metal</td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-warning">★★★☆☆</span></td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-info">⭐⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>5. GPTK桥接</strong></td>
+          <td>N/A（闭源）</td>
+          <td>NVN→D3D11→D3DMetal</td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-error">高(法律)</span></td>
+          <td><span class="pill pill-warning">⭐⭐</span></td>
+        </tr>
+        <tr>
+          <td><strong>6. Maxwell→MSL 直接</strong></td>
+          <td>Maxwell SASS→MSL</td>
+          <td>NVN→Metal</td>
+          <td><span class="pill pill-error">极高</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-error">极高</span></td>
+          <td><span class="pill pill-error">⭐</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section: Why this changes everything -->
+<div class="section">
+  <h2 class="section-title">二、为什么 deko3d + Slang 改变了游戏规则</h2>
+  <p class="section-subtitle">技术路线选择逻辑的范式转变</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🔬 deko3d：从"逆向 NVN"到"理解 Maxwell"</div>
+      <div class="card-body">
+        <p style="margin-bottom:8px;">deko3d 的价值远超一个简单的自制软件 API。它是 <strong>fincs 一年半逆向工程 NVN 的结晶</strong>，提供了 Maxwell GPU 硬件层的完整知识映射。</p>
+        
+        <p style="font-size:13px;line-height:2;margin:8px 0;">
+        <strong>对我们的直接价值：</strong><br>
+        &nbsp;• <code>engine_3d.def</code> 中的每个寄存器定义都对应一个 NVN 函数调用 → 我们可以建立 NVN→Metal 的直接映射表<br>
+        &nbsp;• <code>gpu_3d_state.cpp</code> 展示了 Maxwell 3D 管线状态如何管理 → 可直接映射到 Metal 的 RenderPipelineDescriptor<br>
+        &nbsp;• UAM 的 nv50_ir 编译器展示了 Maxwell 指令如何编码 → 反汇编/验证参考<br>
+        &nbsp;• DKSH 格式公开了着色器二进制布局 → 验证我们的解码器正确性
+        </p>
+
+        <div class="alert alert-info" style="margin-top:10px;">
+          <div class="alert-body" style="font-size:12px;">
+            <strong>实际案例：</strong>deko3d 的 RenderTarget 寄存器定义告诉我们：每个 RT 有 Addr、Format、TileMode、ArrayMode 等属性。这些直接对应 Metal 的 MTLRenderPassDescriptor 配置。<strong>NVN→Metal 的命令映射不再需要猜测。</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Slang：从"造编译器"到"用编译器"</div>
+      <div class="card-body">
+        <p style="margin-bottom:8px;">Slang 是 NVIDIA 研究院 5+ 年持续投入的着色器编译器项目，支持 10 个目标平台。它的 Metal 后端虽然标记为"实验性"，但实际功能相当完整。</p>
+
+        <p style="font-size:13px;line-height:2;margin:8px 0;">
+        <strong>对我们的直接价值：</strong><br>
+        &nbsp;• Slang 接受 GLSL 输入 → 我们不需要写自己的着色器编译器<br>
+        &nbsp;• Metal MSL 代码生成经过了系统语义映射、IR 合法化、类型展平等多个 pass<br>
+        &nbsp;• Slang 的模块系统允许我们复用已有 Shader 库<br>
+        &nbsp;• NVIDIA 持续维护 → 新 Metal 特性会被跟进
+        </p>
+
+        <div class="alert alert-info" style="margin-top:10px;">
+          <div class="alert-body" style="font-size:12px;">
+            <strong>关键对比：</strong>写一个 Maxwell→DXBC 编译器需 4-6 个月（v1.0 方案的最大风险）。而将 Ryujinx 现有的 Maxwell→GLSL 管线（已完成）连接到 Slang 的 GLSL 输入，<strong>只需验证和适配，约 1-2 个月</strong>。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">💡 协同效应：1 + 1 &gt; 2</div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>维度</th><th>仅有 dxmt (v1.0)</th><th>deko3d + Slang (v2.0)</th><th>提升</th></tr></thead>
+        <tbody>
+          <tr><td>着色器转换开发量</td><td>4-6 月（新建 DXBC 编译器）</td><td>1-2 月（适配已有 GLSL 管线）</td><td><span class="pill pill-success">↓ 60-70%</span></td></tr>
+          <tr><td>NVN→Metal 命令映射</td><td>依赖 D3D11 中间层理解</td><td>deko3d 提供精确硬件参考</td><td><span class="pill pill-success">精度 ↑</span></td></tr>
+          <tr><td>Metal 着色器质量</td><td>airconv 输出 AIR（非人类可读）</td><td>Slang 输出人类可读 MSL</td><td><span class="pill pill-success">可调试性 ↑</span></td></tr>
+          <tr><td>长期维护</td><td>依赖 dxmt 社区（70+ 贡献者）</td><td>依赖 Slang（NVIDIA 官方）+ dxmt 双保险</td><td><span class="pill pill-success">可持续性 ↑</span></td></tr>
+          <tr><td>总体时间估算</td><td>11-16 个月</td><td>7-10 个月</td><td><span class="pill pill-success">↓ 30-40%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Section: New Recommended Architecture -->
+<div class="section-alt">
+  <h2 class="section-title">三、🆕 新推荐架构：GLSL-Slang-Metal 直连方案</h2>
+  <p class="section-subtitle">结合 deko3d 参考 + Slang 编译器的最优路径</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title" style="color:var(--success-fg);">🎯 着色器编译管线</div>
+      <div class="card-body">
+        <div style="font-size:13px;line-height:2.2;">
+          <strong>Stage 1: 解码</strong> (复用 Ryujinx)<br>
+          &nbsp;└ Maxwell SASS → 结构化 IR (Decoders/)<br>
+          <strong>Stage 2: 翻译</strong> (复用 Ryujinx · CodeGen/Glsl/)<br>
+          &nbsp;└ 结构化 IR → GLSL 源代码<br>
+          <strong>Stage 3: 编译</strong> (🆕 Slang)<br>
+          &nbsp;└ GLSL → Slang IR → MSL (Metal Shading Language)<br>
+          <strong>Stage 4: 二进制生成</strong> (Apple Metal Compiler)<br>
+          &nbsp;└ MSL → MetalLib → GPU 可执行代码
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--info-fg);">🔩 命令翻译管线</div>
+      <div class="card-body">
+        <div style="font-size:13px;line-height:2.2;">
+          <strong>Stage 1: 解析</strong> (deko3d 参考)<br>
+          &nbsp;└ NVN 命令缓冲 → Maxwell 寄存器操作<br>
+          &nbsp;└ 参考 deko3d 的 engine_3d.def 理解每个寄存器<br>
+          <strong>Stage 2: 映射</strong> (新建 · 核心工作)<br>
+          &nbsp;└ Maxwell 寄存器语义 → Metal API 调用<br>
+          &nbsp;└ 例如：0x200 RenderTarget → MTLRenderPassDescriptor<br>
+          <strong>Stage 3: 执行</strong> (Metal Runtime)<br>
+          &nbsp;└ MTLCommandBuffer → MTLRenderCommandEncoder<br>
+          &nbsp;└ 复用 dxmt 的 Metal 后端基础设施（可选）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:16px;">
+    <div class="alert-title">🏗️ 架构分层总览</div>
+    <div class="alert-body">
+      <pre style="font-size:12px;line-height:1.8;margin:8px 0 0 0;font-family:'Inter Tight',monospace;">
+┌─────────────────────────────────────────────────────┐
+│                   Switch 游戏 ROM                      │
+└────────────────────────┬────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────┐
+│  Layer 1: NVN 解码层（参考 deko3d engine_3d.def）     │
+│  • NVN 命令缓冲解析  • Maxwell 3D 寄存器状态机        │
+└────────┬───────────────────────────────┬────────────┘
+         │ NVN 命令                       │ Maxwell SASS
+┌────────▼──────────────┐  ┌──────────────▼───────────┐
+│  Layer 2: 命令映射层    │  │  Layer 3: 着色器翻译层     │
+│  • Maxwell寄存器→Metal │  │  • Ryujinx IR→GLSL (已有)│
+│  • 管线状态映射        │  │  • Slang: GLSL→MSL (🆕)  │
+│  • 资源格式转换        │  │  • Metal 编译器: MSL→Lib  │
+└────────┬──────────────┘  └──────────────┬───────────┘
+         │                                │
+┌────────▼────────────────────────────────▼───────────┐
+│  Layer 4: Metal 运行时（复用 dxmt 基础设施）           │
+│  • MTLDevice/MTLCommandQueue                        │
+│  • MTLBuffer/MTLTexture 管理                        │
+│  • MetalFX 空间上采样 • HDR 呈现                      │
+└────────────────────────┬────────────────────────────┘
+                         │
+┌────────────────────────▼────────────────────────────┐
+│                Apple Silicon GPU                      │
+└─────────────────────────────────────────────────────┘
+      </pre>
+    </div>
+  </div>
+</div>
+
+<!-- Integration details -->
+<div class="section">
+  <h2 class="section-title">四、关键技术决策点</h2>
+  <p class="section-subtitle">需要验证和权衡的核心问题</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">⚖️ 决策 1：GLSL vs SPIR-V 作为 Slang 输入</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>推荐：GLSL 优先，SPIR-V 作为备选</strong>
+        <br><br>
+        <strong>GLSL 路径优势：</strong>
+        <br>• Ryujinx 的 GLSL 代码生成器已非常成熟
+        <br>• Slang 原生支持 GLSL 语法（通过兼容模块）
+        <br>• GLSL 文本可直接调试和修改
+        <br>
+        <strong>SPIR-V 路径优势：</strong>
+        <br>• SPIR-V 是二进制格式，无文本解析开销
+        <br>• Slang 可以通过内联 SPIR-V 支持
+        <br>• 但会失去 Slang IR 优化的机会
+        <br><br>
+        <span class="pill pill-info">结论</span> Phase 1 验证两者，优选 GLSL
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ 决策 2：Metal 后端：dxmt 复用 vs 自研</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>推荐：混合方案</strong>
+        <br><br>
+        <strong>复用 dxmt 的部分：</strong>
+        <br>• dxmt_device：MTLDevice 创建和管理
+        <br>• dxmt_command_queue：命令队列和提交
+        <br>• dxmt_buffer/texture：资源分配和生命周期
+        <br>• dxmt_presenter：MetalLayer 呈现 + MetalFX
+        <br>
+        <strong>自研的部分：</strong>
+        <br>• NVN→Metal 命令编码器（核心差异化逻辑）
+        <br>• Maxwell 管线状态→Metal PSO 映射
+        <br>• 着色器资源绑定表管理
+        <br><br>
+        <span class="pill pill-info">结论</span> dxmt 提供基础设施，命令翻译自研
+      </div>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">⚖️ 决策 3：deko3d 作为参考 vs 作为代码</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>推荐：作为权威参考文档</strong>
+        <br><br>
+        deko3d 是 C++ 库（目标 Tegra X1），我们的后端是 C++/ObjC（目标 Apple Silicon）。
+        <br><br>
+        <strong>直接使用的部分：</strong>
+        <br>• engine_3d.def → 生成 Maxwell 寄存器映射表
+        <br>• image_formats.cpp → 像素格式转换参考
+        <br>
+        <strong>参考理解的部分：</strong>
+        <br>• gpu_3d_state.cpp → 理解 Maxwell 3D 管线状态模型
+        <br>• UAM 的 nv50_ir → 理解 Maxwell SASS 编码
+        <br><br>
+        <span class="pill pill-info">结论</span> 知识迁移，不直接链接
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ 决策 4：Slang 集成方式</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>推荐：slangc 命令行 + libslang 动态库</strong>
+        <br><br>
+        <strong>Phase 1: 命令行模式</strong>
+        <br>• 使用 <code>slangc</code> CLI 工具验证 GLSL→MSL 转换
+        <br>• 快速原型验证，无需代码集成
+        <br>
+        <strong>Phase 2: 库集成模式</strong>
+        <br>• 通过 <code>libslang</code> 动态库内嵌编译器
+        <br>• 使用 <code>slang.h</code> C API
+        <br>• 支持运行时着色器编译和缓存
+        <br><br>
+        <span class="pill pill-warning">注意</span> Slang Metal 后端标记为实验性，需监控上游更新
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Risk Analysis -->
+<div class="section-alt">
+  <h2 class="section-title">五、v2.0 风险评估更新</h2>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>风险</th><th>v1.0 评级</th><th>v2.0 评级</th><th>变化</th><th>缓解措施</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>着色器转换技术难度</strong></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-warning">中低</span></td>
+          <td><span class="pill pill-success">↓ 显著降低</span></td>
+          <td>复用 Ryujinx GLSL 管线 + Slang，无需自建编译器</td>
+        </tr>
+        <tr>
+          <td><strong>Slang Metal 后端稳定性</strong></td>
+          <td><span class="pill pill-neutral">N/A</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-warning">🆕 新增风险</span></td>
+          <td>Phase 1 深入测试；保留 dxmt/airconv 作为 fallback</td>
+        </tr>
+        <tr>
+          <td><strong>GLSL→MSL 语义损失</strong></td>
+          <td><span class="pill pill-neutral">N/A</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-warning">🆕 新增风险</span></td>
+          <td>部分特性可回退到 SPIR-V→SPIRV-Cross→MSL 路径</td>
+        </tr>
+        <tr>
+          <td><strong>dxmt 代码解耦</strong></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-success">↓ 降低</span></td>
+          <td>仅用 dxmt 基础设施层，不依赖 D3D11 语义层</td>
+        </tr>
+        <tr>
+          <td><strong>几何着色器支持</strong></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-success">↓ 降低</span></td>
+          <td>Slang 支持 Metal mesh shader；dxmt 已有 GS 模拟</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Updated Roadmap -->
+<div class="section">
+  <h2 class="section-title">六、🆕 更新版实施路线图</h2>
+  <p class="section-subtitle">整合 deko3d + Slang 后的加速计划</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title"><span class="pill pill-info" style="margin-right:8px;">Phase 1</span> 概念验证 · 1-1.5 月</div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>搭建 slangc CLI 工具链</li>
+          <li>从 Ryujinx 提取一个简单着色器的 GLSL 输出</li>
+          <li><strong>验证 slangc GLSL→MSL 编译成功</strong></li>
+          <li>在 Metal GPU 上运行该着色器</li>
+          <li>从 deko3d engine_3d.def 提取 Maxwell 寄存器表</li>
+          <li>验证 NVN RenderTarget 寄存器→MTLRenderPassDescriptor 映射</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">里程碑</span> Slang Metal 路径可行 + deko3d 参考有价值</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="pill pill-warning" style="margin-right:8px;">Phase 2</span> 核心实现 · 3-4 月</div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>完整集成 Slang libslang 到着色器编译管线</li>
+          <li>实现全着色器阶段支持（VS/PS/CS/GS/HS/DS）</li>
+          <li>基于 deko3d 参考实现 NVN→Metal 命令映射</li>
+          <li>集成 dxmt Metal 后端基础设施</li>
+          <li>实现着色器缓存（Slang 编译产物缓存）</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">里程碑</span> 简单 2D 游戏可运行</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="pill pill-warning" style="margin-right:8px;">Phase 3</span> 完善优化 · 2-3 月</div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>边界情况 + 兼容性修复</li>
+          <li>MetalFX 上采样集成</li>
+          <li>性能 Profile + 瓶颈优化</li>
+          <li>Ryujinx/Astris 上游集成</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">里程碑</span> 主流 3D 游戏可运行 ≥30fps</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="pill pill-success" style="margin-right:8px;">Phase 4</span> 发布 · 1-2 月</div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>macOS 原生 UI</li>
+          <li>CI/CD 自动化（ARM64 + x86_64）</li>
+          <li>用户文档 + 社区 Beta</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">里程碑</span> 公开发布</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">⏱️ 时间估算对比</div>
+    <div class="card-body">
+      <table style="margin-top:8px;">
+        <thead><tr><th>阶段</th><th>v1.0 方案</th><th>v2.0 方案 (deko3d+Slang)</th><th>节省</th></tr></thead>
+        <tbody>
+          <tr><td>Phase 1 验证</td><td>2-3 月</td><td>1-1.5 月</td><td><span class="pill pill-success">50%</span></td></tr>
+          <tr><td>Phase 2 核心</td><td>4-6 月</td><td>3-4 月</td><td><span class="pill pill-success">33%</span></td></tr>
+          <tr><td>Phase 3 优化</td><td>3-4 月</td><td>2-3 月</td><td><span class="pill pill-success">30%</span></td></tr>
+          <tr><td>Phase 4 发布</td><td>2-3 月</td><td>1-2 月</td><td><span class="pill pill-success">40%</span></td></tr>
+          <tr style="font-weight:600;"><td><strong>总计</strong></td><td><strong>11-16 月</strong></td><td><strong style="color:var(--success-fg);">7-10.5 月</strong></td><td><span class="pill pill-success">~35%</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Key Repos -->
+<div class="section-alt">
+  <h2 class="section-title">七、关键资源索引</h2>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>角色</th><th>Stars</th><th>许可证</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="https://github.com/3Shain/dxmt" target="_blank" style="color:var(--text-primary);font-weight:600;">3Shain/dxmt</a></td>
+          <td>D3D11→Metal 翻译层 · 提供 Metal 后端基础设施</td>
+          <td>1,087</td>
+          <td>LGPL</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/shader-slang/slang" target="_blank" style="color:var(--text-primary);font-weight:600;">shader-slang/slang</a></td>
+          <td>🆕 多目标着色器编译器 · GLSL→MSL 直接编译</td>
+          <td>5,364</td>
+          <td>Apache 2.0</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/devkitPro/deko3d" target="_blank" style="color:var(--text-primary);font-weight:600;">devkitPro/deko3d</a></td>
+          <td>🆕 自制 NVN 替代 · Maxwell 3D 寄存器完整定义</td>
+          <td>394</td>
+          <td>Zlib</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/devkitPro/uam" target="_blank" style="color:var(--text-primary);font-weight:600;">devkitPro/uam</a></td>
+          <td>🆕 GLSL→Maxwell 着色器编译器 · Maxwell SASS 参考</td>
+          <td>25</td>
+          <td>MIT</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/devkitPro/dekotools" target="_blank" style="color:var(--text-primary);font-weight:600;">devkitPro/dekotools</a></td>
+          <td>🆕 deko3d 构建工具 · Maxwell 命令生成</td>
+          <td>3</td>
+          <td>Zlib</td>
+        </tr>
+        <tr>
+          <td>Ryujinx (多镜像)</td>
+          <td>Switch 模拟器 · 着色器 IR 管线 + GLSL 代码生成</td>
+          <td>3,000+</td>
+          <td>MIT</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank" style="color:var(--text-primary);font-weight:600;">Astris</a></td>
+          <td>macOS 专用分支 · 集成参考</td>
+          <td>602</td>
+          <td>MIT</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/strato-emu/strato" target="_blank" style="color:var(--text-primary);font-weight:600;">Strato</a></td>
+          <td>Android Switch 模拟器 · NVN 参考实现</td>
+          <td>2,335</td>
+          <td>GPL</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/KhronosGroup/MoltenVK" target="_blank" style="color:var(--text-primary);font-weight:600;">MoltenVK</a></td>
+          <td>当前 macOS 方案 · 性能对比基线</td>
+          <td>5,000+</td>
+          <td>Apache 2.0</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank" style="color:var(--text-primary);font-weight:600;">SPIRV-Cross</a></td>
+          <td>SPIR-V→MSL · 备选着色器路径</td>
+          <td>2,000+</td>
+          <td>Apache 2.0</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/envytools/envytools" target="_blank" style="color:var(--text-primary);font-weight:600;">envytools</a></td>
+          <td>NVIDIA GPU 逆向工程 · Maxwell ISA 文档</td>
+          <td>500+</td>
+          <td>MIT</td>
+        </tr>
+        <tr>
+          <td><a href="https://gitlab.freedesktop.org/mesa/mesa" target="_blank" style="color:var(--text-primary);font-weight:600;">Mesa (KosmicKrisp)</a></td>
+          <td>替代 MoltenVK · 比较基准</td>
+          <td>-</td>
+          <td>MIT</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Conclusion -->
+<div class="section">
+  <h2 class="section-title">八、结论</h2>
+  <hr class="section-rule">
+
+  <div class="highlight-box">
+    <div class="card-title" style="color:var(--success-fg);">✅ v2.0 核心结论</div>
+    <div class="card-body" style="margin-top:8px;">
+      <p><strong>deko3d/UAM 和 Slang 的引入显著提高了项目成功的概率。</strong></p>
+      <br>
+      <p><strong>deko3d 的核心贡献：</strong>将 NVN 命令映射从"猜测"变为"查阅文档"。engine_3d.def 提供了 Maxwell GPU 寄存器的完整定义，使 NVN→Metal 的命令翻译有了精确的参考。</p>
+      <br>
+      <p><strong>Slang 的核心贡献：</strong>消除了"自建着色器编译器"这个最大的技术和时间风险。通过将 Ryujinx 已有的 GLSL 管线接入 Slang 的 Metal 后端，着色器翻译的工作量从 4-6 个月降至 1-2 个月。</p>
+      <br>
+      <p><strong>成功概率提升：</strong>从 v1.0 估算的 <strong style="color:var(--warning-fg);">60-70%</strong> 提升至 <strong style="color:var(--success-fg);">80-90%</strong>。项目总时间从 11-16 个月降至 7-10.5 个月。核心风险（着色器编译器开发）从"高"降为"中低"。</p>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">📋 最终行动建议</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. <strong>立即启动 Phase 1 验证</strong>：用 slangc CLI 验证 GLSL→MSL 可行性<br>
+        2. <strong>与 dxmt 社区保持协作</strong>：复用 Metal 后端基础设施<br>
+        3. <strong>将 deko3d 作为"Maxwell 参考手册"</strong>：命令翻译的权威知识源<br>
+        4. <strong>监控 Slang Metal 后端成熟度</strong>：作为备选保留 dxmt/airconv<br>
+        5. <strong>模块化各层</strong>：着色器编译器（Slang）、命令翻译（自研）、Metal 后端（dxmt）相互独立
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚠️ 需要注意</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        1. Slang 的 Metal 后端仍标记为"实验性"，需在 Phase 1 充分验证<br>
+        2. UAM 是 GLSL→Maxwell，我们需要的是逆向（Maxwell→GLSL），但 Ryujinx 已解决<br>
+        3. deko3d 是 Tegra X1 的库，不能直接链接到 macOS 项目<br>
+        4. Nintendo 法律风险依然存在，仅开发翻译层<br>
+        5. 着色器缓存策略需针对 Slang 编译产物优化
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Switch Metal Backend 调研 v2.0</div>
+        <div class="footer-label">新增 deko3d/UAM + Slang 深度分析</div>
+      </div>
+      <div class="footer-links">
+        <strong>核心参考</strong><br>
+        <a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a> ·
+        <a href="https://github.com/shader-slang/slang" target="_blank">Slang</a> ·
+        <a href="https://github.com/devkitPro/deko3d" target="_blank">deko3d</a> ·
+        <a href="https://github.com/devkitPro/uam" target="_blank">UAM</a>
+      </div>
+      <div class="footer-links">
+        <strong>技术参考</strong><br>
+        <a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">Astris</a> ·
+        <a href="https://github.com/strato-emu/strato" target="_blank">Strato</a> ·
+        <a href="https://github.com/KhronosGroup/MoltenVK" target="_blank">MoltenVK</a> ·
+        <a href="https://shader-slang.org/" target="_blank">Slang官网</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>2026-06-11 · v2.0 · 包含 deko3d + Slang 深度分析</span>
+      <span>Generated by <a href="https://allyhub.com" target="_blank" style="color:var(--text-secondary);">AllyHub AI</a></span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Radar chart
+const ctx = document.getElementById('radarChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: ['开发效率','性能潜力','兼容性','可维护性','社区生态','风险控制'],
+    datasets: [
+      { label:'🆕 1. GLSL→Slang→MSL', data:[5,5,4,4.5,5,4.5], borderColor:'#5FA882', backgroundColor:'rgba(95,168,130,0.12)', borderWidth:2.5, pointRadius:4, pointBackgroundColor:'#5FA882' },
+      { label:'2. NVN→D3D11→DXMT', data:[4,4,4,4,4.5,4], borderColor:'#3E54CE', backgroundColor:'rgba(62,84,206,0.08)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#3E54CE' },
+      { label:'3. airconv+自研Metal', data:[2.5,5,4,3,3,3], borderColor:'#7C746F', backgroundColor:'rgba(124,116,111,0.06)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#7C746F' },
+      { label:'4. SPIR-V→MSL', data:[5,3,5,5,5,4.5], borderColor:'#E47700', backgroundColor:'rgba(228,119,0,0.08)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#E47700' },
+      { label:'5. GPTK桥接', data:[4,4,3,2,1,3], borderColor:'#C4433A', backgroundColor:'rgba(196,67,58,0.06)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#C4433A' },
+      { label:'6. Maxwell→MSL', data:[0.5,5,2,2,1,1], borderColor:'#717171', backgroundColor:'rgba(113,113,113,0.06)', borderWidth:2, pointRadius:3, pointBackgroundColor:'#717171' }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    scales:{ r:{ beginAtZero:true, max:5, ticks:{stepSize:1,display:false}, pointLabels:{font:{family:'Inter Tight',size:12},color:'#3D3D3D'}, grid:{color:'#E8E6E2'}, angleLines:{color:'#E8E6E2'} } },
+    plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Inter Tight',size:11}, color:'#3D3D3D', padding:12, usePointStyle:true, pointStyleWidth:8 } } }
+  }
+});
+</script>
+</body>
+</html>

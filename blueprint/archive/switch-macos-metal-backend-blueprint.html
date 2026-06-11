@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Metal Backend — Master Implementation Blueprint (Agent Coder Ready)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d; --divider: #21262d;
+  --text-primary: #e6edf3; --text-body: #c9d1d9; --text-secondary: #8b949e;
+  --accent: #58a6ff; --success: #3fb950; --warning: #d2991d; --error: #f85149;
+  --code-bg: #0d1117; --inline-code: #1a1b26;
+  --phase-0: #1a2332; --phase-1: #1a2a1f; --phase-2: #1a1f2a; --phase-3: #2a1f1a;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Inter Tight', sans-serif; color: var(--text-body); font-size: 14px; line-height: 1.65; }
+.page { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
+/* Navigation */
+nav { position: sticky; top: 0; z-index: 100; background: rgba(13,17,23,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 12px 0; margin-bottom: 24px; }
+nav .inner { max-width: 1200px; margin: 0 auto; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+nav a { color: var(--text-secondary); text-decoration: none; font-size: 12px; font-weight: 500; padding: 4px 8px; border-radius: 4px; transition: all 0.15s; }
+nav a:hover { color: var(--text-primary); background: var(--surface); }
+nav .brand { color: var(--accent); font-weight: 700; font-size: 14px; margin-right: 8px; }
+
+/* Headings */
+h1 { font-size: 32px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; margin: 40px 0 8px; }
+h1:first-of-type { margin-top: 16px; }
+h2 { font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 24px 0 8px; }
+h4 { font-size: 14px; font-weight: 600; color: var(--text-body); margin: 16px 0 6px; }
+
+p { margin: 8px 0; }
+a { color: var(--accent); }
+
+/* Info boxes */
+.info-box { border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-size: 13px; line-height: 1.7; }
+.info-accent { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
+.info-success { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.2); }
+.info-warning { background: rgba(210,153,29,0.08); border: 1px solid rgba(210,153,29,0.2); }
+.info-error { background: rgba(248,81,73,0.08); border: 1px solid rgba(248,81,73,0.2); }
+
+/* Code blocks */
+code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--inline-code); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 12px 0; }
+pre code { background: none; padding: 0; border: none; font-size: 12px; line-height: 1.6; }
+pre .kw { color: #ff7b72; } pre .fn { color: #d2a8ff; } pre .str { color: #a5d6ff; } pre .cm { color: #8b949e; } pre .num { color: #79c0ff; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+tbody td { padding: 10px 14px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* Tags */
+.tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 12px; margin-right: 4px; margin-bottom: 4px; }
+.tag-blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+.tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+.tag-orange { background: rgba(210,153,29,0.15); color: #d2991d; }
+.tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+.tag-gray { background: rgba(139,148,158,0.15); color: #8b949e; }
+.tag-purple { background: rgba(210,168,255,0.15); color: #d2a8ff; }
+
+/* Checklist */
+.checklist { list-style: none; padding: 0; }
+.checklist li { padding: 5px 0 5px 24px; position: relative; }
+.checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--text-secondary); font-size: 14px; }
+.checklist li.done::before { content: '☑'; color: var(--success); }
+
+/* Phase timeline */
+.phase-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 16px 0; }
+.phase-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.phase-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.phase-meta { font-size: 12px; color: var(--text-secondary); }
+.phase-content { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 768px) { .phase-content { grid-template-columns: 1fr; } }
+.phase-section h4 { margin-top: 0; margin-bottom: 8px; font-size: 13px; color: var(--accent); }
+.phase-section ul { list-style: none; padding: 0; }
+.phase-section ul li { font-size: 12px; padding: 3px 0 3px 16px; position: relative; line-height: 1.6; }
+.phase-section ul li::before { content: '○'; position: absolute; left: 0; font-size: 8px; color: var(--text-secondary); }
+
+/* Milestone timeline */
+.milestone-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+.milestone-dot.done { background: var(--success); }
+.milestone-dot.active { background: var(--accent); }
+.milestone-dot.pending { background: var(--border); }
+
+/* Demo cards */
+.demo-row { display: flex; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
+.demo-item { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.demo-num { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.demo-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.demo-what { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+
+/* Tech stack cards */
+.tech-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin: 8px 0; }
+.tech-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tech-name { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.tech-purpose { font-size: 12px; color: var(--text-secondary); }
+
+/* Decision box */
+.decision-box { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 16px 20px; margin: 16px 0; }
+.decision-title { font-weight: 600; color: var(--accent); margin-bottom: 6px; font-size: 14px; }
+
+/* Arch diagram */
+.arch-box { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 12px 0; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--text-body); white-space: pre; }
+.arch-box .g { color: #7ee787; } .arch-box .b { color: #79c0ff; } .arch-box .y { color: #d2991d; }
+.arch-box .p { color: #d2a8ff; } .arch-box .r { color: #ff7b72; } .arch-box .dim { color: #484f58; }
+
+/* Agent instruction */
+.agent-box { background: rgba(210,168,255,0.06); border: 1px solid rgba(210,168,255,0.25); border-radius: 8px; padding: 14px 18px; margin: 12px 0; }
+.agent-box .ai-label { font-size: 11px; font-weight: 700; color: #d2a8ff; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.agent-box .ai-content { font-size: 13px; color: var(--text-body); line-height: 1.6; }
+
+/* TOC */
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+.toc h3 { margin-top: 0; }
+.toc ol { padding-left: 20px; font-size: 13px; line-height: 2; }
+.toc ol li a { color: var(--text-secondary); }
+.toc ol li a:hover { color: var(--accent); }
+
+/* Metric row */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 16px 0; }
+.metric-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+.metric-val { font-size: 26px; font-weight: 700; color: var(--text-primary); font-family: 'Noto Serif', serif; }
+.metric-lbl { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Prerequisites badge */
+.prereq { background: rgba(210,153,29,0.1); border-left: 3px solid var(--warning); padding: 8px 14px; margin: 8px 0; font-size: 12px; border-radius: 0 6px 6px 0; }
+
+hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="brand">⬡ Switch-Metal-MBP</span>
+    <a href="#brief">Brief</a>&nbsp;
+    <a href="#decisions">Decisions</a>&nbsp;
+    <a href="#stack">Tech Stack</a>&nbsp;
+    <a href="#phases">Phases</a>&nbsp;
+    <a href="#demos">Demos</a>&nbsp;
+    <a href="#tests">Tests</a>&nbsp;
+    <a href="#github">GitHub</a>&nbsp;
+    <a href="#structure">Structure</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- ============================================================ -->
+<!-- TITLE -->
+<!-- ============================================================ -->
+<h1>🎯 Switch Metal Backend<br>Master Implementation Blueprint</h1>
+<p style="font-size:16px;color:var(--text-secondary);margin-bottom:8px;">Agent Coder Ready · Single Source of Truth · v8.0 Final</p>
+<p style="font-size:13px;color:var(--text-secondary);">为 Nintendo Switch 模拟器（基于 Ryubing）实现原生 Apple Metal 图形后端。本蓝图整合了全网系统搜索（62个工具/框架）、10阶段实施计划、8级渐进渲染Demo、50+测试用例、完整技术栈、GitHub工作流、Issue/PR模板、提交规范和代码审查标准。Agent Coder 可按章节顺序执行。</p>
+
+<div class="metrics">
+  <div class="metric-item"><div class="metric-val">62</div><div class="metric-lbl">工具/框架收录</div></div>
+  <div class="metric-item"><div class="metric-val">10</div><div class="metric-lbl">实施阶段</div></div>
+  <div class="metric-item"><div class="metric-val">8</div><div class="metric-lbl">渐进渲染Demo</div></div>
+  <div class="metric-item"><div class="metric-val">50+</div><div class="metric-lbl">测试用例</div></div>
+  <div class="metric-item"><div class="metric-val">5</div><div class="metric-lbl">着色器路径</div></div>
+  <div class="metric-item"><div class="metric-val">28-41w</div><div class="metric-lbl">预估周期</div></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TABLE OF CONTENTS -->
+<!-- ============================================================ -->
+<div class="toc" id="brief">
+<h3>📑 文档导航</h3>
+<ol>
+  <li><a href="#brief">§1 项目简报 (Project Brief)</a> — 为什么做、做什么、不做什么、最终目标</li>
+  <li><a href="#decisions">§2 关键架构决策 (ADR)</a> — 为什么选Slang+MSC、为什么选Ryubing、6条路线对比</li>
+  <li><a href="#stack">§3 完整技术栈</a> — 7种语言、每个模块的语言选型与理由</li>
+  <li><a href="#pipeline">§4 着色器管道架构</a> — 5条路径、回退策略、Maxwell硬件参考体系</li>
+  <li><a href="#runtime">§5 运行时架构</a> — libswitch-metal.dylib 模块设计、IRenderer/IPipeline映射</li>
+  <li><a href="#phases">§6 10阶段实施计划</a> — 每阶段天/周级任务、入口/出口准则、Agent执行提示</li>
+  <li><a href="#demos">§7 8级渐进式渲染Demo</a> — D1-D8详细规格、验证目标、代码入口</li>
+  <li><a href="#tests">§8 测试体系</a> — 4层金字塔、50+用例、框架选型</li>
+  <li><a href="#github">§9 GitHub工作流</a> — 分支策略、提交规范、Issue/PR模板、代码审查、CI/CD</li>
+  <li><a href="#tools">§10 完整工具目录</a> — 62个工具按类别索引</li>
+  <li><a href="#structure">§11 项目目录结构</a> — 完整文件树</li>
+  <li><a href="#references">§12 参考文献</a></li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- §1 PROJECT BRIEF -->
+<!-- ============================================================ -->
+<h2 id="brief">§1 项目简报</h2>
+
+<div class="decision-box">
+  <div class="decision-title">📋 一句话定义</div>
+  为 Ryubing（Ryujinx 活跃分支）开发原生 Apple Metal 图形后端，使 Nintendo Switch 模拟器在 Apple Silicon Mac 上实现硬件加速渲染，摆脱 MoltenVK 间接翻译的性能损失和 SPIRV-Cross MSL 兼容性问题。
+</div>
+
+<h3>1.1 项目动机</h3>
+<table>
+  <thead><tr><th>问题</th><th>现状</th><th>本项目的解决</th></tr></thead>
+  <tbody>
+    <tr><td>Ryujinx/Ryubing 的 Metal 支持</td><td>通过 MoltenVK：Vulkan→SPIRV-Cross→MSL→Metal，双重翻译</td><td>直接 Maxwell→GLSL→Slang→DXIL→MSC→metallib，单次翻译</td></tr>
+    <tr><td>SPIRV-Cross MSL 限制</td><td>7个已知问题：全局变量、描述符集绑定、阴影采样器、控制流、参数缓冲等</td><td>Path A 完全绕过 SPIRV-Cross；Path C 作为回退</td></tr>
+    <tr><td>Apple Silicon 未充分利用</td><td>MetalFX、Argument Buffers Tier 2、TBDR 架构优化未利用</td><td>原生集成 MetalFX Upscaling/Frame Interpolation、Argument Buffers</td></tr>
+    <tr><td>现有方案都是标准API翻译</td><td>D3DMetal/MoltenVK/DXMT/ANGLE 都处理 D3D/Vulkan/OpenGL，无直接处理 Maxwell 的</td><td>填补 Maxwell→现代API翻译链的最前端空白</td></tr>
+  </tbody>
+</table>
+
+<h3>1.2 范围边界</h3>
+<div class="info-box info-accent">
+  <strong>✅ 范围内：</strong> 着色器翻译管线（Maxwell→Metal）、NVN命令映射（Maxwell寄存器→Metal API）、Ryubing IRenderer/IPipeline 接口实现、MetalFX集成、macOS原生启动器、CI/CD 流水线<br><br>
+  <strong>❌ 范围外：</strong> CPU模拟（复用ARMeilleure）、音频（复用Ryubing）、输入（复用Ryubing）、文件系统（复用Ryubing）、Windows/Linux支持（仅macOS Apple Silicon）
+</div>
+
+<h3>1.3 成功定义</h3>
+<table>
+  <thead><tr><th>级别</th><th>标准</th><th>量化指标</th></tr></thead>
+  <tbody>
+    <tr><td><span class="tag tag-green">MVP</span></td><td>D8复杂Demo完整运行，≥60fps</td><td>PBR场景+阴影+粒子+后处理，全部Metal原生</td></tr>
+    <tr><td><span class="tag tag-blue">Milestone 1</span></td><td>2D游戏可玩（如Celeste类）</td><td>≥30fps, 无Metal API错误</td></tr>
+    <tr><td><span class="tag tag-orange">Milestone 2</span></td><td>3D游戏可玩，≥30fps (M1)</td><td>Top 20游戏中≥15可启动渲染</td></tr>
+    <tr><td><span class="tag tag-purple">Release</span></td><td>Public Beta，完整CI/CD，文档齐全</td><td>自动构建+测试+发布流水线</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<!-- §2 ARCHITECTURE DECISIONS -->
+<!-- ============================================================ -->
+<h2 id="decisions">§2 关键架构决策 (Architecture Decision Records)</h2>
+
+<h3>ADR-001: 着色器翻译主路径 — Slang + MSC</h3>
+<div class="decision-box">
+  <div class="decision-title">✅ 决定：Path A (Maxwell→GLSL→Slang→DXIL→MSC→metallib) 为主路径</div>
+  <strong>Why not airconv (dxmt)?</strong> airconv 吃 DXBC 输入。我们没有 Maxwell→DXBC 编译器。需要从零构建编译器后端，工作量巨大且无现成工具链。<br><br>
+  <strong>Why not SPIRV-Cross 为主?</strong> SPIRV-Cross→MSL 有7个已知缺陷：不支持全局变量、描述符集绑定冲突、阴影采样器语义缺失、控制流"Over 3 compilation loops"错误、未初始化bool变量、参数缓冲基类型推断失败、结构体成员优化删除。SPIRV-Cross MSL被社区认为是"最难的目标语言"。<br><br>
+  <strong>Why Slang + MSC?</strong> Slang 原生支持 <code>-target dxil</code> 输出。MSC 是 Apple 官方维护的 DXIL→metallib 编译器。整条链路每环节都有成熟工具（Ryujinx Decoder→GLSL→Slang→DXIL→MSC→metallib），无需自研任何编译器。MSC 支持 SM 6.0-6.6（含 Ray Tracing、Mesh Shader、Wave Intrinsics）。提供 C API (libmetalirconverter) 可嵌入运行时。
+</div>
+
+<h3>ADR-002: 模拟器基础 — Ryubing (非 Astris)</h3>
+<div class="decision-box">
+  <div class="decision-title">✅ 决定：基于 Ryubing Fork 开发</div>
+  <strong>Ryubing：</strong> 完整开源（MIT），4,813 commits，活跃社区。有清晰的 GAL（Graphics Abstraction Layer），IRenderer/IPipeline 接口天然支持新后端。.NET 10 迁移中。已有 Vulkan/OpenGL/Metal(via MoltenVK) 三个后端实现参考。<br><br>
+  <strong>Astris：</strong> 仅发布二进制（无源码）。605 stars 但不可修改。感谢了 Ryubing 和 Ryujinx 团队——本质是 Ryubing 的 Apple Silicon 预编译优化版。使用 KosmicKrisp (MoltenVK 补丁版) 的间接 Metal 路径。不能用于开发。<br><br>
+  <strong>集成方式：</strong> 创建 src/Ryujinx.Graphics.Metal/ 项目，实现 IRenderer 和 IPipeline 接口，通过 Ryubing 的 GPU 类注册为第4个后端选项。
+</div>
+
+<h3>ADR-003: 语言选择 — C++/C# 混合 + Python/Rust 辅助</h3>
+<div class="decision-box">
+  <div class="decision-title">✅ 决定：Metal运行时用C++ (metal-cpp)，模拟器集成用C# (Ryubing)，构建脚本用Python，交叉验证用Rust</div>
+  详见 <a href="#stack">§3 完整技术栈</a>。
+</div>
+
+<h3>ADR-004: 6条技术路线对比</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>路线</th><th>可行性</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr style="background:rgba(63,185,80,0.06)"><td><strong>1 ⭐</strong></td><td><strong>GLSL→Slang→DXIL→MSC→metallib</strong></td><td><span class="tag tag-green">极高</span></td><td>5条子路径，全成熟工具链</td></tr>
+    <tr><td>2</td><td>GLSL→Slang→MSL</td><td><span class="tag tag-blue">高</span></td><td>Slang Metal后端实验性</td></tr>
+    <tr><td>3</td><td>GLSL→SPIR-V→SPIRV-Cross→MSL</td><td><span class="tag tag-blue">高</span></td><td>SPIRV-Cross 7个已知MSL问题</td></tr>
+    <tr><td>4</td><td>Maxwell→DXBC→airconv→Metal</td><td><span class="tag tag-red">低</span></td><td>无Maxwell→DXBC编译器</td></tr>
+    <tr><td>5</td><td>NVN→Vulkan(NVK参考)→MoltenVK→Metal</td><td><span class="tag tag-orange">中</span></td><td>双重翻译开销</td></tr>
+    <tr><td>6</td><td>NVN→D3D11→DXMT→Metal</td><td><span class="tag tag-orange">中-低</span></td><td>NVN→D3D11语义差距大</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §3 TECHNOLOGY STACK -->
+<!-- ============================================================ -->
+<h2 id="stack">§3 完整技术栈</h2>
+
+<h3>3.1 语言与运行时</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>语言</th><th>版本</th><th>用途</th><th>所在模块</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td><strong>C++</strong></td><td>≥17</td><td>Metal运行时、着色器编译器封装、dxmt模块</td><td>libmetal_bridge, dxmt/metal/*</td><td>metal-cpp 是C++；dxmt用C++；零开销Metal调用</td></tr>
+    <tr><td><strong>C#</strong></td><td>≥12 (.NET 10)</td><td>模拟器主体、IRenderer/IPipeline实现</td><td>Ryujinx.Graphics.Metal/*</td><td>Ryubing是C#项目；GAL接口是C#</td></tr>
+    <tr><td><strong>Metal Shading Language</strong></td><td>≥3.0</td><td>手写着色器（Demo/POC）</td><td>demos/*/shaders/</td><td>原生Metal着色语言</td></tr>
+    <tr><td><strong>GLSL</strong></td><td>≥4.6</td><td>中间着色语言（Maxwell→GLSL→Slang）</td><td>着色器翻译管道输入</td><td>Ryujinx Decoder输出GLSL；Slang接受GLSL</td></tr>
+    <tr><td><strong>Python</strong></td><td>≥3.11</td><td>构建脚本、测试脚本、CI脚本</td><td>tools/*, tests/*, ci/*</td><td>快速开发，丰富的文本处理库</td></tr>
+    <tr><td><strong>Rust</strong></td><td>≥1.78</td><td>着色器交叉验证 (shader-compiler-rs)</td><td>外部工具依赖</td><td>第二套独立Maxwell解码器，交叉验证</td></tr>
+    <tr><td><strong>Shell (bash/zsh)</strong></td><td>—</td><td>工具验证、一键构建脚本</td><td>tools/*.sh, Makefile</td><td>系统集成最通用</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.2 核心依赖库</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>库</th><th>版本</th><th>许可</th><th>用途</th><th>集成方式</th></tr></thead>
+  <tbody>
+    <tr><td><strong>metal-cpp</strong></td><td>latest</td><td>MIT</td><td>C++ Metal API封装</td><td>Header-only, #include</td></tr>
+    <tr><td><strong>Slang</strong></td><td>≥2024.14</td><td>Apache 2.0</td><td>GLSL→DXIL/MSL编译</td><td>libslang 动态链接</td></tr>
+    <tr><td><strong>libmetalirconverter (MSC)</strong></td><td>v4.0</td><td>Apple EULA</td><td>DXIL→metallib编译</td><td>C API 动态链接</td></tr>
+    <tr><td><strong>SPIRV-Tools</strong></td><td>≥v2024.3</td><td>Apache 2.0</td><td>SPIR-V验证/优化</td><td>CLI + libspirv-tools</td></tr>
+    <tr><td><strong>SPIRV-Cross</strong></td><td>latest</td><td>Apache 2.0</td><td>SPIR-V→MSL (回退路径)</td><td>CLI调用</td></tr>
+    <tr><td><strong>glslang</strong></td><td>≥15.0</td><td>BSD</td><td>GLSL→SPIR-V参考编译器</td><td>CLI调用</td></tr>
+    <tr><td><strong>deko3d</strong></td><td>latest</td><td>Zlib</td><td>Maxwell 3D引擎寄存器定义</td><td>仅参考,不链接</td></tr>
+    <tr><td><strong>envytools</strong></td><td>latest</td><td>MIT</td><td>NVIDIA GPU寄存器数据库</td><td>仅参考,不链接</td></tr>
+    <tr><td><strong>dxmt</strong></td><td>v0.80</td><td>LGPL</td><td>Metal Device/Queue/Presenter</td><td>提取C++模块,静态链接</td></tr>
+    <tr><td><strong>shader-compiler-rs</strong></td><td>latest</td><td>MIT</td><td>Maxwell→GLSL (交叉验证)</td><td>CLI调用</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.3 构建系统</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>组件</th><th>构建系统</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td>libmetal_bridge (C++)</td><td>CMake ≥3.27</td><td>metal-cpp + dxmt模块 + Slang/MSC C API封装</td></tr>
+    <tr><td>Ryubing + Ryujinx.Graphics.Metal (C#)</td><td>MSBuild / dotnet CLI</td><td>集成到Ryubing .sln中</td></tr>
+    <tr><td>Demos (Metal/C++)</td><td>Makefile / CMake</td><td>每个Demo独立编译</td></tr>
+    <tr><td>测试脚本</td><td>Python + pytest</td><td>跨组件测试编排</td></tr>
+    <tr><td>顶层构建</td><td>Makefile</td><td>单命令构建全部：make all</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.4 开发环境要求</h3>
+<pre><code># 必需
+macOS ≥ 14.0 (Apple Silicon: M1/M2/M3/M4)
+Xcode ≥ 16.0 (含Metal工具链 + Command Line Tools)
+.NET SDK ≥ 10.0
+CMake ≥ 3.27
+Python ≥ 3.11
+Rust ≥ 1.78
+
+# 推荐
+Visual Studio Code / JetBrains Rider
+Xcode (用于Metal Debugger + Instruments)
+Homebrew (包管理)</code></pre>
+
+<!-- ============================================================ -->
+<!-- §4 SHADER PIPELINE -->
+<!-- ============================================================ -->
+<h2 id="pipeline">§4 着色器管道架构</h2>
+
+<h3>4.1 5条着色器路径</h3>
+<div class="arch-box"><span class="g">Maxwell SASS</span> → <span class="b">Ryujinx Decoder</span> → <span class="g">Structured IR</span> → <span class="b">CodeGen/Glsl</span> → <span class="g">GLSL</span>
+│
+├── <span class="y">Path A (主 ⭐)</span>: → <span class="b">Slang -target dxil</span> → <span class="g">DXIL</span> → <span class="b">MSC</span> → <span class="g">metallib</span>
+│     <span class="dim">优势：Slang DXIL后端成熟 + MSC Apple官方维护</span>
+│
+├── <span class="y">Path B (备选)</span>: → <span class="b">Slang -target metal</span> → <span class="g">MSL</span> → <span class="b">xcrun metal</span> → <span class="g">metallib</span>
+│     <span class="dim">优势：纯Apple工具链，零第三方依赖</span>
+│
+├── <span class="y">Path C (SPIR-V桥)</span>: → <span class="b">glslangValidator</span> → <span class="g">SPIR-V</span> → <span class="b">spirv-opt</span> → <span class="b">SPIRV-Cross</span> → <span class="g">MSL</span> → <span class="b">xcrun metal</span>
+│     <span class="dim">优势：最成熟的开源路径，经MoltenVK大量验证</span>
+│
+├── <span class="y">Path D (SPIR-V优化)</span>: → <span class="b">Slang -target spirv</span> → <span class="g">SPIR-V</span> → <span class="b">spirv-opt</span> → <span class="b">Slang -target dxil</span> → <span class="g">DXIL</span> → <span class="b">MSC</span>
+│     <span class="dim">优势：spirv-opt中间优化后送MSC</span>
+│
+└── <span class="y">Path E (交叉验证)</span>: → <span class="b">shader-compiler-rs</span> → <span class="g">GLSL'</span> → 任意路径
+      <span class="dim">优势：第二套独立Maxwell解码器，验证Ryujinx Decoder正确性</span></div>
+
+<h3>4.2 回退策略</h3>
+<div class="info-box info-accent">
+  <strong>运行时自动回退链路：</strong><br>
+  Path A 失败 → 自动回退 Path C → Path C 失败 → 自动回退 Path B → 全部失败 → 报告编译错误并记录着色器<br><br>
+  <strong>回退时不阻塞渲染：</strong> 使用占位着色器（粉色/品红色）标记编译失败的物体，确保游戏不崩溃。<br><br>
+  <strong>离线编译模式：</strong> 首次遇到着色器时尝试所有路径，成功路径记录到缓存index。后续加载直接用缓存路径，避免运行时回退开销。
+</div>
+
+<h3>4.3 Maxwell硬件参考三层体系</h3>
+<div class="arch-box"><span class="b">Layer 1 — 寄存器级：</span>
+  <span class="g">deko3d engine_3d.def</span> (3D引擎寄存器) + <span class="g">envytools rnndb</span> (全寄存器XML数据库)
+  → 覆盖：MMIO寄存器、FIFO方法、内存结构
+
+<span class="b">Layer 2 — 指令级：</span>
+  <span class="g">NVK Maxwell后端</span> (Mesa/Vulkan一致性验证) + <span class="g">MaxAs</span> (SASS汇编器) + <span class="g">nvdisasm</span> (NVIDIA官方反汇编)
+  → 覆盖：SASS指令格式、操作码、寄存器编码、控制流
+
+<span class="b">Layer 3 — 着色器级：</span>
+  <span class="g">Ryujinx Decoder</span> (Maxwell→IR) + <span class="g">shader-compiler-rs</span> (Maxwell→GLSL, 交叉验证)
+  → 覆盖：完整着色器程序解码、结构化IR生成</div>
+
+<!-- ============================================================ -->
+<!-- §5 RUNTIME ARCHITECTURE -->
+<!-- ============================================================ -->
+<h2 id="runtime">§5 运行时架构</h2>
+
+<h3>5.1 libswitch-metal.dylib 模块设计</h3>
+<div class="arch-box"><span class="p">libswitch-metal.dylib</span>
+│
+├── <span class="b">MetalRuntime</span> (C++ via metal-cpp + dxmt)
+│   ├── Device    — MTLDevice创建、GPU选择、特性查询
+│   ├── Queue     — MTLCommandQueue管理、多队列调度
+│   ├── Buffer    — MTLBuffer分配、Upload/Readback
+│   ├── Texture   — MTLTexture创建、格式映射
+│   ├── Presenter — CAMetalLayer、SwapChain、VSync
+│   └── Sync      — MTLEvent/MTLSharedEvent、Fence
+│
+├── <span class="b">ShaderCompiler</span> (C++ 封装 Slang + MSC)
+│   ├── CompileGLSLtoDXIL()  — Slang API调用
+│   ├── CompileDXILtoMetallib() — libmetalirconverter API调用
+│   ├── CompileSPIRVtoMSL() — spirv-cross CLI (回退)
+│   ├── ShaderCache         — 磁盘缓存metallib
+│   └── PipelineManager     — MTLRenderPipelineState缓存
+│
+├── <span class="b">CommandMapper</span> (C++ 基于 deko3d + envytools)
+│   ├── MaxwellStateTracker — Maxwell GPU状态机
+│   ├── BlendStateMapper    — NVN→Metal混合状态
+│   ├── DepthStencilMapper  — NVN→Metal深度模板
+│   ├── RasterizerMapper    — NVN→Metal光栅化
+│   └── VertexLayoutMapper  — NVN→Metal顶点布局
+│
+└── <span class="b">MetalNative (C# P/Invoke Bridge)</span>
+    └── MetalNative.cs — C#调用C++的P/Invoke接口</div>
+
+<h3>5.2 IRenderer 接口映射（核心集成点）</h3>
+<p>在 Ryubing 的 <code>src/Ryujinx.Graphics.GAL/IRenderer.cs</code> 中定义的接口，我们需要全部实现：</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>IRenderer方法</th><th>Metal实现</th><th>状态</th></tr></thead>
+  <tbody>
+    <tr><td><code>CreateBuffer(int, BufferAccess)</code></td><td>MTLBuffer 新建 (dxmt Buffer模块)</td><td>P4实现</td></tr>
+    <tr><td><code>CreateTexture(TextureCreateInfo)</code></td><td>MTLTexture 新建 + 像素格式映射表</td><td>P4实现</td></tr>
+    <tr><td><code>CreateSampler(SamplerCreateInfo)</code></td><td>MTLSamplerState 新建</td><td>P4实现</td></tr>
+    <tr><td><code>CreateProgram(ShaderSource[], ShaderInfo)</code></td><td>MetalShaderCompiler → MTLLibrary → MTLFunction</td><td>P4核心</td></tr>
+    <tr><td><code>CreateSync(ulong, bool) / WaitSync(ulong)</code></td><td>MTLEvent/MTLSharedEvent 信号量</td><td>P4实现</td></tr>
+    <tr><td><code>Pipeline { get; }</code></td><td>返回 MetalPipeline 实例</td><td>P4实现</td></tr>
+    <tr><td><code>Window { get; }</code></td><td>返回 NSWindow/CAMetalLayer 封装</td><td>P4实现</td></tr>
+    <tr><td><code>GetCapabilities()</code></td><td>查询 MTLDevice GPU Family + 特性掩码</td><td>P4实现</td></tr>
+    <tr><td><code>RunLoop(ThreadStart)</code></td><td>MTLCommandQueue驱动的事件循环</td><td>P4实现</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>5.3 IPipeline 接口映射（渲染命令核心）</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>IPipeline方法（关键）</th><th>Metal实现</th></tr></thead>
+  <tbody>
+    <tr><td><code>Draw / DrawIndexed</code></td><td>MTLRenderCommandEncoder drawPrimitives / drawIndexedPrimitives</td></tr>
+    <tr><td><code>DispatchCompute</code></td><td>MTLComputeCommandEncoder dispatchThreadgroups</td></tr>
+    <tr><td><code>SetProgram</code></td><td>MTLRenderCommandEncoder setRenderPipelineState</td></tr>
+    <tr><td><code>SetVertexBuffers / SetVertexAttribs</code></td><td>MTLRenderCommandEncoder setVertexBuffer + setVertexBytes</td></tr>
+    <tr><td><code>SetUniformBuffers / SetStorageBuffers</code></td><td>setVertexBuffer:offset:atIndex: / setFragmentBuffer:...</td></tr>
+    <tr><td><code>SetTextureAndSampler</code></td><td>setFragmentTexture:atIndex: + setFragmentSamplerState:atIndex:</td></tr>
+    <tr><td><code>SetRenderTargets</code></td><td>MTLRenderPassDescriptor colorAttachments + depthAttachment</td></tr>
+    <tr><td><code>ClearRenderTarget*</code></td><td>MTLRenderCommandEncoder clear (loadAction=.clear) 或 fillBuffer</td></tr>
+    <tr><td><code>SetBlendState / SetDepthTest / SetStencilTest</code></td><td>对应 Metal 管线状态对象</td></tr>
+    <tr><td><code>SetScissors / SetViewports</code></td><td>MTLRenderCommandEncoder setScissorRect / setViewport</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §6 10-PHASE IMPLEMENTATION PLAN -->
+<!-- ============================================================ -->
+<h2 id="phases">§6 10阶段实施计划</h2>
+
+<!-- PHASE 0 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 0 · 开发环境与工具链搭建</div>
+    <div class="phase-meta">⏱ 1-2 周 | 🎯 出口：全工具链可用</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单 (T0.1–T0.12)</h4>
+      <ul>
+        <li>T0.1 验证本地工具链：devkitPro + Xcode + Metal tools + Homebrew</li>
+        <li>T0.2 安装并验证 slangc：确保 <code>slangc -target dxil</code> 和 <code>-target metal</code> 正常</li>
+        <li>T0.3 安装 metal-shaderconverter v4.0：验证 DXIL→metallib 端到端</li>
+        <li>T0.4 安装 SPIRV-Tools (spirv-val, spirv-opt, spirv-cross)</li>
+        <li>T0.5 安装 glslangValidator：验证 GLSL→SPIR-V</li>
+        <li>T0.6 安装 shader-compiler-rs (Rust)</li>
+        <li>T0.7 在 Shader Playground 在线验证完整链</li>
+        <li>T0.8 克隆 Ryubing 源码，确认 <code>dotnet build</code> 可编译</li>
+        <li>T0.9 克隆 dxmt 源码，提取 Device/Queue/Buffer/Presenter 模块</li>
+        <li>T0.10 初始化 Git 仓库 + 目录结构（按 §11 结构）</li>
+        <li>T0.11 编写 <code>tools/tools-verify.sh</code> 一键验证脚本</li>
+        <li>T0.12 配置 VS Code / Rider 开发环境</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        优先创建 tools/tools-verify.sh。用 <code>command -v</code> 检查每个工具。每个工具运行一个最小示例验证功能。slangc 用 <code>echo 'void main(){}' | slangc -target dxil - -o /dev/null</code> 测试。所有输出写入 <code>tools/verify.log</code>。验证脚本失败时 exit 1。
+      </div></div>
+      <h4>✅ 出口准则</h4>
+      <pre><code># tools-verify.sh 必须全部输出 OK：
+$ ./tools/tools-verify.sh
+✓ slangc GLSL→MSL: OK
+✓ slangc GLSL→DXIL: OK
+✓ MSC DXIL→metallib: OK
+✓ glslangValidator GLSL→SPIR-V: OK
+✓ spirv-val: OK
+✓ spirv-cross SPIR-V→MSL: OK
+✓ shader-compiler-rs: OK
+✓ Ryubing dotnet build: OK
+✓ dxmt modules extracted: OK</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 1 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 1 · 着色器管道概念验证</div>
+    <div class="phase-meta">⏱ 2-3 周 | 🎯 出口：≥3条路径验证通过 + ≥3个真实游戏着色器可编译</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T1.1 编写 <code>tools/test_slang_dxil.sh</code> (Path A)</li>
+        <li>T1.2 编写 <code>tools/test_slang_msl.sh</code> (Path B)</li>
+        <li>T1.3 编写 <code>tools/test_spirv_cross.sh</code> (Path C)</li>
+        <li>T1.4 编写 <code>tools/test_spirv_dxil.sh</code> (Path D)</li>
+        <li>T1.5 编写 <code>tools/test_cross_validate.sh</code> (Path E)</li>
+        <li>T1.6 从 Ryujinx Shader Cache 收集10个真实游戏的 guest.data/shared.data</li>
+        <li>T1.7 真实着色器 Path A 测试</li>
+        <li>T1.8 同一着色器 Path A/C/D 三路对比 + spirv-val 验证</li>
+        <li>T1.9 编写 <code>tools/shader_pipeline_bench.py</code> 编译时间测量</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        测试着色器矩阵必须覆盖：顶点着色器(simple/complex)、片段着色器(simple/complex)、计算着色器、几何着色器。每个脚本独立可运行，接受输入文件和输出路径参数。结果输出JSON格式方便后续CI解析。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 2 · 8级渐进式渲染Demo</div>
+    <div class="phase-meta">⏱ 5-6 周 | 🎯 出口：D8复杂Demo完整运行 ≥60fps</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T2.1 创建 <code>demos/d1_hello_triangle/</code> — 手写MSL，最简Metal管线</li>
+        <li>T2.2 创建 <code>demos/d2_textured_quad/</code> — Slang→DXIL→MSC管线 + 纹理</li>
+        <li>T2.3 创建 <code>demos/d3_multi_texture/</code> — 多纹理+采样器模式+各向异性</li>
+        <li>T2.4 创建 <code>demos/d4_basic_lighting/</code> — Phong光照+深度测试+3D变换</li>
+        <li>T2.5 创建 <code>demos/d5_advanced_texturing/</code> — 法线贴图+视差+Cubemap+RTT+MSAA</li>
+        <li>T2.6 创建 <code>demos/d6_advanced_lighting/</code> — Shadow Map+PBR+HDR+Bloom</li>
+        <li>T2.7 创建 <code>demos/d7_gpu_driven/</code> — Indirect+Compute粒子+Instancing+Argument Buffers</li>
+        <li>T2.8 创建 <code>demos/d8_complex_showcase/</code> — 全特性综合演示程序</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        每个Demo独立目录，含自己的 Makefile、shaders/、src/。Demo之间无依赖。D1-D7每个约300-500行代码。D8约1000-1500行。优先用 metal-cpp (C++) 而非 ObjC。每个Demo包含一个 README.md 说明运行方法和预期输出。D8必须包含：5个PBR材质球、方向光阴影、HDR天空盒、Bloom后处理、1000+ GPU粒子、实时FPS HUD、自由摄像机。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 3 · Ryubing Fork与GAL集成</div>
+    <div class="phase-meta">⏱ 2-3 周 | 🎯 出口：Ryujinx.Graphics.Metal编译通过，IRenderer骨架就位</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T3.1 Fork Ryubing → 本地仓库，分支 <code>feature/native-metal-backend</code></li>
+        <li>T3.2 创建 <code>src/Ryujinx.Graphics.Metal/</code> + .csproj</li>
+        <li>T3.3 引用 Ryujinx.Graphics.GAL、Ryujinx.Graphics.Shader</li>
+        <li>T3.4 创建 <code>MetalNative.cs</code> (P/Invoke → libmetal_bridge)</li>
+        <li>T3.5 创建 <code>MetalRenderer.cs</code> — 实现 IRenderer（初始stub）</li>
+        <li>T3.6 创建 <code>MetalPipeline.cs</code> — 实现 IPipeline（初始stub）</li>
+        <li>T3.7 创建 <code>MetalDevice.cs</code> — MTLDevice管理</li>
+        <li>T3.8 创建 <code>MetalShaderCompiler.cs</code> — Slang+MSC封装</li>
+        <li>T3.9 注册Metal后端选项到Ryubing启动代码</li>
+        <li>T3.10 验证：选择Metal后端 → 模拟器启动 → 空白窗口不崩溃</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        参考现有 Ryujinx.Graphics.Vulkan/ 的实现模式。IRenderer的TryMakeThreaded已提供默认实现。先用 System.NotImplementedException stub所有方法。逐步替换stub为真实Metal调用。创建 native/ 子目录存放 C++ 桥接代码。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 4 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 4 · 核心Metal后端实现</div>
+    <div class="phase-meta">⏱ 5-6 周 | 🎯 出口：2D游戏可启动渲染</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 子阶段 4.1: 设备与资源管理 (1-2w)</h4>
+      <ul>
+        <li>MetalDevice: GPU选择、MTLDevice创建、特性查询</li>
+        <li>MetalBuffer: MTLStorageMode策略</li>
+        <li>MetalTexture: Maxwell→MTLPixelFormat映射表</li>
+        <li>MetalSampler: 过滤/包裹/比较模式映射</li>
+        <li>稀疏缓冲区, GetCapabilities</li>
+      </ul>
+      <h4>📋 子阶段 4.2: 着色器编译器集成 (1-2w)</h4>
+      <ul>
+        <li>MetalShaderCompiler.CreateProgram: Source→MTLLibrary</li>
+        <li>Slang API P/Invoke: GLSL→DXIL</li>
+        <li>libmetalirconverter P/Invoke: DXIL→metallib</li>
+        <li>磁盘着色器缓存 (.metallib文件)</li>
+        <li>回退逻辑: Path A→Path C</li>
+      </ul>
+      <h4>📋 子阶段 4.3: 管线状态与绘制 (2w)</h4>
+      <ul>
+        <li>SetProgram → MTLRenderPipelineState</li>
+        <li>顶点/Uniform/纹理绑定</li>
+        <li>Draw/DrawIndexed实现</li>
+        <li>RenderTarget/Blend/Depth/Stencil</li>
+        <li>Scissor/Viewport</li>
+      </ul>
+      <h4>📋 子阶段 4.4: 同步与呈现 (1w)</h4>
+      <ul>
+        <li>CommandBuffer提交+等待</li>
+        <li>Sync (MTLEvent)</li>
+        <li>Presenter (CAMetalLayer)</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        MetalBuffer优先用 MTLStorageModeManaged (统一内存模型，最适合Apple Silicon)。纹理格式映射表一次性实现所有Maxwell格式。着色器缓存在 ~/Library/Caches/SwitchMetal/ 下。参考 dxmt 的 Buffer/Texture 实现，但用 metal-cpp 替代其内部的 ObjC 代码。每个方法实现后立即启用 Metal Validation Layer 验证。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 5 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 5 · 命令映射与状态跟踪</div>
+    <div class="phase-meta">⏱ 3-4 周 | 🎯 出口：3D homebrew可渲染</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T5.1 Maxwell→Metal 状态映射表（基于deko3d+envytools）</li>
+        <li>T5.2 Compute Shader: DispatchCompute + Storage Buffers + 纹理读写</li>
+        <li>T5.3 CopyBuffer (MTLBlitCommandEncoder) + 纹理上传/下载</li>
+        <li>T5.4 几何着色器路径：Maxwell GS→解构为Vertex+Compute</li>
+        <li>T5.5 曲面细分路径：Maxwell Tess→Metal Compute+Post-TCS Vertex</li>
+        <li>T5.6 Transform Feedback → MTLBuffer写入</li>
+        <li>T5.7 Indirect Draw + Conditional Rendering</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        几何着色器和曲面细分是已知难点。Metal 没有原生 Geometry Shader——需要解构成顶点着色器+计算着色器组合。Metal 的曲面细分模型（Compute Kernel + Tessellator + Post-TCS Vertex）与 DirectX Hull/Domain Shader 模型不同，需要仔细映射。这些可以在后期打磨。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 6 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 6 · 测试与验证体系</div>
+    <div class="phase-meta">⏱ 3-4 周 | 🎯 出口：50+测试用例通过，CI自动运行</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T6.1 单元测试：Maxwell指令解码 (15个指令)</li>
+        <li>T6.2 单元测试：着色器解码交叉验证 (5个)</li>
+        <li>T6.3 单元测试：像素格式映射全覆盖 (5个)</li>
+        <li>T6.4 集成测试：Path A/B/C/D端到端编译 (4个)</li>
+        <li>T6.5 集成测试：回退逻辑 (2个)</li>
+        <li>T6.6 集成测试：着色器缓存 (4个)</li>
+        <li>T6.7 集成测试：Draw/MRT/Compute/Sync (5个)</li>
+        <li>T6.8 集成测试：Indirect/Conditional (2个)</li>
+        <li>T6.9 回归测试：Demo帧缓冲对比 (5个)</li>
+        <li>T6.10 回归测试：Game Shader编译 (3个)</li>
+        <li>T6.11 性能基准测试 (2个)</li>
+      </ul>
+    </div>
+    <div class="phase-section">
+      <h4>🤖 Agent执行提示</h4>
+      <div class="agent-box"><div class="ai-label">Agent Hints</div><div class="ai-content">
+        测试用 pytest (Python) + GoogleTest (C++) + xUnit (C#)。每个测试用例必须：①唯一ID ②清晰输入 ③可测量通过条件。回归测试用 pixel-diff 对比帧缓冲。CI用 GitHub Actions + Mac mini runner。详见 §8 测试体系。
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 7 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 7 · 性能优化与MetalFX集成</div>
+    <div class="phase-meta">⏱ 3-4 周 | 🎯 出口：D8≥60fps，3D游戏≥30fps</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T7.1 MetalFX Upscaling: 720p→1440p/4K</li>
+        <li>T7.2 MetalFX Frame Interpolation: 30→60fps感知</li>
+        <li>T7.3 GPU Trace 性能剖析，定位瓶颈</li>
+        <li>T7.4 Argument Buffers 优化批量资源绑定</li>
+        <li>T7.5 着色器编译预热</li>
+        <li>T7.6 异步编译 (DXVK模式)</li>
+        <li>T7.7 内存优化 (StorageMode策略)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 8 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 8 · 兼容性修复与打磨</div>
+    <div class="phase-meta">⏱ 3-4 周 | 🎯 出口：Top 20游戏 ≥15可玩</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T8.1 Game Compatibility Tracker (Google Sheets/CSV)</li>
+        <li>T8.2 逐游戏测试：可启动→可渲染→可玩→完美</li>
+        <li>T8.3 按优先级修复：崩溃 > 渲染错误 > 性能 > 瑕疵</li>
+        <li>T8.4 几何/曲面细分着色器兼容修复</li>
+        <li>T8.5 像素格式边缘情况</li>
+        <li>T8.6 纹理压缩格式: ASTC/BCn/ETC2→MTLPixelFormat</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 9 -->
+<div class="phase-card">
+  <div class="phase-header">
+    <div class="phase-title"><span class="milestone-dot pending"></span> Phase 9 · 发布准备</div>
+    <div class="phase-meta">⏱ 1-2 周 | 🎯 出口：Public Beta发布</div>
+  </div>
+  <div class="phase-content">
+    <div class="phase-section">
+      <h4>📋 任务清单</h4>
+      <ul>
+        <li>T9.1 macOS原生启动器 (SwiftUI + Metal后端选择)</li>
+        <li>T9.2 CI/CD完整流水线 (GitHub Actions: build+test+release)</li>
+        <li>T9.3 用户文档 (安装指南, 游戏兼容列表, FAQ)</li>
+        <li>T9.4 开发者文档 (架构说明, 贡献指南, API文档)</li>
+        <li>T9.5 libmetalirconverter 许可确认</li>
+        <li>T9.6 Public Beta + 反馈收集</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 PROGRESSIVE DEMOS -->
+<!-- ============================================================ -->
+<h2 id="demos">§7 8级渐进式渲染Demo</h2>
+<p>每个Demo独立可运行，层层叠加技术栈。D1-D8组成一个完整的渲染能力验证链。</p>
+
+<div class="demo-row">
+  <div class="demo-item"><div class="demo-num">D1</div><div class="demo-name">Hello Triangle</div><div class="demo-what">手写MSL着色器 · MTLDevice/CommandQueue/RenderPipelineState · 单色三角形 · 无纹理</div></div>
+  <div class="demo-item"><div class="demo-num">D2</div><div class="demo-name">Textured Quad</div><div class="demo-what">Slang→DXIL→MSC管线 · PNG纹理加载 · MTLTexture/MTLSampler · UV坐标</div></div>
+  <div class="demo-item"><div class="demo-num">D3</div><div class="demo-name">Multi-Texture</div><div class="demo-what">多纹理混合 · Nearest/Linear/Mipmap · Repeat/Clamp/Mirror · 各向异性过滤</div></div>
+  <div class="demo-item"><div class="demo-num">D4</div><div class="demo-name">Basic Lighting</div><div class="demo-what">Phong光照 · Uniform Buffer · 3D变换矩阵 · 深度测试 · 背面剔除</div></div>
+</div>
+<div class="demo-row">
+  <div class="demo-item"><div class="demo-num">D5</div><div class="demo-name">Advanced Texturing</div><div class="demo-what">法线贴图 · 视差贴图 · Cubemap/Skybox · Render-to-Texture · MSAA</div></div>
+  <div class="demo-item"><div class="demo-num">D6</div><div class="demo-name">Advanced Lighting</div><div class="demo-what">Shadow Mapping · PBR金属度/粗糙度 · HDR渲染+Tone Mapping · Bloom后处理</div></div>
+  <div class="demo-item"><div class="demo-num">D7</div><div class="demo-name">GPU-Driven</div><div class="demo-what">Indirect Draw · Compute Shader粒子 · 万级Instancing · Argument Buffers · Occlusion Culling</div></div>
+  <div class="demo-item"><div class="demo-num">D8</div><div class="demo-name">Complex Showcase ⭐</div><div class="demo-what">5 PBR球+阴影+天空盒+Bloom+1000粒子+性能HUD+自由摄像机</div></div>
+</div>
+
+<div class="info-box info-accent" style="margin-top:12px;">
+  <strong>D8 详细规格：</strong><br>
+  • 场景：5个PBR材质球（金属/粗糙/光滑/陶瓷/天鹅绒）+ 地面平面 + 1个方向光投射阴影<br>
+  • 天空盒：HDR Cubemap作为IBL环境光照<br>
+  • 后处理链：HDR渲染→ACES Tone Mapping→高斯Bloom→Gamma校正<br>
+  • 粒子系统：≥1000 GPU粒子 (Compute Shader)，螺旋上升<br>
+  • UI Overlay：实时FPS、GPU时间(ms)、Draw Call数、三角形数<br>
+  • 摄像机：WASD移动 + 鼠标旋转 + 滚轮缩放<br>
+  • 构建：一键 <code>make run</code>
+</div>
+
+<!-- ============================================================ -->
+<!-- §8 TESTING STRATEGY -->
+<!-- ============================================================ -->
+<h2 id="tests">§8 测试体系</h2>
+
+<h3>8.1 4层测试金字塔</h3>
+<div class="arch-box"><span class="dim">        ▲ L4: 回归测试 (≥10用例)</span>
+<span class="dim">       ───  帧缓冲对比 + Game Shader编译 + 性能基准</span>
+<span class="dim">      ─────</span>
+<span class="dim">     ▲ L3: Metal管线集成测试 (≥10用例)</span>
+<span class="dim">    ─────  Draw/MRT/Compute/Sync + Indirect/Conditional</span>
+<span class="dim">   ───────</span>
+<span class="dim">  ▲ L2: 着色器编译集成测试 (≥10用例)</span>
+<span class="dim"> ───────  Path A/B/C/D + 回退逻辑 + 缓存 + 跨阶段优化</span>
+<span class="dim">────────</span>
+<span class="y">▲ L1: 单元测试 (≥25用例)</span>
+<span class="y">───────  指令解码15 + 着色器解码5 + 像素格式5</span></div>
+
+<h3>8.2 测试框架选型</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>层级</th><th>框架</th><th>语言</th><th>运行环境</th></tr></thead>
+  <tbody>
+    <tr><td>L1 单元测试 (C++)</td><td>GoogleTest</td><td>C++17</td><td>macOS CLI + CI</td></tr>
+    <tr><td>L1 单元测试 (C#)</td><td>xUnit.net</td><td>C# 12</td><td>dotnet test + CI</td></tr>
+    <tr><td>L2 着色器编译测试</td><td>pytest</td><td>Python</td><td>macOS CLI + CI</td></tr>
+    <tr><td>L3 Metal管线测试</td><td>GoogleTest + Metal Validation</td><td>C++17</td><td>macOS (需要GPU) + CI</td></tr>
+    <tr><td>L4 回归测试</td><td>pytest + pixel-diff</td><td>Python</td><td>macOS (需要GPU) + CI</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>8.3 关键测试用例速查</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ID</th><th>名称</th><th>输入</th><th>通过条件</th></tr></thead>
+  <tbody>
+    <tr><td>UT-ISA-001~015</td><td>Maxwell指令解码</td><td>FADD/FMUL/FFMA/IADD/IMUL/SHL/SHR/LDG/STG/LDS/STS/ATOM/BAR/BRA/EXIT</td><td>解码IR与envydis一致</td></tr>
+    <tr><td>UT-SHADER-001</td><td>简单顶点着色器</td><td>MVP×Position (guest.data)</td><td>双解码器GLSL等价</td></tr>
+    <tr><td>UT-SHADER-005</td><td>Compute Shader</td><td>shared memory+atomics</td><td>barrier/atomics保留</td></tr>
+    <tr><td>IT-COMPILE-001</td><td>Path A端到端</td><td>10真实游戏VS</td><td>≥8/10编译成功</td></tr>
+    <tr><td>IT-COMPILE-003</td><td>回退逻辑</td><td>模拟Path A失败</td><td>100ms内回退Path C</td></tr>
+    <tr><td>IT-PIPE-001</td><td>基础Draw</td><td>三角形+着色器</td><td>1 draw call, 帧缓冲非空</td></tr>
+    <tr><td>IT-PIPE-002</td><td>纹理Draw</td><td>四边形+纹理</td><td>像素差异 < 1%</td></tr>
+    <tr><td>REG-001~005</td><td>Demo回归</td><td>D1-D5帧缓冲</td><td>差异像素 < 0.1%</td></tr>
+    <tr><td>REG-011</td><td>性能基准</td><td>D8场景</td><td>帧时间 ≤ 16ms</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §9 GITHUB WORKFLOW -->
+<!-- ============================================================ -->
+<h2 id="github">§9 GitHub工作流</h2>
+
+<h3>9.1 分支策略</h3>
+<div class="arch-box"><span class="g">main</span>          ← 稳定发布分支，仅通过PR合并，禁止直接推送
+<span class="y">develop</span>       ← 开发主线，Feature分支合并目标
+<span class="b">feature/*</span>     ← 功能分支：feature/p0-toolchain, feature/p2-d3-multi-texture
+<span class="r">hotfix/*</span>      ← 紧急修复：hotfix/p4-buffer-leak
+<span class="p">release/*</span>     ← 发布分支：release/v0.1.0-beta</div>
+
+<h3>9.2 提交规范 (Conventional Commits)</h3>
+<pre><code># 格式：&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+
+# type:
+feat     — 新功能
+fix      — 修复bug
+docs     — 文档变更
+test     — 测试相关
+refactor — 重构（不改变功能）
+perf     — 性能优化
+build    — 构建系统/依赖
+ci       — CI/CD变更
+chore    — 杂项
+
+# scope (本项目):
+metal   — Metal运行时 (C++)
+gal     — Ryubing IRenderer/IPipeline实现 (C#)
+shader  — 着色器编译器/管道
+demo    — 渐进式Demo
+cmd     — 命令映射 (NVN→Metal)
+tools   — 构建/测试脚本
+docs    — 文档
+test    — 测试用例
+
+# 示例:
+feat(shader): implement Path A Slang→DXIL compilation pipeline
+fix(metal): resolve MTLBuffer alignment issue on M1
+test(shader): add cross-validation for Maxwell decode paths
+docs(github): add PR template and code review checklist
+perf(metal): enable MetalFX upscaling for D8 showcase</code></pre>
+
+<h3>9.3 Issue 模板</h3>
+<pre><code># .github/ISSUE_TEMPLATE/bug_report.md
+---
+name: Bug Report
+about: 报告渲染错误、崩溃或性能问题
+title: "[BUG] &lt;简短描述&gt;"
+labels: bug
+---
+
+**环境信息**
+- macOS版本:
+- Apple Silicon型号 (M1/M2/M3/M4):
+- 分支/提交:
+
+**复现步骤**
+1.
+2.
+3.
+
+**预期行为**
+
+**实际行为** (附截图/Metal Debugger捕获)
+
+**日志** (Metal Validation Layer输出)</code></pre>
+
+<pre><code># .github/ISSUE_TEMPLATE/feature_request.md
+---
+name: Feature Request
+about: 提议新功能或Demo
+title: "[FEAT] &lt;简短描述&gt;"
+labels: enhancement
+---
+
+**关联阶段**: P0-P9
+**关联模块**: metal/gal/shader/demo/cmd
+
+**功能描述**
+
+**验证标准** (如何判断完成)</code></pre>
+
+<pre><code># .github/ISSUE_TEMPLATE/task.md
+---
+name: Implementation Task
+about: Phase实施任务 (从Blueprint分解)
+title: "[TASK] P{X}.{Y} &lt;任务名&gt;"
+labels: task
+---
+
+**来源**: Master Blueprint §6, T{X}.{Y}
+**阶段**: Phase {X}
+**预估时间**: {X}天
+
+**任务描述**
+
+**子任务清单**
+- [ ] 
+- [ ] 
+
+**出口准则**</code></pre>
+
+<h3>9.4 PR 模板</h3>
+<pre><code># .github/PULL_REQUEST_TEMPLATE.md
+## 描述
+&lt;简述此PR的变更内容&gt;
+
+## 关联 Issue
+Closes #
+
+## 变更类型
+- [ ] feat: 新功能
+- [ ] fix: Bug修复
+- [ ] docs: 文档
+- [ ] test: 测试
+- [ ] refactor: 重构
+- [ ] perf: 性能
+- [ ] build/ci: 构建/CI
+
+## 影响范围
+- [ ] metal (libmetal_bridge)
+- [ ] gal (Ryujinx.Graphics.Metal)
+- [ ] shader (着色器编译器)
+- [ ] demo (渐进式Demo)
+- [ ] cmd (命令映射)
+- [ ] tools/tests
+
+## 测试
+- [ ] 单元测试通过
+- [ ] 集成测试通过
+- [ ] Metal Validation Layer无错误
+- [ ] 回归测试无退化
+
+## 截图 (如涉及渲染变更)
+
+## Checklist
+- [ ] 代码符合项目风格
+- [ ] 提交遵循Conventional Commits
+- [ ] 相关文档已更新
+- [ ] 无遗留调试代码/注释</code></pre>
+
+<h3>9.5 代码审查标准</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>检查项</th><th>标准</th><th>阻塞级别</th></tr></thead>
+  <tbody>
+    <tr><td>Metal Validation</td><td>运行时不产生 Metal API Validation 错误</td><td><span class="tag tag-red">Blocker</span></td></tr>
+    <tr><td>内存管理</td><td>MTLBuffer/MTLTexture 正确释放；无 retain cycle</td><td><span class="tag tag-red">Blocker</span></td></tr>
+    <tr><td>线程安全</td><td>MTLCommandQueue 使用正确；多线程访问保护</td><td><span class="tag tag-red">Blocker</span></td></tr>
+    <tr><td>着色器编译</td><td>所有路径编译成功；回退逻辑触发正确</td><td><span class="tag tag-red">Blocker</span></td></tr>
+    <tr><td>测试覆盖</td><td>新增代码 ≥80% 被测试覆盖</td><td><span class="tag tag-orange">Should</span></td></tr>
+    <tr><td>提交规范</td><td>遵循 Conventional Commits 格式</td><td><span class="tag tag-orange">Should</span></td></tr>
+    <tr><td>文档</td><td>新API有注释；架构变更更新docs/</td><td><span class="tag tag-blue">Nice to have</span></td></tr>
+    <tr><td>性能</td><td>无退化（基准测试不超110%）</td><td><span class="tag tag-blue">Nice to have</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>9.6 CI/CD 流水线</h3>
+<pre><code># .github/workflows/ci.yml — 触发条件：push/PR到develop或main
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  verify-tools:        # Phase 0-1: 验证工具链
+    runs-on: macos-latest  # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash tools/tools-verify.sh
+
+  build-metal-bridge:  # Phase 3+: 构建C++库
+    runs-on: macos-latest
+    steps:
+      - run: cd libmetal_bridge && cmake -B build && cmake --build build
+
+  build-ryubing:       # Phase 3+: 构建C#模拟器
+    runs-on: macos-latest
+    steps:
+      - run: cd ryubing && dotnet build
+
+  test-unit:           # Phase 6: 单元测试
+    needs: [build-metal-bridge, build-ryubing]
+    steps:
+      - run: cd tests/unit && pytest test_maxwell_decode.py
+      - run: cd ryubing && dotnet test
+
+  test-integration:    # Phase 6: 集成测试
+    needs: [test-unit]
+    steps:
+      - run: cd tests/integration && pytest test_shader_compile.py
+
+  test-regression:     # Phase 6: 回归测试 (GPU required)
+    needs: [test-integration]
+    steps:
+      - run: cd tests/regression && pytest test_demo_frames.py
+
+  build-demos:         # Phase 2+: 构建所有Demo
+    steps:
+      - run: for d in demos/d*/; do make -C "$d"; done
+
+  build-release:       # Phase 9: 发布构建
+    if: github.ref == 'refs/heads/main'
+    needs: [test-regression, build-demos]
+    steps:
+      - run: make release</code></pre>
+
+<h3>9.7 项目初始化Issue列表（前30个）</h3>
+<p>Agent Coder 可直接从Blueprint自动生成这些Issue：</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>Issue标题</th><th>标签</th><th>Phase</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>[TASK] P0.1 Verify local dev toolchain (devkitPro + Xcode + Metal)</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>2</td><td>[TASK] P0.2 Install &amp; verify slangc with DXIL and Metal targets</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>3</td><td>[TASK] P0.3 Install metal-shaderconverter v4.0 and verify DXIL→metallib</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>4</td><td>[TASK] P0.4 Install SPIRV-Tools (spirv-val, spirv-opt, spirv-cross)</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>5</td><td>[TASK] P0.5 Install glslangValidator and verify GLSL→SPIR-V</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>6</td><td>[TASK] P0.6 Install shader-compiler-rs (Rust) for cross-validation</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>7</td><td>[TASK] P0.7 Verify full chain on Shader Playground online</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>8</td><td>[TASK] P0.8 Clone Ryubing and verify dotnet build</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>9</td><td>[TASK] P0.9 Clone dxmt and extract Device/Queue/Buffer/Presenter modules</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>10</td><td>[TASK] P0.10 Initialize Git repo with full directory structure</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>11</td><td>[TASK] P0.11 Write tools/tools-verify.sh one-click verification script</td><td>task, p0</td><td>P0</td></tr>
+    <tr><td>12</td><td>[TASK] P1.1 Write test_slang_dxil.sh (Path A validation)</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>13</td><td>[TASK] P1.2 Write test_slang_msl.sh (Path B validation)</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>14</td><td>[TASK] P1.3 Write test_spirv_cross.sh (Path C validation)</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>15</td><td>[TASK] P1.4 Write test_spirv_dxil.sh (Path D validation)</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>16</td><td>[TASK] P1.5 Write test_cross_validate.sh (Path E — dual decoder)</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>17</td><td>[TASK] P1.6 Collect 10 real game shader caches from Ryujinx</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>18</td><td>[TASK] P1.9 Write shader_pipeline_bench.py for compilation timing</td><td>task, p1</td><td>P1</td></tr>
+    <tr><td>19</td><td>[FEAT] P2.1 Create Demo D1: Hello Triangle with hand-written MSL</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>20</td><td>[FEAT] P2.2 Create Demo D2: Textured Quad via Slang→DXIL→MSC pipeline</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>21</td><td>[FEAT] P2.3 Create Demo D3: Multi-Texture &amp; Sampler Modes</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>22</td><td>[FEAT] P2.4 Create Demo D4: Basic Lighting (Phong + Depth + 3D)</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>23</td><td>[FEAT] P2.5 Create Demo D5: Advanced Texturing (Normal/Parallax/Cubemap)</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>24</td><td>[FEAT] P2.6 Create Demo D6: Advanced Lighting (Shadow+PBR+HDR+Bloom)</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>25</td><td>[FEAT] P2.7 Create Demo D7: GPU-Driven (Indirect+Compute+Instancing+AB)</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>26</td><td>[FEAT] P2.8 Create Demo D8: Complex Showcase (all features combined)</td><td>feat, p2, demo</td><td>P2</td></tr>
+    <tr><td>27</td><td>[TASK] P3.1 Fork Ryubing and create feature/native-metal-backend branch</td><td>task, p3</td><td>P3</td></tr>
+    <tr><td>28</td><td>[TASK] P3.2 Create Ryujinx.Graphics.Metal project + .csproj</td><td>task, p3</td><td>P3</td></tr>
+    <tr><td>29</td><td>[TASK] P3.5 Implement MetalRenderer stub (IRenderer interface)</td><td>task, p3</td><td>P3</td></tr>
+    <tr><td>30</td><td>[TASK] P3.6 Implement MetalPipeline stub (IPipeline interface)</td><td>task, p3</td><td>P3</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §10 TOOL CATALOG -->
+<!-- ============================================================ -->
+<h2 id="tools">§10 完整工具目录 (62个)</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>类别</th><th>工具</th><th>用途</th><th>许可</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="11"><strong>着色器编译</strong></td><td>Slang</td><td>GLSL→DXIL/MSL/SPIR-V多目标</td><td>Apache 2.0</td></tr>
+    <tr><td>Metal Shader Converter (MSC)</td><td>DXIL→metallib, Apple官方</td><td>Apple EULA</td></tr>
+    <tr><td>SPIRV-Cross</td><td>SPIR-V→MSL/HLSL/GLSL</td><td>Apache 2.0</td></tr>
+    <tr><td>glslangValidator</td><td>GLSL→SPIR-V参考编译器</td><td>BSD</td></tr>
+    <tr><td>DXC</td><td>HLSL→DXIL+SPIR-V</td><td>LLVM</td></tr>
+    <tr><td>shaderc</td><td>Google GLSL→SPIR-V库</td><td>Apache 2.0</td></tr>
+    <tr><td>airconv (dxmt)</td><td>DXBC→Metal AIR</td><td>LGPL</td></tr>
+    <tr><td>UAM</td><td>GLSL→Maxwell (Mesa GLSL+nv50_ir)</td><td>MIT</td></tr>
+    <tr><td>shader-compiler-rs</td><td>Maxwell→GLSL (Rust)</td><td>MIT</td></tr>
+    <tr><td>NVK Maxwell后端</td><td>Mesa Vulkan Maxwell编译器</td><td>MIT</td></tr>
+    <tr><td>CrossTL</td><td>通用着色器翻译器</td><td>MIT</td></tr>
+    <tr><td rowspan="5"><strong>SPIR-V工具</strong></td><td>spirv-opt</td><td>SPIR-V优化器</td><td>Apache 2.0</td></tr>
+    <tr><td>spirv-val</td><td>SPIR-V验证器</td><td>Apache 2.0</td></tr>
+    <tr><td>spirv-dis/spirv-as</td><td>SPIR-V反/汇编</td><td>Apache 2.0</td></tr>
+    <tr><td>SPIRV-LLVM-Translator</td><td>LLVM IR↔SPIR-V</td><td>LLVM</td></tr>
+    <tr><td>canonicalize-ids</td><td>SPIR-V二进制压缩</td><td>Apache 2.0</td></tr>
+    <tr><td rowspan="6"><strong>寄存器/ISA</strong></td><td>deko3d engine_3d.def</td><td>Maxwell 3D引擎寄存器</td><td>Zlib</td></tr>
+    <tr><td>envytools rnndb</td><td>NVIDIA全寄存器XML数据库</td><td>MIT</td></tr>
+    <tr><td>MaxAs</td><td>Maxwell SASS汇编器</td><td>MIT</td></tr>
+    <tr><td>envydis</td><td>NVIDIA GPU指令反汇编</td><td>MIT</td></tr>
+    <tr><td>nvdisasm</td><td>NVIDIA官方SASS反汇编</td><td>NVIDIA EULA</td></tr>
+    <tr><td>cuobjdump</td><td>CUDA二进制提取</td><td>NVIDIA EULA</td></tr>
+    <tr><td rowspan="6"><strong>Metal原生</strong></td><td>metal-cpp</td><td>Apple C++ Metal接口</td><td>MIT</td></tr>
+    <tr><td>Metal Argument Buffers T2</td><td>Bindless资源模型</td><td>Apple SDK</td></tr>
+    <tr><td>MetalFX Upscaling</td><td>AI升格 720p→2K/4K</td><td>Apple SDK</td></tr>
+    <tr><td>MetalFX Frame Interpolation</td><td>帧生成 30→60fps</td><td>Apple SDK</td></tr>
+    <tr><td>Xcode Metal Debugger</td><td>GPU帧捕获+着色器调试</td><td>Apple SDK</td></tr>
+    <tr><td>MTL_SHADER_VALIDATION</td><td>运行时着色器验证</td><td>Apple SDK</td></tr>
+    <tr><td rowspan="5"><strong>调试/捕获</strong></td><td>GFXReconstruct</td><td>Vulkan/DX12帧捕获-重放</td><td>MIT</td></tr>
+    <tr><td>LunarG vkconfig</td><td>Vulkan验证层GUI配置</td><td>Apache 2.0</td></tr>
+    <tr><td>LunarG Validation Layers</td><td>Vulkan API验证</td><td>Apache 2.0</td></tr>
+    <tr><td>Instruments GPU Trace</td><td>Apple GPU性能剖析</td><td>Apple SDK</td></tr>
+    <tr><td>Apitrace</td><td>OpenGL/D3D API追踪</td><td>MIT</td></tr>
+    <tr><td rowspan="4"><strong>测试/验证</strong></td><td>Shader Playground</td><td>在线着色器编译对比</td><td>Web</td></tr>
+    <tr><td>Ryujinx Shader Cache</td><td>真实游戏着色器数据集</td><td>MIT</td></tr>
+    <tr><td>GoogleTest</td><td>C++单元测试框架</td><td>BSD</td></tr>
+    <tr><td>pixel-diff</td><td>帧缓冲像素差异</td><td>自研</td></tr>
+    <tr><td rowspan="4"><strong>GPU驱动</strong></td><td>Asahi Linux AGX</td><td>Apple GPU逆向工程</td><td>MIT</td></tr>
+    <tr><td>Nouveau NVK</td><td>Maxwell Vulkan驱动</td><td>MIT</td></tr>
+    <tr><td>Mesa Lavapipe</td><td>CPU Vulkan (CI无GPU测试)</td><td>MIT</td></tr>
+    <tr><td>Mesa Zink</td><td>OpenGL→Vulkan翻译</td><td>MIT</td></tr>
+    <tr><td rowspan="7"><strong>API翻译层</strong></td><td>dxmt</td><td>D3D11→Metal</td><td>LGPL</td></tr>
+    <tr><td>D3DMetal (GPTK)</td><td>Apple D3D11/12→Metal</td><td>Apple EULA</td></tr>
+    <tr><td>DXVK</td><td>D3D11→Vulkan</td><td>Zlib</td></tr>
+    <tr><td>vkd3d-proton</td><td>D3D12→Vulkan</td><td>LGPL</td></tr>
+    <tr><td>MoltenVK</td><td>Vulkan→Metal</td><td>Apache 2.0</td></tr>
+    <tr><td>ANGLE</td><td>OpenGL ES→Vulkan/Metal</td><td>BSD</td></tr>
+    <tr><td>VirGL/Venus</td><td>Virtio-GPU Vulkan</td><td>MIT</td></tr>
+    <tr><td rowspan="4"><strong>模拟器</strong></td><td>Ryujinx</td><td>Switch模拟器 (C#)</td><td>MIT</td></tr>
+    <tr><td>Ryubing</td><td>Ryujinx活跃分支 (本Fork基础)</td><td>MIT</td></tr>
+    <tr><td>Astris</td><td>Apple Silicon二进制 (参考)</td><td>MIT</td></tr>
+    <tr><td>Strato</td><td>Android Switch模拟器</td><td>GPL</td></tr>
+    <tr><td rowspan="8"><strong>构建/开发</strong></td><td>devKitPro</td><td>Switch homebrew工具链</td><td>GPL</td></tr>
+    <tr><td>Xcode + Metal</td><td>Apple开发环境</td><td>Apple SDK</td></tr>
+    <tr><td>.NET SDK 10</td><td>Ryubing运行时</td><td>MIT</td></tr>
+    <tr><td>CMake + Meson</td><td>C++构建系统</td><td>BSD/Apache</td></tr>
+    <tr><td>DirectX Agility SDK</td><td>SM 6.8+规格参考</td><td>Microsoft</td></tr>
+    <tr><td>Slang文档</td><td>shader-slang.org</td><td>Web</td></tr>
+    <tr><td>MSC文档</td><td>developer.apple.com/metal/shader-converter/</td><td>Web</td></tr>
+    <tr><td>SPIRV-Tools文档</td><td>github.com/KhronosGroup/SPIRV-Tools</td><td>Web</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §11 PROJECT STRUCTURE -->
+<!-- ============================================================ -->
+<h2 id="structure">§11 项目目录结构</h2>
+<pre><code>switch-metal-backend/
+│
+├── README.md                       ← 项目概述 + 快速开始
+├── BLUEPRINT.md                    ← 本文档 (Agent Coder入口)
+├── Makefile                        ← 顶层构建入口 (make all)
+├── .gitignore
+├── .editorconfig
+│
+├── .github/
+│   ├── workflows/
+│   │   └── ci.yml                  ← CI/CD流水线
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.md
+│   │   ├── feature_request.md
+│   │   └── task.md
+│   └── PULL_REQUEST_TEMPLATE.md
+│
+├── tools/                          ← Phase 0-1: 工具验证脚本
+│   ├── tools-verify.sh
+│   ├── test_slang_dxil.sh
+│   ├── test_slang_msl.sh
+│   ├── test_spirv_cross.sh
+│   ├── test_spirv_dxil.sh
+│   ├── test_cross_validate.sh
+│   ├── shader_pipeline_bench.py
+│   └── gen_issue_list.py           ← 从Blueprint生成GitHub Issue
+│
+├── demos/                          ← Phase 2: 渐进式渲染Demo
+│   ├── d1_hello_triangle/
+│   │   ├── Makefile
+│   │   ├── README.md
+│   │   ├── src/main.cpp
+│   │   └── shaders/triangle.msl
+│   ├── d2_textured_quad/
+│   │   ├── Makefile
+│   │   ├── README.md
+│   │   ├── src/main.cpp
+│   │   ├── shaders/quad.glsl
+│   │   └── assets/texture.png
+│   ├── d3_multi_texture/
+│   ├── d4_basic_lighting/
+│   ├── d5_advanced_texturing/
+│   ├── d6_advanced_lighting/
+│   ├── d7_gpu_driven/
+│   └── d8_complex_showcase/
+│
+├── libmetal_bridge/                ← C++: Metal运行时 + 着色器编译器
+│   ├── CMakeLists.txt
+│   ├── include/
+│   │   ├── metal_bridge/MetalDevice.h
+│   │   ├── metal_bridge/MetalBuffer.h
+│   │   ├── metal_bridge/MetalTexture.h
+│   │   ├── metal_bridge/MetalShaderCompiler.h
+│   │   └── metal_bridge/MetalPresenter.h
+│   ├── src/
+│   │   ├── MetalDevice.cpp
+│   │   ├── MetalBuffer.cpp
+│   │   ├── MetalTexture.cpp
+│   │   ├── MetalShaderCompiler.cpp
+│   │   ├── MetalPresenter.cpp
+│   │   └── ShaderPipeline.cpp      ← 5条路径控制逻辑
+│   ├── dxmt/                       ← 从dxmt提取的模块
+│   │   ├── Device.cpp
+│   │   ├── Queue.cpp
+│   │   ├── Buffer.cpp
+│   │   └── Texture.cpp
+│   └── third_party/
+│       └── metal-cpp/              ← Header-only
+│
+├── ryubing/                        ← Phase 3+: Forked Ryubing
+│   └── src/
+│       └── Ryujinx.Graphics.Metal/
+│           ├── Ryujinx.Graphics.Metal.csproj
+│           ├── MetalRenderer.cs
+│           ├── MetalPipeline.cs
+│           ├── MetalDevice.cs
+│           ├── MetalShaderCompiler.cs
+│           ├── MetalBuffer.cs
+│           ├── MetalTexture.cs
+│           ├── MetalSampler.cs
+│           ├── MetalSync.cs
+│           ├── MetalFormatTable.cs
+│           └── Native/
+│               ├── MetalNative.cs
+│               └── (P/Invoke → libmetal_bridge)
+│
+├── tests/                          ← Phase 6: 测试套件
+│   ├── conftest.py
+│   ├── unit/
+│   │   ├── test_maxwell_decode.py
+│   │   ├── test_maxwell_decode.cpp  (GoogleTest)
+│   │   └── test_pixel_format.py
+│   ├── integration/
+│   │   ├── test_shader_compile.py
+│   │   ├── test_fallback_logic.py
+│   │   ├── test_shader_cache.py
+│   │   └── test_metal_pipeline.cpp  (GoogleTest)
+│   ├── regression/
+│   │   ├── test_demo_frames.py
+│   │   └── test_game_shaders.py
+│   └── fixtures/
+│       ├── shader_cache/           ← 真实游戏着色器
+│       └── reference_frames/       ← 参考帧缓冲
+│
+├── docs/
+│   ├── architecture.md
+│   ├── shader-pipeline.md
+│   ├── command-mapping.md
+│   ├── CONTRIBUTING.md
+│   ├── GAME_COMPAT.md
+│   └── FAQ.md
+│
+└── ci/
+    ├── build.sh
+    └── release.sh</code></pre>
+
+<!-- ============================================================ -->
+<!-- §12 REFERENCES -->
+<!-- ============================================================ -->
+<h2 id="references">§12 参考文献</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>资源</th><th>URL</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Ryubing (Fork目标)</td><td><a href="https://git.ryujinx.app/projects/Ryubing" target="_blank">git.ryujinx.app/projects/Ryubing</a></td></tr>
+    <tr><td>2</td><td>Ryubing IRenderer.cs</td><td><a href="https://git.ryujinx.app/projects/Ryubing/src/branch/master/src/Ryujinx.Graphics.GAL/IRenderer.cs" target="_blank">git.ryujinx.app/.../IRenderer.cs</a></td></tr>
+    <tr><td>3</td><td>Ryubing IPipeline.cs</td><td><a href="https://git.ryujinx.app/projects/Ryubing/src/branch/master/src/Ryujinx.Graphics.GAL/IPipeline.cs" target="_blank">git.ryujinx.app/.../IPipeline.cs</a></td></tr>
+    <tr><td>4</td><td>Slang</td><td><a href="https://shader-slang.org/" target="_blank">shader-slang.org</a></td></tr>
+    <tr><td>5</td><td>Metal Shader Converter</td><td><a href="https://developer.apple.com/metal/shader-converter/" target="_blank">developer.apple.com/metal/shader-converter/</a></td></tr>
+    <tr><td>6</td><td>metal-cpp</td><td><a href="https://developer.apple.com/metal/cpp/" target="_blank">developer.apple.com/metal/cpp/</a></td></tr>
+    <tr><td>7</td><td>dxmt</td><td><a href="https://github.com/3Shain/dxmt" target="_blank">github.com/3Shain/dxmt</a></td></tr>
+    <tr><td>8</td><td>deko3d</td><td><a href="https://github.com/devkitPro/deko3d" target="_blank">github.com/devkitPro/deko3d</a></td></tr>
+    <tr><td>9</td><td>envytools</td><td><a href="https://github.com/envytools/envytools" target="_blank">github.com/envytools/envytools</a></td></tr>
+    <tr><td>10</td><td>Astris (参考)</td><td><a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">github.com/V380-Ori/Astris.Binaries</a></td></tr>
+    <tr><td>11</td><td>SPIRV-Tools</td><td><a href="https://github.com/KhronosGroup/SPIRV-Tools" target="_blank">github.com/KhronosGroup/SPIRV-Tools</a></td></tr>
+    <tr><td>12</td><td>SPIRV-Cross</td><td><a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank">github.com/KhronosGroup/SPIRV-Cross</a></td></tr>
+    <tr><td>13</td><td>glslang</td><td><a href="https://github.com/KhronosGroup/glslang" target="_blank">github.com/KhronosGroup/glslang</a></td></tr>
+    <tr><td>14</td><td>shader-compiler-rs</td><td><a href="https://github.com/DCNick3/shader-compiler-rs" target="_blank">github.com/DCNick3/shader-compiler-rs</a></td></tr>
+    <tr><td>15</td><td>MaxAs</td><td><a href="https://github.com/NervanaSystems/maxas" target="_blank">github.com/NervanaSystems/maxas</a></td></tr>
+    <tr><td>16</td><td>Asahi Linux GPU</td><td><a href="https://asahilinux.org/" target="_blank">asahilinux.org</a></td></tr>
+    <tr><td>17</td><td>GFXReconstruct</td><td><a href="https://github.com/LunarG/gfxreconstruct" target="_blank">github.com/LunarG/gfxreconstruct</a></td></tr>
+    <tr><td>18</td><td>MoltenVK</td><td><a href="https://github.com/KhronosGroup/MoltenVK" target="_blank">github.com/KhronosGroup/MoltenVK</a></td></tr>
+    <tr><td>19</td><td>DXVK</td><td><a href="https://github.com/doitsujin/dxvk" target="_blank">github.com/doitsujin/dxvk</a></td></tr>
+    <tr><td>20</td><td>Shader Playground</td><td><a href="https://shader-playground.timjones.io/" target="_blank">shader-playground.timjones.io</a></td></tr>
+  </tbody>
+</table>
+</div>
+
+<hr style="margin:40px 0;">
+
+<div class="info-box info-success">
+  <strong>🔚 文档结束</strong><br><br>
+  本文档是 Switch Metal Backend 项目的唯一执行蓝图（Single Source of Truth）。<br>
+  <strong>Agent Coder 使用方式：</strong>按 §6 从 Phase 0 开始顺序执行；每个 Phase 内的任务按编号顺序完成；每个 Phase 的出口准则全部满足后再进入下一 Phase。<br>
+  <strong>Issue生成：</strong>使用 <code>tools/gen_issue_list.py</code> 从本 Blueprint 自动生成 GitHub Issue。<br>
+  <strong>本蓝图版本：</strong>v8.0 · 生成日期 2026-06-11 · 整合 v1-v7 全部上下文。
+</div>
+
+</div><!-- .page -->
+</body>
+</html>

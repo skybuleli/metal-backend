@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch 模拟器 Metal 后端 — 技术方案与路线调研</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --outer-bg: #E4E1DC;
+  --page-bg: #FDFCF9;
+  --surface: #FFFFFF;
+  --border: #E8E6E2;
+  --divider: #C5C0BA;
+  --text-primary: #151515;
+  --text-body: #3D3D3D;
+  --text-secondary: #717171;
+  --hero-bg: #DDE8D8;
+  --hero-deco: #93B888;
+  --hero-deco2: #5E8F52;
+  --success-bg: #E8FBCF;
+  --success-fg: #3D4826;
+  --warning-bg: #FFF0DC;
+  --warning-fg: #E47700;
+  --info-bg: #DEE5F7;
+  --info-fg: #3E54CE;
+  --error-bg: #FDECEA;
+  --error-fg: #C4433A;
+  --neutral-bg: #FDF9F2;
+  --neutral-fg: #7C746F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter Tight', sans-serif;
+  background: var(--outer-bg);
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.6;
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.page {
+  max-width: 1200px;
+  width: 100%;
+  background: var(--page-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.06);
+}
+
+/* Hero */
+.hero {
+  background: var(--hero-bg);
+  padding: 48px 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 260px; height: 180px;
+  top: -30px; left: -20px;
+  background: var(--hero-deco);
+  opacity: 0.15;
+  border-radius: 60% 40% 70% 30% / 30% 60% 40% 70%;
+  transform: rotate(-15deg);
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 200px; height: 140px;
+  bottom: -40px; right: 10%;
+  background: var(--hero-deco2);
+  opacity: 0.12;
+  border-radius: 40% 60% 55% 45% / 60% 35% 65% 40%;
+  transform: rotate(25deg);
+}
+.hero-blob-3 {
+  position: absolute;
+  width: 170px; height: 120px;
+  top: 60%; left: 50%;
+  background: var(--hero-deco);
+  opacity: 0.1;
+  border-radius: 50% 50% 40% 60% / 55% 45% 55% 45%;
+  transform: translate(-50%, -50%) rotate(10deg);
+}
+.hero-content { position: relative; z-index: 1; }
+.hero-eyebrow {
+  font-size: 12px; font-weight: 500;
+  color: var(--hero-deco2);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.hero-title {
+  font-size: 32px; font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+.hero-subtitle {
+  font-size: 15px; color: var(--text-secondary);
+  max-width: 640px; line-height: 1.5;
+}
+.hero-divider {
+  border: none; border-top: 0.5px solid rgba(94,143,82,0.3);
+  margin: 24px 0;
+}
+.hero-stats {
+  display: flex; gap: 40px; flex-wrap: wrap;
+}
+.hero-stat-value {
+  font-family: 'Noto Serif', serif;
+  font-size: 48px; font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.hero-stat-label {
+  font-size: 13px; color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Sections */
+.section {
+  padding: 36px 48px;
+}
+.section-title {
+  font-size: 17px; font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.section-subtitle {
+  font-size: 12px; color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.section-rule {
+  border: none; border-top: 0.5px solid var(--border);
+  margin-bottom: 24px;
+}
+
+/* Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .card-grid { grid-template-columns: 1fr; }
+  .hero { padding: 32px 24px; }
+  .section { padding: 24px 16px; }
+  .hero-title { font-size: 24px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .hero-stats { gap: 24px; }
+  .hero-stat-value { font-size: 36px; }
+  body { padding: 0; }
+  .page { border-radius: 0; }
+}
+.card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+.card-title {
+  font-size: 15px; font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.card-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+.card-body { font-size: 14px; color: var(--text-body); line-height: 1.6; }
+
+/* Route cards */
+.route-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.route-header {
+  display: flex; align-items: flex-start; gap: 16px;
+  margin-bottom: 16px;
+}
+.route-number {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700;
+  flex-shrink: 0;
+}
+.route-number.recommended { background: var(--success-bg); color: var(--success-fg); }
+.route-number.viable { background: var(--info-bg); color: var(--info-fg); }
+.route-number.experimental { background: var(--warning-bg); color: var(--warning-fg); }
+.route-title-group { flex: 1; }
+.route-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.route-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Pills */
+.pill {
+  display: inline-block;
+  font-size: 11px; font-weight: 500;
+  padding: 3px 9px; border-radius: 20px;
+}
+.pill-success { background: var(--success-bg); color: var(--success-fg); }
+.pill-info { background: var(--info-bg); color: var(--info-fg); }
+.pill-warning { background: var(--warning-bg); color: var(--warning-fg); }
+.pill-error { background: var(--error-bg); color: var(--error-fg); }
+.pill-neutral { background: var(--neutral-bg); color: var(--neutral-fg); }
+
+/* Alerts */
+.alert {
+  border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.alert-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.alert-body { font-size: 13px; }
+.alert-info { background: var(--info-bg); color: var(--info-fg); }
+.alert-warning { background: var(--warning-bg); color: var(--warning-fg); }
+.alert-success { background: var(--success-bg); color: var(--success-fg); }
+
+/* Flow diagram */
+.flow-container {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+.flow-box {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 13px; font-weight: 500;
+  text-align: center; color: var(--text-primary);
+}
+.flow-arrow {
+  font-size: 18px; color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* KPI */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.kpi-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.kpi-value { font-size: 26px; font-weight: 600; color: var(--text-primary); }
+
+/* Tables */
+.table-wrap {
+  overflow-x: auto; margin-bottom: 16px;
+}
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--divider);
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 0.5px solid var(--border);
+  color: var(--text-body);
+}
+tr:last-child td { border-bottom: none; }
+
+/* Comparison chart */
+.chart-wrap {
+  position: relative; height: 320px; margin-bottom: 20px;
+}
+
+/* Footer */
+.footer {
+  background: var(--hero-bg);
+  padding: 40px 48px 32px;
+  position: relative; overflow: hidden;
+}
+.footer::before {
+  content: '';
+  position: absolute;
+  width: 220px; height: 150px;
+  bottom: -40px; right: -30px;
+  background: var(--hero-deco2);
+  opacity: 0.1;
+  border-radius: 55% 45% 60% 40% / 40% 55% 45% 60%;
+}
+.footer-content { position: relative; z-index: 1; }
+.footer-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+}
+.footer-brand { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.footer-label { font-size: 12px; color: var(--text-secondary); }
+.footer-links { font-size: 13px; color: var(--text-body); }
+.footer-links a { color: var(--text-body); text-decoration: underline; }
+.footer-divider {
+  border: none; border-top: 0.5px solid rgba(94,143,82,0.3);
+  margin: 20px 0;
+}
+.footer-bottom {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--text-secondary);
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-blob-3"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">技术调研报告 · 2026 年 6 月</p>
+    <h1 class="hero-title">Switch 模拟器原生 Metal 后端<br>技术路线与实现方案</h1>
+    <p class="hero-subtitle">
+      基于 dxmt (D3D11→Metal 翻译层) 及其他开源方案，探索 Nintendo Switch 模拟器在 Apple Silicon 上实现原生 Metal 图形后端的可行路径。
+    </p>
+    <hr class="hero-divider">
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-value">5</div>
+        <div class="hero-stat-label">候选技术路线</div>
+      </div>
+      <div>
+        <div class="hero-stat-value">1,087</div>
+        <div class="hero-stat-label">dxmt GitHub Stars</div>
+      </div>
+      <div>
+        <div class="hero-stat-value">v0.80</div>
+        <div class="hero-stat-label">dxmt 最新版本</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: Background -->
+<div class="section">
+  <h2 class="section-title">一、背景：Switch 模拟器图形栈全景</h2>
+  <p class="section-subtitle">理解 Nintendo Switch 的 GPU 架构与当前模拟方案</p>
+  <hr class="section-rule">
+
+  <div class="card-grid" style="margin-bottom: 16px;">
+    <div class="card">
+      <div class="card-title">Switch GPU 硬件</div>
+      <div class="card-meta">NVIDIA Tegra X1 SoC · Maxwell 架构</div>
+      <div class="card-body">
+        Nintendo Switch 搭载 NVIDIA Tegra X1 芯片，GPU 基于 Maxwell 架构（GM20B）。
+        支持 256 个 CUDA Core、16 个 TMU、16 个 ROP，理论性能约 0.5 TFLOPS (FP32)。
+        原生图形 API 为 <strong>NVN</strong>（Nintendo 专有低级 API），同时兼容 OpenGL 4.5 和 Vulkan 1.0。
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">NVN 图形 API</div>
+      <div class="card-meta">低级命令缓冲 API · 类似 Vulkan/D3D12</div>
+      <div class="card-body">
+        NVN 是一个轻量级、低开销的图形 API，提供对 GPU 命令缓冲的直接控制。
+        它包括命令列表提交、资源绑定、着色器程序管理等功能。
+        由于 NVN 不公开文档，模拟器需要逆向工程其行为。Switch 着色器使用 Maxwell 原生 SASS 机器码。
+      </div>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">当前模拟方案</div>
+      <div class="card-meta">Ryujinx / Yuzu 分支 · 双后端架构</div>
+      <div class="card-body">
+        主流 Switch 模拟器（Ryujinx、Sudachi、Citron）采用 <strong>GAL（Graphics Abstraction Layer）</strong> 设计：
+        <br>• Maxwell 着色器 → 解码 → IR → GLSL 或 SPIR-V
+        <br>• GPU 命令通过 GAL 后端分发给 Vulkan 或 OpenGL
+        <br>• macOS 上通过 MoltenVK 将 Vulkan 转为 Metal，存在双翻译开销
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">macOS 痛点</div>
+      <div class="card-meta">双翻译损耗 · 着色器卡顿 · 几何着色器缺失</div>
+      <div class="card-body">
+        <strong>MoltenVK 瓶颈：</strong>Vulkan → Metal 的翻译带来额外 CPU 开销和着色器编译卡顿。
+        <br><strong>几何着色器问题：</strong>MoltenVK 长期不支持几何着色器（Metal 无原生 GS），需要复杂模拟。
+        <br><strong>Astris 项目：</strong>macOS 原生分支，使用 KosmicKrisp（Mesa Vulkan-Metal 驱动）替代 MoltenVK，但仍为 Vulkan→Metal 翻译。
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow diagram -->
+  <div class="flow-container">
+    <div class="flow-box" style="background:var(--info-bg);color:var(--info-fg);">Switch<br>NVN 命令</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">GAL<br>抽象层</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="background:var(--warning-bg);color:var(--warning-fg);">Vulkan<br>后端</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="background:var(--error-bg);color:var(--error-fg);">MoltenVK<br>(Vulkan→Metal)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Metal<br>GPU</div>
+  </div>
+  <p style="font-size:12px;color:var(--text-secondary);text-align:center;margin-top:8px;">
+    ▲ 当前 macOS 路径：双重翻译带来显著性能损耗
+  </p>
+</div>
+
+<!-- Section 2: DXMT Deep Dive -->
+<div class="section" style="background:var(--hero-bg);">
+  <h2 class="section-title">二、DXMT 深度解析</h2>
+  <p class="section-subtitle">核心可复用组件的技术剖析</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🏗️ 整体架构</div>
+      <div class="card-body">
+        DXMT 是一个 D3D11→Metal 的直接翻译层，替代 DXVK+MoltenVK 的双翻译路径。
+        主要组件：
+        <br>• <strong>dxgi / d3d11 / d3d10：</strong>DXGI 交换链和 D3D11/10 API 实现
+        <br>• <strong>dxmt：</strong>Metal 后端核心，设备/命令队列/缓冲/纹理管理
+        <br>• <strong>airconv：</strong>DXBC→Metal AIR 着色器编译器（最关键的复用组件）
+        <br>• <strong>winemetal：</strong>Wine 集成层
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⭐ airconv 着色器编译器</div>
+      <div class="card-body">
+        airconv 是 DXMT 的核心技术资产。它将 DXBC（DirectX 字节码）直接编译为 Metal AIR（Apple Intermediate Representation，基于 LLVM IR）。
+        <br>• 支持 SM 5.0 全套指令：VS、PS、CS、HS、DS、GS
+        <br>• 通过 LLVM 15 进行优化 Pass
+        <br>• 曲面细分（Tessellation）通过 Mesh Pipeline 模拟
+        <br>• 几何着色器通过专门的转换管线处理
+        <br>• 支持独立命令行工具离线编译 HLSL→MetalLib
+      </div>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">🔧 Metal 后端 (dxmt 模块)</div>
+      <div class="card-body">
+        dxmt 模块封装了完整的 Metal API 抽象：
+        <br>• <strong>Device/CommandQueue：</strong>设备管理与命令提交
+        <br>• <strong>Buffer/Texture：</strong>缓冲区和纹理生命周期
+        <br>• <strong>Sampler/Format：</strong>采样器与像素格式映射
+        <br>• <strong>Pipeline Cache：</strong>管线状态对象缓存
+        <br>• <strong>Presenter：</strong>MetalLayer 呈现（HDR/Gamma/MetalFX 上采样）
+        <br>• <strong>Fence/Resource Sync：</strong>基于 MTLFence 的资源同步
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📊 关键指标</div>
+      <div class="card-body">
+        <div class="kpi-grid" style="margin-bottom:0;">
+          <div class="kpi">
+            <div class="kpi-label">Stars</div>
+            <div class="kpi-value">1,087</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Forks</div>
+            <div class="kpi-value">71</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">最新版本</div>
+            <div class="kpi-value">0.80</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">语言</div>
+            <div class="kpi-value">C++</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+          构建依赖：LLVM 15、Meson、Xcode 16+、Metal Toolchain
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Current Metal-based Emulation -->
+<div class="section">
+  <h2 class="section-title">三、现有 Metal 模拟方案盘点</h2>
+  <p class="section-subtitle">macOS 上 Switch 模拟的现状与技术栈</p>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>方案</th><th>图形路径</th><th>着色器翻译</th><th>状态</th><th>性能</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Ryujinx (Vulkan via MoltenVK)</strong></td>
+          <td>NVN→Vulkan→MoltenVK→Metal</td>
+          <td>Maxwell→IR→SPIR-V→(SPIRV-Cross)→MSL</td>
+          <td><span class="pill pill-success">活跃</span></td>
+          <td>中等，双翻译有损耗</td>
+        </tr>
+        <tr>
+          <td><strong>Astris (KosmicKrisp)</strong></td>
+          <td>NVN→Vulkan→KosmicKrisp→Metal</td>
+          <td>Maxwell→IR→SPIR-V→(NIR)→MSL</td>
+          <td><span class="pill pill-success">活跃</span></td>
+          <td>略优于 MoltenVK</td>
+        </tr>
+        <tr>
+          <td><strong>Ryujinx Metal 实验后端</strong></td>
+          <td>NVN→GAL→Metal（直接）</td>
+          <td>Maxwell→IR→MSL（直接）</td>
+          <td><span class="pill pill-error">已废弃</span></td>
+          <td>未完成，大量 bug</td>
+        </tr>
+        <tr>
+          <td><strong>Apple GPTK (D3DMetal)</strong></td>
+          <td>D3D11/12→Metal</td>
+          <td>DXIL→MetalLib</td>
+          <td><span class="pill pill-neutral">闭源</span></td>
+          <td>优秀，但仅限 D3D</td>
+        </tr>
+        <tr>
+          <td><strong>DXMT (Wine 集成)</strong></td>
+          <td>D3D11→Metal</td>
+          <td>DXBC→AIR (via airconv)</td>
+          <td><span class="pill pill-success">活跃</span></td>
+          <td>优秀，直接翻译</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-title">💡 关键洞察</div>
+    <div class="alert-body">
+      现有所有可用的 macOS Switch 模拟方案都依赖 <strong>Vulkan→Metal 翻译层</strong>（MoltenVK 或 KosmicKrisp）。
+      Ryujinx 的实验性直接 Metal 后端因开发者在 C&D 后退出而未完成。
+      这意味着 <strong>成熟的直接 Metal 后端在当前生态中是空白的</strong>。
+    </div>
+  </div>
+</div>
+
+<!-- Section 4: Technical Routes -->
+<div class="section" style="background:var(--hero-bg);">
+  <h2 class="section-title">四、五条候选技术路线</h2>
+  <p class="section-subtitle">从不同角度切入，各有优劣</p>
+  <hr class="section-rule">
+
+  <!-- Route 1: Recommended -->
+  <div class="route-card">
+    <div class="route-header">
+      <div class="route-number recommended">1</div>
+      <div class="route-title-group">
+        <div class="route-title">路线一：NVN → D3D11 语义映射 → DXMT → Metal <span class="pill pill-success">推荐</span></div>
+        <div class="route-subtitle">最大程度复用 dxmt 的成熟 Metal 后端和 airconv 着色器编译器</div>
+      </div>
+    </div>
+    
+    <div class="flow-container" style="padding:12px 0;">
+      <div class="flow-box">Maxwell<br>着色器</div><div class="flow-arrow">→</div>
+      <div class="flow-box">反编译为<br>DXBC IR</div><div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">airconv<br>DXBC→AIR</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Metal<br>GPU</div>
+    </div>
+    <div class="flow-container" style="padding:4px 0 12px;">
+      <div class="flow-box">NVN<br>命令</div><div class="flow-arrow">→</div>
+      <div class="flow-box">映射为<br>D3D11 语义</div><div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--success-bg);color:var(--success-fg);">dxmt<br>D3D11→Metal</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Metal<br>GPU</div>
+    </div>
+
+    <div class="card-grid" style="margin-top:12px;">
+      <div style="font-size:13px;">
+        <strong>✅ 优势：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>airconv 已是成熟的 DXBC→Metal AIR 编译器</li>
+          <li>dxmt 的 Metal 后端完整实现设备/资源/管线管理</li>
+          <li>D3D11 语义与 NVN 高度相似（同为低级命令缓冲 API）</li>
+          <li>可复用 dxmt 的 MetalFX 上采样、HDR 支持</li>
+          <li>社区活跃，持续维护中</li>
+        </ul>
+      </div>
+      <div style="font-size:13px;">
+        <strong>⚠️ 挑战：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>Maxwell SASS→DXBC IR 的转换需要新建</li>
+          <li>NVN 的某些特性 D3D11 无直接对应（如某些纹理格式）</li>
+          <li>需要适配 dxmt 的 Wine 集成代码为独立库</li>
+          <li>D3D11 的 DeferredContext 模型与 NVN 有差异</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route 2 -->
+  <div class="route-card">
+    <div class="route-header">
+      <div class="route-number viable">2</div>
+      <div class="route-title-group">
+        <div class="route-title">路线二：复用 airconv + 自研 Metal 后端 <span class="pill pill-info">可行</span></div>
+        <div class="route-subtitle">仅复用 dxmt 的着色器编译器，自研完整 Metal 命令翻译后端</div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div style="font-size:13px;">
+        <strong>✅ 优势：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>airconv 可独立使用，无需绑定整个 dxmt</li>
+          <li>Metal 后端可完全按 NVN 语义设计，无需 D3D11 中间层</li>
+          <li>管线状态可针对 Switch 游戏优化</li>
+        </ul>
+      </div>
+      <div style="font-size:13px;">
+        <strong>⚠️ 挑战：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>需要从零实现金属设备/命令/资源管理（工作量巨大）</li>
+          <li>需要独立处理呈现、HDR、缩放等</li>
+          <li>重复造轮子，dxmt 已有的成熟代码无法直接复用</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route 3 -->
+  <div class="route-card">
+    <div class="route-header">
+      <div class="route-number experimental">3</div>
+      <div class="route-title-group">
+        <div class="route-title">路线三：Maxwell→SPIR-V→SPIRV-Cross→MSL <span class="pill pill-warning">实验性</span></div>
+        <div class="route-subtitle">延续现有 Ryujinx 的 SPIR-V 路径，优化 Metal 翻译</div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div style="font-size:13px;">
+        <strong>✅ 优势：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>Ryujinx 已有成熟的 Maxwell→SPIR-V 管线</li>
+          <li>SPIRV-Cross 成熟稳定，被 MoltenVK 广泛验证</li>
+          <li>KosmicKrisp（Mesa NIR）提供了另一条 SPIR-V→MSL 路径</li>
+        </ul>
+      </div>
+      <div style="font-size:13px;">
+        <strong>⚠️ 挑战：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>仍然是 Vulkan→Metal 翻译路径，无法消除双翻译开销</li>
+          <li>SPIR-V 与 MSL 语义差异大，部分特性翻译质量不佳</li>
+          <li>几何着色器在 SPIRV-Cross 中需模拟实现</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route 4 -->
+  <div class="route-card">
+    <div class="route-header">
+      <div class="route-number experimental">4</div>
+      <div class="route-title-group">
+        <div class="route-title">路线四：基于 Apple GPTK/D3DMetal 的桥接 <span class="pill pill-warning">受限</span></div>
+        <div class="route-subtitle">利用 Apple 闭源 D3DMetal 翻译层作为后端</div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div style="font-size:13px;">
+        <strong>✅ 优势：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>Apple 官方优化，性能卓越</li>
+          <li>D3D11/12 支持完善</li>
+        </ul>
+      </div>
+      <div style="font-size:13px;">
+        <strong>⚠️ 挑战：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>闭源，无法定制或调试</li>
+          <li>不提供独立 API，深度绑定 Game Porting Toolkit</li>
+          <li>法律风险：模拟器通常不能依赖 Apple 专有组件</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route 5 -->
+  <div class="route-card">
+    <div class="route-header">
+      <div class="route-number experimental">5</div>
+      <div class="route-title-group">
+        <div class="route-title">路线五：Maxwell→MSL 直接编译器 <span class="pill pill-warning">前沿研究</span></div>
+        <div class="route-subtitle">新建从 Maxwell SASS 到 Metal Shading Language 的直接编译器</div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div style="font-size:13px;">
+        <strong>✅ 优势：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>最短路径，零中间IR损耗</li>
+          <li>可完全针对 Metal 优化输出</li>
+          <li>不受中间表示语义限制</li>
+        </ul>
+      </div>
+      <div style="font-size:13px;">
+        <strong>⚠️ 挑战：</strong>
+        <ul style="margin:8px 0 0 16px;line-height:1.8;">
+          <li>Maxwell SASS 未公开文档，需大量逆向工程</li>
+          <li>工作量极大，需要同时精通 Maxwell ISA 和 Metal</li>
+          <li>Ryujinx 的 Isaac Metal 后端（类似路线）已证明难度极高</li>
+          <li>envytools 仅提供反汇编，不提供编译能力</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: Comparison -->
+<div class="section">
+  <h2 class="section-title">五、路线对比分析</h2>
+  <p class="section-subtitle">多维度量化评估</p>
+  <hr class="section-rule">
+
+  <div class="chart-wrap">
+    <canvas id="comparisonChart"></canvas>
+  </div>
+
+  <div class="table-wrap" style="margin-top:20px;">
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th><th>路线一<br>NVN→D3D11→DXMT</th><th>路线二<br>airconv+自研Metal</th><th>路线三<br>SPIR-V→MSL</th><th>路线四<br>GPTK桥接</th><th>路线五<br>Maxwell→MSL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>开发工作量</strong></td>
+          <td><span class="pill pill-success">中等</span></td>
+          <td><span class="pill pill-warning">高</span></td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-success">低</span></td>
+          <td><span class="pill pill-error">极高</span></td>
+        </tr>
+        <tr>
+          <td><strong>性能潜力</strong></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-warning">★★★☆☆</span></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+        </tr>
+        <tr>
+          <td><strong>兼容性</strong></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-warning">★★★☆☆</span></td>
+          <td><span class="pill pill-warning">★★☆☆☆</span></td>
+        </tr>
+        <tr>
+          <td><strong>可维护性</strong></td>
+          <td><span class="pill pill-success">★★★★☆</span></td>
+          <td><span class="pill pill-warning">★★★☆☆</span></td>
+          <td><span class="pill pill-success">★★★★★</span></td>
+          <td><span class="pill pill-error">★★☆☆☆</span></td>
+          <td><span class="pill pill-error">★★☆☆☆</span></td>
+        </tr>
+        <tr>
+          <td><strong>开源生态</strong></td>
+          <td><span class="pill pill-success">优秀</span></td>
+          <td><span class="pill pill-warning">一般</span></td>
+          <td><span class="pill pill-success">优秀</span></td>
+          <td><span class="pill pill-error">闭源</span></td>
+          <td><span class="pill pill-error">无</span></td>
+        </tr>
+        <tr>
+          <td><strong>综合推荐</strong></td>
+          <td><span class="pill pill-success">⭐⭐⭐⭐⭐</span></td>
+          <td><span class="pill pill-info">⭐⭐⭐⭐</span></td>
+          <td><span class="pill pill-info">⭐⭐⭐</span></td>
+          <td><span class="pill pill-warning">⭐⭐</span></td>
+          <td><span class="pill pill-error">⭐</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 6: Recommended Architecture -->
+<div class="section" style="background:var(--hero-bg);">
+  <h2 class="section-title">六、推荐路线：NVN→D3D11→DXMT 架构设计</h2>
+  <p class="section-subtitle">路线一的详细技术架构与实现计划</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🎯 核心理念</div>
+      <div class="card-body">
+        将 NVN 图形命令映射为 D3D11 语义调用，着色器通过 airconv 编译为 Metal AIR，
+        利用 dxmt 的完整 Metal 后端实现渲染。
+        <br><br>
+        <strong>为什么选择 D3D11 作为中间层：</strong>
+        <br>• NVN 和 D3D11 都是基于命令缓冲的低级 API
+        <br>• 两者共享相似的管线阶段模型（IA/VS/HS/DS/GS/PS/OM）
+        <br>• 着色器模型接近（SM5.0 / Maxwell）
+        <br>• 资源绑定模型可映射（Constant Buffer / SRV / UAV）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📐 架构分层</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>Layer 1：NVN 解码层</strong>
+        <br>├─ NVN 命令缓冲解析器
+        <br>├─ Maxwell 着色器二进制解码器（复用 Ryujinx Decoders）
+        <br>├─ GPU 状态追踪器
+        <br>
+        <strong>Layer 2：D3D11 语义映射层</strong>
+        <br>├─ NVN→D3D11 管线状态映射
+        <br>├─ Maxwell IR→DXBC IR 着色器转换
+        <br>├─ 资源格式/绑定模型适配
+        <br>
+        <strong>Layer 3：DXMT 翻译层（直接复用）</strong>
+        <br>├─ airconv：DXBC→Metal AIR 编译
+        <br>├─ dxmt：Metal 设备/命令/资源管理
+        <br>├─ Presenter：MetalLayer 呈现
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:16px;">
+    <div class="alert-title">🔑 关键突破点：着色器转换路径</div>
+    <div class="alert-body">
+      现有的 Ryujinx 着色器管线已经完成了 <strong>Maxwell SASS → 结构化 IR</strong> 的解码。
+      我们需要新增的是一步 <strong>结构化 IR → DXBC IR（或 airconv 可接受的格式）</strong> 的转换。
+      <br><br>
+      这个转换可以有两种策略：
+      <br><strong>策略 A：</strong>从 Ryujinx IR 直接生成 DXBC 字节码 → 输入 airconv
+      <br><strong>策略 B：</strong>在 airconv 中新增一个前端，直接接受 Maxwell IR（更高效但工作量更大）
+      <br><br>
+      推荐从策略 A 开始，降低风险，后续可优化为策略 B。
+    </div>
+  </div>
+</div>
+
+<!-- Section 7: Implementation Roadmap -->
+<div class="section">
+  <h2 class="section-title">七、实施路线图</h2>
+  <p class="section-subtitle">分阶段推进计划</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">
+        <span class="pill pill-info" style="margin-right:8px;">Phase 1</span>
+        基础验证 · 2-3 个月
+      </div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>搭建独立构建环境（dxmt 去除 Wine 依赖）</li>
+          <li>从 Ryujinx 提取 Maxwell→IR 管线</li>
+          <li>实现一个简单着色器的 IR→DXBC 转换原型</li>
+          <li>验证 airconv 可编译该 DXBC 到 Metal</li>
+          <li>在 Metal GPU 上运行单个三角形渲染</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">目标</span> 证明技术可行性</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span class="pill pill-warning" style="margin-right:8px;">Phase 2</span>
+        核心实现 · 4-6 个月
+      </div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>实现完整的 Maxwell IR→DXBC IR 着色器编译器</li>
+          <li>支持所有着色器阶段（VS/PS/CS/GS/HS/DS）</li>
+          <li>实现 NVN→D3D11 管线状态映射层</li>
+          <li>集成 dxmt 的 Metal 后端设备管理</li>
+          <li>实现 NVN 命令缓冲→D3D11 设备上下文映射</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">目标</span> 运行简单 2D 游戏</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span class="pill pill-warning" style="margin-right:8px;">Phase 3</span>
+        完善与优化 · 3-4 个月
+      </div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>处理边界情况与兼容性修复</li>
+          <li>几何着色器与曲面细分管线完善</li>
+          <li>MetalFX 上采样集成</li>
+          <li>着色器缓存机制</li>
+          <li>性能分析与瓶颈优化</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">目标</span> 运行主流 3D 游戏</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span class="pill pill-success" style="margin-right:8px;">Phase 4</span>
+        集成与发布 · 2-3 个月
+      </div>
+      <div class="card-body" style="font-size:13px;">
+        <ul style="margin:8px 0 0 16px;line-height:2;">
+          <li>与 Ryujinx/Astris 上游集成 Gallery 后端</li>
+          <li>macOS 原生 UI 适配</li>
+          <li>自动化 CI/CD 构建（ARM64/x86_64）</li>
+          <li>用户文档与开发文档</li>
+          <li>Beta 测试与社区反馈</li>
+        </ul>
+        <p style="margin-top:8px;"><span class="pill pill-neutral">目标</span> 公开发布可用版本</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 8: Risk Analysis -->
+<div class="section" style="background:var(--hero-bg);">
+  <h2 class="section-title">八、风险评估与缓解</h2>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>风险</th><th>影响</th><th>概率</th><th>缓解措施</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Maxwell IR→DXBC 语义损失</strong></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td>在 airconv 中新增 Maxwell 前端作为备选（策略 B）</td>
+        </tr>
+        <tr>
+          <td><strong>dxmt 依赖 Wine 代码解耦困难</strong></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td>dxmt 已有 Native Build 模式（Mach-O .dylib），可在此基础改造</td>
+        </tr>
+        <tr>
+          <td><strong>几何着色器支持不完善</strong></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td>dxmt 已实现 GS 模拟，Metal 3.0+ 支持 mesh shader 可辅助</td>
+        </tr>
+        <tr>
+          <td><strong>Nintendo 法律风险</strong></td>
+          <td><span class="pill pill-error">高</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td>仅开发翻译层/后端，不分发密钥、固件或游戏代码</td>
+        </tr>
+        <tr>
+          <td><strong>社区维护可持续性</strong></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td><span class="pill pill-warning">中</span></td>
+          <td>模块化设计，各层独立维护；dxmt 社区已有 70+ 贡献者</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 9: Key Repositories -->
+<div class="section">
+  <h2 class="section-title">九、关键开源项目总览</h2>
+  <p class="section-subtitle">调研涉及的核心仓库与技术参考</p>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>项目</th><th>类型</th><th>语言</th><th>Stars</th><th>与本方案的关系</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://github.com/3Shain/dxmt" target="_blank" style="color:var(--text-primary);font-weight:600;">3Shain/dxmt</a></td>
+          <td>D3D11→Metal 翻译层</td>
+          <td>C++</td>
+          <td>1,087</td>
+          <td>核心依赖：复用 airconv + dxmt 后端</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/strato-emu/strato" target="_blank" style="color:var(--text-primary);font-weight:600;">strato-emu/strato</a></td>
+          <td>Switch 模拟器 (Android)</td>
+          <td>C++</td>
+          <td>2,335</td>
+          <td>参考 NVN 实现和着色器解码</td>
+        </tr>
+        <tr>
+          <td>Ryujinx (多镜像)</td>
+          <td>Switch 模拟器</td>
+          <td>C#</td>
+          <td>~3,000+</td>
+          <td>着色器 IR 管线复用，GAL 后端参考</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank" style="color:var(--text-primary);font-weight:600;">V380-Ori/Astris</a></td>
+          <td>macOS Switch 模拟器</td>
+          <td>C#</td>
+          <td>602</td>
+          <td>macOS 原生集成参考</td>
+        </tr>
+        <tr>
+          <td><a href="https://gitlab.freedesktop.org/mesa/mesa" target="_blank" style="color:var(--text-primary);font-weight:600;">Mesa (KosmicKrisp)</a></td>
+          <td>Vulkan→Metal 驱动</td>
+          <td>C</td>
+          <td>-</td>
+          <td>替代 MoltenVK 的参考实现</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank" style="color:var(--text-primary);font-weight:600;">SPIRV-Cross</a></td>
+          <td>SPIR-V→MSL 翻译</td>
+          <td>C++</td>
+          <td>2,000+</td>
+          <td>路线三的核心依赖</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/KhronosGroup/MoltenVK" target="_blank" style="color:var(--text-primary);font-weight:600;">MoltenVK</a></td>
+          <td>Vulkan→Metal 运行时</td>
+          <td>C++/ObjC</td>
+          <td>5,000+</td>
+          <td>当前 macOS Switch 模拟的事实标准</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/envytools/envytools" target="_blank" style="color:var(--text-primary);font-weight:600;">envytools</a></td>
+          <td>NVIDIA GPU 逆向工具</td>
+          <td>C</td>
+          <td>500+</td>
+          <td>Maxwell ISA 文档和反汇编</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 10: Conclusion -->
+<div class="section" style="background:var(--hero-bg);">
+  <h2 class="section-title">十、结论与建议</h2>
+  <hr class="section-rule">
+
+  <div class="alert alert-success">
+    <div class="alert-title">✅ 核心结论</div>
+    <div class="alert-body">
+      在 Apple Silicon Mac 上实现 Switch 模拟器的原生 Metal 后端是<strong>技术上可行的</strong>。
+      dxmt 项目的 airconv 着色器编译器和成熟的 Metal 后端提供了坚实的基础。
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">📋 行动建议</div>
+    <div class="card-body">
+      <ol style="margin:8px 0 0 16px;line-height:2.2;">
+        <li><strong>首选路线一</strong>（NVN→D3D11→DXMT→Metal），在最大化复用与可控工作量之间取得最佳平衡。</li>
+        <li><strong>Phase 1 作为关键里程碑</strong>：验证 Maxwell IR→DXBC→Metal AIR 的着色器转换可行性。这是整个方案的核心技术风险点。</li>
+        <li><strong>与 dxmt 上游保持协作</strong>：建立与 3Shain 及 dxmt 社区的沟通渠道，贡献 Patch 并将 Metal 后端能力泛化。</li>
+        <li><strong>关注 KosmicKrisp 发展</strong>：Mesa 的 Vulkan-on-Metal 驱动在持续改进，可作为中期替代方案或性能对比基线。</li>
+        <li><strong>模块化设计</strong>：确保着色器编译器、命令翻译层、Metal 后端各自独立，便于替代和演进。</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">📊 预期性能收益</div>
+      <div class="card-body">
+        相比当前 MoltenVK 路径：
+        <br>• <strong>着色器编译：</strong>消除 SPIR-V→MSL 翻译环节，减少卡顿
+        <br>• <strong>命令提交：</strong>NVN→D3D11 单次翻译 vs NVN→Vulkan→Metal 双翻译
+        <br>• <strong>CPU 开销：</strong>预计降低 20-40%（去除 MoltenVK 中间层）
+        <br>• <strong>MetalFX 集成：</strong>利用 dxmt 已有的空间上采样能力
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⏱️ 时间估算</div>
+      <div class="card-body">
+        <strong>总计：11-16 个月</strong>（从 Phase 1 到 Phase 4）
+        <br>• Phase 1 (验证)：2-3 个月
+        <br>• Phase 2 (核心)：4-6 个月
+        <br>• Phase 3 (优化)：3-4 个月
+        <br>• Phase 4 (发布)：2-3 个月
+        <br><br>
+        依赖团队规模和对 Maxwell ISA 的熟悉程度。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Switch Metal Backend 调研</div>
+        <div class="footer-label">技术方案与可行性报告</div>
+      </div>
+      <div class="footer-links">
+        <strong>参考资源</strong><br>
+        <a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a> ·
+        <a href="https://github.com/3Shain/dxmt/blob/main/docs/DEVELOPMENT.md" target="_blank">DXMT 开发文档</a> ·
+        <a href="https://github.com/V380-Ori/Astris.Binaries" target="_blank">Astris</a> ·
+        <a href="https://github.com/strato-emu/strato" target="_blank">Strato</a>
+      </div>
+      <div class="footer-links">
+        <strong>技术参考</strong><br>
+        <a href="https://github.com/KhronosGroup/MoltenVK" target="_blank">MoltenVK</a> ·
+        <a href="https://github.com/KhronosGroup/SPIRV-Cross" target="_blank">SPIRV-Cross</a> ·
+        <a href="https://github.com/envytools/envytools" target="_blank">envytools</a> ·
+        <a href="https://gitlab.freedesktop.org/mesa/mesa" target="_blank">Mesa (KosmicKrisp)</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>2026-06-11 · 调研版本 1.0</span>
+      <span>Generated by <a href="https://allyhub.com" target="_blank" style="color:var(--text-secondary);">AllyHub AI</a></span>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// Comparison Radar Chart
+const ctx = document.getElementById('comparisonChart').getContext('2d');
+new Chart(ctx, {
+  type: 'radar',
+  data: {
+    labels: ['开发效率', '性能潜力', '兼容性', '可维护性', '社区生态', '风险控制'],
+    datasets: [
+      {
+        label: '路线一: NVN→D3D11→DXMT',
+        data: [4.5, 4, 4, 4, 5, 4],
+        borderColor: '#5E8F52',
+        backgroundColor: 'rgba(94,143,82,0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#5E8F52',
+      },
+      {
+        label: '路线二: airconv+自研Metal',
+        data: [2.5, 5, 4, 3, 3, 3],
+        borderColor: '#3E54CE',
+        backgroundColor: 'rgba(62,84,206,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#3E54CE',
+      },
+      {
+        label: '路线三: SPIR-V→MSL',
+        data: [5, 3, 5, 5, 5, 4.5],
+        borderColor: '#E47700',
+        backgroundColor: 'rgba(228,119,0,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#E47700',
+      },
+      {
+        label: '路线四: GPTK桥接',
+        data: [4, 4, 3, 2, 1, 3],
+        borderColor: '#C4433A',
+        backgroundColor: 'rgba(196,67,58,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#C4433A',
+      },
+      {
+        label: '路线五: Maxwell→MSL',
+        data: [0.5, 5, 2, 2, 1, 1],
+        borderColor: '#7C746F',
+        backgroundColor: 'rgba(124,116,111,0.08)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#7C746F',
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        beginAtZero: true,
+        max: 5,
+        ticks: { stepSize: 1, display: false },
+        pointLabels: { font: { family: 'Inter Tight', size: 12 }, color: '#3D3D3D' },
+        grid: { color: '#E8E6E2' },
+        angleLines: { color: '#E8E6E2' },
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          font: { family: 'Inter Tight', size: 12 },
+          color: '#3D3D3D',
+          padding: 16,
+          usePointStyle: true,
+          pointStyleWidth: 10,
+        }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

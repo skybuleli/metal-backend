@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Metal Backend — Agent Operations Manual &amp; Checkpoint System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d; --divider: #21262d;
+  --text-primary: #e6edf3; --text-body: #c9d1d9; --text-secondary: #8b949e;
+  --accent: #58a6ff; --success: #3fb950; --warning: #d2991d; --error: #f85149;
+  --code-bg: #0d1117;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Inter Tight', sans-serif; color: var(--text-body); font-size: 14px; line-height: 1.65; }
+.page { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+h1 { font-size: 28px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; margin: 32px 0 8px; }
+h2 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 36px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 22px 0 10px; }
+h4 { font-size: 13px; font-weight: 600; color: var(--text-body); margin: 14px 0 6px; }
+
+p { margin: 8px 0; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #1a1b26; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 10px 0; }
+pre code { background: none; padding: 0; border: none; font-size: 12px; line-height: 1.6; }
+
+.info-box { border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-size: 13px; line-height: 1.7; }
+.info-accent { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); }
+.info-success { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.2); }
+.info-warning { background: rgba(210,153,29,0.08); border: 1px solid rgba(210,153,29,0.2); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
+thead th { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+tbody td { padding: 10px 14px; border-bottom: 1px solid var(--divider); vertical-align: top; }
+tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 12px; margin-right: 4px; }
+.tag-green { background: rgba(63,185,80,0.15); color: #3fb950; }
+.tag-blue { background: rgba(88,166,255,0.15); color: #58a6ff; }
+.tag-orange { background: rgba(210,153,29,0.15); color: #d2991d; }
+.tag-red { background: rgba(248,81,73,0.15); color: #f85149; }
+.tag-gray { background: rgba(139,148,158,0.15); color: #8b949e; }
+
+.file-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin: 14px 0; }
+.file-card .fc-path { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+.file-card .fc-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
+
+.flow-row { display: flex; gap: 12px; margin: 14px 0; flex-wrap: wrap; align-items: stretch; }
+.flow-step { flex: 1; min-width: 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; position: relative; }
+.flow-step .fs-num { font-size: 20px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.flow-step .fs-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.flow-step .fs-desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.flow-arrow { display: flex; align-items: center; font-size: 18px; color: var(--text-secondary); flex-shrink: 0; }
+
+.status-row { display: flex; gap: 10px; align-items: center; margin: 4px 0; }
+.status-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.status-text { font-size: 13px; }
+
+.checklist { list-style: none; padding: 0; }
+.checklist li { padding: 4px 0 4px 22px; position: relative; font-size: 13px; }
+.checklist li::before { position: absolute; left: 0; font-size: 13px; }
+.checklist li.pending::before { content: '⬜'; color: var(--text-secondary); }
+.checklist li.active::before { content: '🔄'; color: var(--accent); }
+.checklist li.done::before { content: '✅'; color: var(--success); }
+.checklist li.blocked::before { content: '🚫'; color: var(--error); }
+
+.protocol-box { background: rgba(210,168,255,0.06); border: 1px solid rgba(210,168,255,0.25); border-radius: 8px; padding: 14px 18px; margin: 10px 0; }
+.protocol-box .pt-label { font-size: 11px; font-weight: 700; color: #d2a8ff; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.protocol-box .pt-content { font-size: 13px; color: var(--text-body); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>🔄 Agent Operations Manual<br>Checkpoint 系统 & 工作流设计</h1>
+<p style="font-size:14px;color:var(--text-secondary);">本文档描述如何让 Agent Coder 在多次会话间保持连续性。配合 Blueprint 使用。</p>
+
+<!-- ====== 设计理念 ====== -->
+<h2>1. 设计理念：为什么要自己设计，不依赖框架</h2>
+
+<div class="info-box info-warning">
+  <strong>核心洞察：</strong>Superpowers、GSD、AutoGPT 等 Agent 框架解决的是"如何调用工具"的问题。但真正的痛点不是工具调用，而是 <strong>Agent 在每次新会话中不知道做到哪了</strong>。这个断片问题，任何框架都解决不了——它只能通过一个持久化的状态文件来解决。
+</div>
+
+<p>我们的方案：<strong>文件驱动状态机</strong>——一套纯 markdown 文件，Agent 读写它们就像读写代码文件一样自然。不绑定任何特定框架，但任何框架的 Agent 都能用。</p>
+
+<div class="flow-row">
+  <div class="flow-step"><div class="fs-num">1</div><div class="fs-title">Blueprint</div><div class="fs-desc">"做什么"<br>静态的、完整的项目方案</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><div class="fs-num">2</div><div class="fs-title">Task Ledger</div><div class="fs-desc">"任务拆解"<br>Blueprint → 可执行任务</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><div class="fs-num">3</div><div class="fs-title">PROGRESS.md</div><div class="fs-desc">"做到哪了"<br>每一任务的实时状态</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><div class="fs-num">4</div><div class="fs-title">NEXT_TASK.md</div><div class="fs-desc">"下一步做什么"<br>Agent 会话的入口指令</div></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step"><div class="fs-num">5</div><div class="fs-title">Commit</div><div class="fs-desc">"持久化"<br>更新 PROGRESS + 提交代码</div></div>
+</div>
+
+<h2>2. 核心文件：PROGRESS.md（Checkpoint 状态机）</h2>
+
+<p>这是整个系统的心脏。每次 Agent 完成任务后<strong>必须</strong>更新这个文件。下次 Agent 启动时<strong>首先</strong>读取它。</p>
+
+<div class="file-card">
+  <div class="fc-path">📄 PROGRESS.md</div>
+  <div class="fc-desc">项目根目录。Agent 每次会话的第一条指令就是读取此文件。</div>
+</div>
+
+<h3>2.1 PROGRESS.md 格式规范</h3>
+<pre><code># Project Progress Ledger
+# 最后更新: 2026-06-15T14:30:00+08:00
+# 当前阶段: Phase 2 — 渐进式渲染Demo
+# 完成度: 18/220 tasks (8.2%)
+
+## ── 图例 ──
+## ⬜ pending   🔄 in_progress   ✅ done   🚫 blocked   ⏸️ skipped
+
+## Phase 0: 开发环境与工具链搭建
+### 阶段状态: ✅ DONE (2026-06-12)
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P0.1 | 验证本地工具链 | ✅ | 06-11 | tools/verify.log |
+| P0.2 | 安装验证slangc | ✅ | 06-11 | tools/verify.log |
+| P0.3 | 安装验证MSC v4.0 | ✅ | 06-11 | tools/verify.log |
+| P0.4 | 安装SPIRV-Tools | ✅ | 06-12 | tools/verify.log |
+| P0.5 | 安装glslangValidator | ✅ | 06-12 | tools/verify.log |
+| P0.6 | 安装shader-compiler-rs | ✅ | 06-12 | tools/verify.log |
+| P0.7 | Shader Playground验证 | ✅ | 06-12 | tools/verify.log |
+| P0.8 | 克隆Ryubing + dotnet build | ✅ | 06-12 | ryubing/ exists |
+| P0.9 | 克隆dxmt + 提取模块 | ✅ | 06-12 | libmetal_bridge/dxmt/ |
+| P0.10 | 初始化Git仓库+目录结构 | ✅ | 06-12 | git log |
+| P0.11 | 编写tools-verify.sh | ✅ | 06-12 | tools/tools-verify.sh |
+| P0.12 | 配置开发环境 | ✅ | 06-12 | .vscode/ |
+
+## Phase 1: 着色器管道概念验证
+### 阶段状态: 🔄 IN PROGRESS (started 2026-06-13)
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P1.1 | test_slang_dxil.sh | ✅ | 06-13 | tools/test_slang_dxil.sh |
+| P1.2 | test_slang_msl.sh | ✅ | 06-13 | tools/test_slang_msl.sh |
+| P1.3 | test_spirv_cross.sh | ✅ | 06-14 | tools/test_spirv_cross.sh |
+| P1.4 | test_spirv_dxil.sh | 🔄 | — | — |
+| P1.5 | test_cross_validate.sh | ⬜ | — | — |
+| P1.6 | 收集shader cache | 🚫 | — | 需要真实游戏ROM |
+
+## Phase 2: 渐进式渲染Demo
+### 阶段状态: ⬜ PENDING (awaiting Phase 1 completion)
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P2.1 | D1: Hello Triangle | ⬜ | — | — |
+| P2.2 | D2: Textured Quad | ⬜ | — | — |
+| ...
+
+## ── Blockers ──
+| ID | 阻塞项 | 影响任务 | 解决方案 | 状态 |
+|----|--------|----------|----------|------|
+| BLK-001 | 缺少游戏ROM提取shader | P1.6, P1.7 | 用homebrew测试shader替代 | 🚫 OPEN |
+
+## ── 环境引用 ──
+| 变量 | 值 |
+|------|-----|
+| RYUBING_REPO | /Users/xxx/projects/ryubing |
+| DEMO_DIR | /Users/xxx/projects/switch-metal/demos |
+| DEVICE | MacBook Pro M3 Pro, 18GB |</code></pre>
+
+<h3>2.2 Agent 读取 PROGRESS.md 后的行为</h3>
+
+<div class="protocol-box">
+  <div class="pt-label">Session Resume Protocol</div>
+  <div class="pt-content">
+    ① 找到第一个 🔄 in_progress → 继续该任务<br>
+    ② 如果没有 in_progress，找第一个 ⬜ pending → 开始该任务<br>
+    ③ 更新该任务状态为 🔄，记录开始时间<br>
+    ④ 执行任务<br>
+    ⑤ 完成后更新状态为 ✅，记录完成时间和证据文件<br>
+    ⑥ 如果有 🚫 blocked，评估是否需要报告用户<br>
+    ⑦ Commit: <code>feat(scope): P{X}.{Y} task description [done]</code>
+  </div>
+</div>
+
+<!-- ====== NEXT_TASK ====== -->
+<h2>3. NEXT_TASK.md — Agent 会话入口指令</h2>
+
+<p>这不是手动写的，而是 <strong>从 PROGRESS.md 自动生成</strong> 的。Agent 启动时直接读取这个文件，不需要解析整个 PROGRESS。</p>
+
+<div class="file-card">
+  <div class="fc-path">📄 NEXT_TASK.md</div>
+  <div class="fc-desc">自动生成（tools/gen_next_task.py），每次 PROGRESS.md 更新后重新生成。</div>
+</div>
+
+<pre><code># NEXT TASK — 2026-06-15T14:30:00+08:00
+# 自动生成，源文件: PROGRESS.md
+
+## 📍 当前位置
+- 阶段: Phase 1 — 着色器管道概念验证 (3/9 done)
+- 当前任务: P1.4 — test_spirv_dxil.sh (Path D验证)
+- 进度: 18/220 (8.2%)
+
+## 🎯 你的任务: P1.4 test_spirv_dxil.sh
+
+**描述**: 编写验证脚本测试 Path D (GLSL→Slang→SPIR-V→spirv-opt→Slang→DXIL→MSC)
+
+**输入**: tools/test_slang_dxil.sh (参考Path A)、tools/test_spirv_cross.sh (参考SPIR-V处理)
+
+**步骤**:
+1. 创建 tools/test_spirv_dxil.sh
+2. 使用 slangc -target spirv 生成SPIR-V
+3. 使用 spirv-opt --eliminate-dead-input-components 优化
+4. 使用 slangc 输入SPIR-V + -target dxil 生成DXIL
+5. 使用 metal-shaderconverter 转为metallib
+6. 用 xcrun metal 验证metallib可加载
+7. 测试3个不同着色器（VS/FS/CS）
+8. 输出 JSON 格式结果到 tools/results/path_d.json
+
+**出口准则**:
+- [ ] 脚本可独立运行: bash tools/test_spirv_dxil.sh
+- [ ] ≥2/3着色器编译成功
+- [ ] 优化后的SPIR-V通过spirv-val
+- [ ] metallib可被MTLLibrary加载
+
+**预计时间**: 2-3小时
+
+**相关文件**:
+- Blueprint: §4 着色器管道 (Path D)
+- 参考: tools/test_slang_dxil.sh, tools/test_spirv_cross.sh
+
+## ⚠️ Blockers 状态
+| ID | 描述 | 状态 |
+|----|------|------|
+| BLK-001 | 缺少游戏ROM | 🚫 OPEN |
+
+## 📊 统计
+- 总任务: 220
+- 已完成: 18 (8.2%)
+- 进行中: 1
+- 阻塞: 1
+- 待开始: 200
+
+## 🚀 完成后的Commit消息
+```
+feat(tools): P1.4 add spirv-dxil pipeline validation script [done]
+```</code></pre>
+
+<h2>4. 文件体系总览</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>文件</th><th>类型</th><th>谁写</th><th>谁读</th><th>更新频率</th></tr></thead>
+  <tbody>
+    <tr><td><code>BLUEPRINT.html</code></td><td>静态方案</td><td>Human (一次性)</td><td>Agent (参考)</td><td>方案变更时</td></tr>
+    <tr><td><code>PROGRESS.md</code></td><td>动态状态机</td><td>Agent (每任务完成)</td><td>Agent (会话启动)</td><td>每次任务完成</td></tr>
+    <tr><td><code>NEXT_TASK.md</code></td><td>自动生成指令</td><td>脚本自动生成</td><td>Agent (会话启动)</td><td>每次 PROGRESS 更新</td></tr>
+    <tr><td><code>SESSION_LOG.md</code></td><td>会话记录</td><td>Agent (每会话)</td><td>Human (审查)</td><td>每会话追加</td></tr>
+    <tr><td><code>tools/gen_next_task.py</code></td><td>代码生成器</td><td>Human (P0时创建)</td><td>Agent / Git Hook</td><td>不变</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>5. Agent 会话完整生命周期</h2>
+
+<div class="protocol-box">
+  <div class="pt-label">🔁 每次会话的标准流程</div>
+  <div class="pt-content">
+<strong>STEP 0 — 启动</strong><br>
+Agent读取 <code>NEXT_TASK.md</code>（如不存在则读取 <code>PROGRESS.md</code> 并自行判断）<br><br>
+
+<strong>STEP 1 — 认领</strong><br>
+在 <code>PROGRESS.md</code> 中标记当前任务为 🔄 in_progress，写开始时间<br><br>
+
+<strong>STEP 2 — 执行</strong><br>
+按照 NEXT_TASK.md 中的步骤执行。遇到阻塞立即标记 🚫 并记录到 Blockers 表<br><br>
+
+<strong>STEP 3 — 验证</strong><br>
+检查出口准则是否全部满足。记录证据（log文件、截图、测试输出）<br><br>
+
+<strong>STEP 4 — 完成</strong><br>
+标记任务为 ✅ done，写完成时间和证据路径。更新完成度百分比。更新 Phase 状态<br><br>
+
+<strong>STEP 5 — 持久化</strong><br>
+① commit PROGRESS.md ② commit 代码变更（Conventional Commits格式）③ 运行 <code>python tools/gen_next_task.py</code> ④ commit NEXT_TASK.md（如有变更）<br><br>
+
+<strong>STEP 6 — 追加会话日志</strong><br>
+在 <code>SESSION_LOG.md</code> 追加本次简短记录：时间、任务、结果、遇到什么问题
+  </div>
+</div>
+
+<h2>6. SESSION_LOG.md — 给人看的</h2>
+
+<pre><code># Session Log
+
+## 2026-06-15 14:30–17:45 | P1.4 test_spirv_dxil.sh
+- **Agent**: Ally Coder
+- **结果**: ✅ 完成
+- **变更**: 新增 tools/test_spirv_dxil.sh, tools/results/path_d.json
+- **问题**: 无
+- **Commit**: a1b2c3d feat(tools): P1.4 add spirv-dxil pipeline validation
+
+## 2026-06-15 10:00–12:15 | P1.3 test_spirv_cross.sh
+- **Agent**: Ally Coder
+- **结果**: ✅ 完成
+- **变更**: 新增 tools/test_spirv_cross.sh
+- **问题**: SPIRV-Cross MSL输出需手动修复uniform buffer声明，已记录到脚本注释
+- **Commit**: d4e5f6a feat(tools): P1.3 add spirv-cross pipeline validation
+
+## 2026-06-14 15:00–17:30 | P1.2 test_slang_msl.sh
+- **Agent**: Ally Coder
+- **结果**: ✅ 完成
+- **变更**: 新增 tools/test_slang_msl.sh
+- **问题**: 无
+- **Commit**: g7h8i9j feat(tools): P1.2 add slang MSL pipeline validation</code></pre>
+
+<h2>7. gen_next_task.py — 自动生成器</h2>
+
+<pre><code>#!/usr/bin/env python3
+"""从 PROGRESS.md 自动生成 NEXT_TASK.md"""
+import re, datetime
+
+def parse_progress(path="PROGRESS.md"):
+    with open(path) as f:
+        content = f.read()
+    
+    # 找第一个 in_progress 任务
+    in_progress = re.findall(r'\|\s*(P\d+\.\d+)\s*\|(.+?)\|\s*🔄', content)
+    if in_progress:
+        return {"task_id": in_progress[0][0], "desc": in_progress[0][1].strip()}
+    
+    # 找第一个 pending 任务
+    pending = re.findall(r'\|\s*(P\d+\.\d+)\s*\|(.+?)\|\s*⬜', content)
+    if pending:
+        return {"task_id": pending[0][0], "desc": pending[0][1].strip()}
+    
+    return None
+
+def gen(task):
+    now = datetime.datetime.now().isoformat()
+    return f"""# NEXT TASK — {now}
+# 自动生成: tools/gen_next_task.py
+
+## 📍 当前位置
+- 当前任务: **{task['task_id']}** — {task['desc']}
+
+## 🎯 你的任务: {task['task_id']}
+请查看 Blueprint §6 中对应的任务描述和 Agent 执行提示。
+
+## 🚀 完成后的Commit消息
+```
+feat(scope): {task['task_id']} {task['desc'].lower()} [done]
+```
+"""
+
+if __name__ == "__main__":
+    task = parse_progress()
+    if task:
+        with open("NEXT_TASK.md", "w") as f:
+            f.write(gen(task))
+        print(f"Generated NEXT_TASK.md → {task['task_id']}")
+    else:
+        print("🎉 All tasks complete!")</code></pre>
+
+<h2>8. 关于 Agent 框架（Superpowers / GSD 等）</h2>
+
+<div class="info-box info-accent">
+  <strong>我们的立场：文件驱动 > 框架绑定</strong><br><br>
+  这套 Checkpoint 系统是<strong>框架无关</strong>的。无论 Agent 运行在 Ally Coder、Claude Code、Cursor、Windsurf、还是任何其他平台上，只要它能读写文件，就能用。<br><br>
+  
+  如果未来想引入 Superpowers 或 GSD 的工作流编排能力，它们可以在<strong>这套文件之上</strong>运行——读取 NEXT_TASK.md 获取当前任务，执行完成后更新 PROGRESS.md，形成闭环。但核心的状态管理始终在文件中，不绑定到任何框架的数据库或内部状态。<br><br>
+
+  <strong>原因：</strong>框架会变、会停更、会被替换。但一套结构化的 Markdown 文件，10年后还能用。
+</div>
+
+<h2>9. 渐进式复杂度：从简单到自动化</h2>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>阶段</th><th>复杂度</th><th>操作方式</th><th>适合时机</th></tr></thead>
+  <tbody>
+    <tr><td>Level 1</td><td><span class="tag tag-green">最低</span></td><td>Agent 手动读写 PROGRESS.md，Human 手写 NEXT_TASK.md</td><td>项目初期（P0-P2），任务少</td></tr>
+    <tr><td>Level 2</td><td><span class="tag tag-blue">低</span></td><td>Agent 手动更新 PROGRESS.md，gen_next_task.py 自动生成 NEXT_TASK.md</td><td>P3-P5，任务增多</td></tr>
+    <tr><td>Level 3</td><td><span class="tag tag-orange">中</span></td><td>Agent 调用 gen_next_task.py；Git pre-commit hook 自动验证 PROGRESS 格式</td><td>P6+，需要严格管理</td></tr>
+    <tr><td>Level 4</td><td><span class="tag tag-red">高</span></td><td>CI bot 自动监控 PROGRESS.md 变更 → 自动更新 GitHub Project board → 自动分配 Issue</td><td>多人协作 + 发布后</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>10. 目录结构（补充 Blueprint §11）</h2>
+
+<pre><code>switch-metal-backend/
+│
+├── BLUEPRINT.html              ← 静态方案（不变）
+├── PROGRESS.md                 ← 🔴 动态状态（每次任务后更新）
+├── NEXT_TASK.md                ← 🔴 自动生成（Agent入口）
+├── SESSION_LOG.md              ← 会话记录（人类审查）
+│
+├── tools/
+│   ├── gen_next_task.py        ← 任务生成器
+│   ├── verify_progress.py      ← 验证PROGRESS格式
+│   └── ...（其他工具脚本）
+│
+└── .github/
+    └── hooks/
+        └── pre-commit          ← Git hook: 自动运行gen_next_task.py</code></pre>
+
+<hr style="margin:40px 0;">
+
+<div class="info-box info-success">
+  <strong>🔚 总结：如何让项目顺畅运行</strong><br><br>
+  ① <strong>Blueprint = 宪法</strong>，记录"该做什么"<br>
+  ② <strong>PROGRESS.md = 仪表盘</strong>，记录"做到哪了"——每次任务完成后更新<br>
+  ③ <strong>NEXT_TASK.md = 导航仪</strong>，告诉下一个 Agent "你现在做什么"<br>
+  ④ <strong>SESSION_LOG.md = 黑匣子</strong>，记录"发生了什么"<br>
+  ⑤ <strong>Conventional Commits = 轨迹</strong>，每次完成一个任务就 commit 一个<br>
+  ⑥ <strong>gen_next_task.py = 自动挡</strong>，从 P3 开始自动化<br><br>
+  这四个文件 + 一个脚本 + 提交规范 = Agent 永不断片。不管换了多少个 Agent 会话，每个新 Agent 打开 NEXT_TASK.md 就知道自己该干啥。
+</div>
+
+</div>
+</body>
+</html>

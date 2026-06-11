@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Switch Metal 后端 v5.0 — Metal Shader Converter 整合分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif:wght@500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --outer-bg: #E4E1DC; --page-bg: #FDFCF9; --surface: #FFFFFF;
+  --border: #E8E6E2; --divider: #C5C0BA;
+  --text-primary: #151515; --text-body: #3D3D3D; --text-secondary: #717171;
+  --hero-bg: #E8DDEF; --hero-deco: #B89AC8; --hero-deco2: #8F6AAF;
+  --success-bg: #E8FBCF; --success-fg: #3D4826;
+  --warning-bg: #FFF0DC; --warning-fg: #E47700;
+  --info-bg: #DEE5F7; --info-fg: #3E54CE;
+  --error-bg: #FDECEA; --error-fg: #C4433A;
+  --neutral-bg: #FDF9F2; --neutral-fg: #7C746F;
+  --code-bg: #F5F4F1;
+  --apple-bg: #F0F0F5; --apple-accent: #0071E3;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Inter Tight',sans-serif; background:var(--outer-bg);
+  color:var(--text-body); font-size:14px; line-height:1.6;
+  display:flex; justify-content:center; padding:24px 16px;
+}
+.page { max-width:1200px; width:100%; background:var(--page-bg); border-radius:24px; overflow:hidden; box-shadow:0 2px 24px rgba(0,0,0,0.06); }
+.hero {
+  background:var(--hero-bg); padding:48px 48px 40px; position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; width:240px; height:170px;
+  top:-25px; right:5%; background:var(--hero-deco); opacity:0.13;
+  border-radius:50% 50% 45% 55% / 55% 45% 55% 45%; transform:rotate(15deg);
+}
+.hero::after {
+  content:''; position:absolute; width:180px; height:130px;
+  bottom:-20px; left:10%; background:var(--hero-deco2); opacity:0.10;
+  border-radius:40% 60% 55% 45% / 60% 40% 60% 40%; transform:rotate(-20deg);
+}
+.hero-content { position:relative; z-index:1; }
+.hero-eyebrow { font-size:12px; font-weight:500; color:var(--hero-deco2); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+.hero-title { font-size:32px; font-weight:700; color:var(--text-primary); letter-spacing:-0.01em; margin-bottom:12px; line-height:1.2; }
+.hero-subtitle { font-size:15px; color:var(--text-secondary); max-width:700px; line-height:1.5; }
+.hero-divider { border:none; border-top:0.5px solid rgba(143,106,175,0.3); margin:24px 0; }
+.hero-stats { display:flex; gap:40px; flex-wrap:wrap; }
+.hero-stat-value { font-family:'Noto Serif',serif; font-size:44px; font-weight:500; color:var(--text-primary); letter-spacing:-0.02em; line-height:1; }
+.hero-stat-label { font-size:13px; color:var(--text-secondary); margin-top:4px; }
+
+.section { padding:36px 48px; }
+.section-alt { padding:36px 48px; background:var(--hero-bg); }
+.section-apple { padding:36px 48px; background:linear-gradient(135deg, #F5F0F8, #F0F0F5); }
+.section-title { font-size:17px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.section-subtitle { font-size:12px; color:var(--text-secondary); margin-bottom:16px; }
+.section-rule { border:none; border-top:0.5px solid var(--border); margin-bottom:24px; }
+.card-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.card-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+@media (max-width:768px) {
+  .card-grid,.card-grid-3 { grid-template-columns:1fr; }
+  .hero { padding:32px 24px; }
+  .section,.section-alt,.section-apple { padding:24px 16px; }
+  .hero-title { font-size:24px; }
+  body { padding:0; }
+  .page { border-radius:0; }
+}
+.card {
+  background:var(--surface); border:0.5px solid var(--border);
+  border-radius:12px; padding:20px 24px; transition:box-shadow 0.2s;
+}
+.card:hover { box-shadow:0 2px 12px rgba(0,0,0,0.06); }
+.card-title { font-size:15px; font-weight:600; color:var(--text-primary); margin-bottom:4px; }
+.card-meta { font-size:12px; color:var(--text-secondary); margin-bottom:12px; }
+.card-body { font-size:14px; color:var(--text-body); line-height:1.6; }
+.pill { display:inline-block; font-size:11px; font-weight:500; padding:2px 8px; border-radius:20px; }
+.pill-success { background:var(--success-bg); color:var(--success-fg); }
+.pill-info { background:var(--info-bg); color:var(--info-fg); }
+.pill-warning { background:var(--warning-bg); color:var(--warning-fg); }
+.pill-error { background:var(--error-bg); color:var(--error-fg); }
+.pill-neutral { background:var(--neutral-bg); color:var(--neutral-fg); }
+.pill-apple { background:var(--apple-bg); color:var(--apple-accent); }
+.alert { border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+.alert-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+.alert-body { font-size:13px; line-height:1.6; }
+.alert-info { background:var(--info-bg); color:var(--info-fg); }
+.alert-success { background:var(--success-bg); color:var(--success-fg); }
+.alert-warning { background:var(--warning-bg); color:var(--warning-fg); }
+
+.table-wrap { overflow-x:auto; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { font-size:12px; font-weight:500; color:var(--text-secondary); text-align:left; padding:8px 12px; border-bottom:1px solid var(--divider); }
+td { padding:10px 12px; border-bottom:0.5px solid var(--border); color:var(--text-body); }
+tr:last-child td { border-bottom:none; }
+tr.row-highlight { background:rgba(143,106,175,0.05); }
+
+.flow-container { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; padding:12px 0; }
+.flow-box { background:var(--surface); border:0.5px solid var(--border); border-radius:8px; padding:9px 14px; font-size:11px; font-weight:500; text-align:center; color:var(--text-primary); }
+.flow-arrow { font-size:14px; color:var(--text-secondary); flex-shrink:0; }
+
+.highlight-box {
+  background: linear-gradient(135deg, rgba(184,154,200,0.10), rgba(143,106,175,0.04));
+  border: 1px solid rgba(143,106,175,0.2);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 16px;
+}
+
+.compare-table td:first-child { font-weight:600; white-space:nowrap; }
+
+.footer {
+  background:var(--hero-bg); padding:40px 48px 32px; position:relative; overflow:hidden;
+}
+.footer::before {
+  content:''; position:absolute; width:220px; height:150px;
+  bottom:-40px; right:-30px; background:var(--hero-deco2); opacity:0.1;
+  border-radius:55% 45% 60% 40% / 40% 55% 45% 60%;
+}
+.footer-content { position:relative; z-index:1; }
+.footer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px; }
+.footer-brand { font-size:15px; font-weight:600; color:var(--text-primary); }
+.footer-label { font-size:12px; color:var(--text-secondary); }
+.footer-links { font-size:13px; color:var(--text-body); }
+.footer-links a { color:var(--text-body); text-decoration:underline; }
+.footer-divider { border:none; border-top:0.5px solid rgba(143,106,175,0.3); margin:20px 0; }
+.footer-bottom { display:flex; justify-content:space-between; font-size:12px; color:var(--text-secondary); flex-wrap:wrap; }
+
+/* API code block */
+.api-block {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  background:var(--code-bg); color:var(--text-body);
+  padding:12px 16px; border-radius:8px; overflow-x:auto;
+  white-space:pre; line-height:1.6; margin:8px 0;
+}
+
+/* Numbered flow */
+.num-flow { display:flex; gap:0; align-items:center; justify-content:center; margin:16px 0; flex-wrap:wrap; }
+.num-step { display:flex; flex-direction:column; align-items:center; padding:8px 12px; min-width:80px; }
+.num-circle { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; }
+.num-label { font-size:10px; text-align:center; margin-top:4px; color:var(--text-secondary); max-width:90px; }
+.num-line { width:24px; height:2px; background:var(--divider); flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">技术调研报告 v5.0 · 2026 年 6 月 · 🆕 Metal Shader Converter 整合</p>
+    <h1 class="hero-title">Apple Metal Shader Converter<br>对项目的提升与嵌入方案</h1>
+    <p class="hero-subtitle">
+      Metal Shader Converter（已安装）是 Apple 官方的 DXIL→Metal IR 转换器。它与 Slang 配合形成"双保险"着色器翻译管线，显著降低 Slang 实验性 Metal 后端的风险。
+    </p>
+    <hr class="hero-divider">
+    <div class="hero-stats">
+      <div><div class="hero-stat-value">v4.0</div><div class="hero-stat-label">MSC 当前版本</div></div>
+      <div><div class="hero-stat-value">SM 6.6</div><div class="hero-stat-label">支持的最高 Shader Model</div></div>
+      <div><div class="hero-stat-value">85→95%</div><div class="hero-stat-label">成功率提升</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 1: What is MSC -->
+<div class="section-apple">
+  <h2 class="section-title">一、Metal Shader Converter 是什么</h2>
+  <p class="section-subtitle"><a href="https://developer.apple.com/metal/shader-converter/" target="_blank">developer.apple.com/metal/shader-converter/</a> · 已安装在本地</p>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title"><span class="pill pill-apple">Apple</span> 核心能力</div>
+      <div class="card-body" style="font-size:13px;">
+        <strong>Metal Shader Converter (MSC)</strong> 是 Apple 官方的着色器中间表示转换器。
+        <br><br>
+        <strong>输入：</strong>DXIL（DirectX Intermediate Language，基于 LLVM IR 字节码）
+        <br><strong>输出：</strong>Metal IR → <code>.metallib</code>（可直接加载到 Metal GPU）
+        <br><br>
+        <strong>支持范围：</strong>SM 6.0-6.6（Wave Intrinsics、64-bit Integer、Ray Tracing、Mesh/Amplification Shader、Dynamic Resources）
+        <br><br>
+        <strong>提供形式：</strong>
+        <br>• CLI 工具：<code>metal-shaderconverter</code>
+        <br>• C 动态库：<code>libmetalirconverter</code>（可嵌入 C/C++/ObjC/Swift 代码）
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 版本演进</div>
+      <div class="card-body" style="font-size:13px;">
+        <table>
+          <tr><td><strong>v1.0</strong></td><td>初始发布，基础 DXIL→Metal 转换</td></tr>
+          <tr><td><strong>v1.1</strong></td><td>光线追踪着色器支持</td></tr>
+          <tr><td><strong>v2.0</strong></td><td>着色器调试信息、全局一致性内存</td></tr>
+          <tr><td><strong>v3.0</strong></td><td>函数常量、framebuffer fetch、Metal 交叉函数缓冲</td></tr>
+          <tr><td><strong>v3.1</strong></td><td>libmetalirconverter 支持 iOS</td></tr>
+          <tr style="background:rgba(143,106,175,0.06);"><td><strong>v4.0</strong></td><td><strong>2D 计算导数、NaN/Inf 优化默认开启</strong> ← 当前版本</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">🔌 API 接口（libmetalirconverter）</div>
+    <div class="card-body">
+      <div class="api-block">// 创建编译器实例
+IRCompiler* compiler = IRCompilerCreate();
+IRCompilerSetEntryPointName(compiler, "MainVS");
+
+// 从 DXIL 字节码创建 IR 对象
+IRObject* dxil = IRObjectCreateFromDXIL(bytecode, size, IRBytecodeOwnershipNone);
+
+// 编译并链接 → 输出 Metal IR
+IRError* error = nullptr;
+IRObject* outIR = IRCompilerAllocCompileAndLink(compiler, NULL, dxil, &error);
+
+// 提取 metallib 字节码
+IRMetalLibBinary* metallib = IRMetalLibBinaryCreate();
+IRObjectGetMetalLibBinary(outIR, stage, metallib);
+size_t metallibSize = IRMetalLibGetBytecodeSize(metallib);
+uint8_t* metallibBytes = new uint8_t[metallibSize];
+IRMetalLibGetBytecode(metallib, metallibBytes);
+
+// 清理
+IRMetalLibBinaryDestroy(metallib);
+IRObjectDestroy(outIR);
+IRObjectDestroy(dxil);
+IRCompilerDestroy(compiler);</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+        <strong>关键接口：</strong><code>IRObjectCreateFromDXIL</code> ← <strong>仅接受 DXIL</strong>，不接受 SPIR-V。这意味着 MSC 不能直接替代 Slang，而是作为 Slang 输出 DXIL 后的第二步。
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: How MSC fits in our pipeline -->
+<div class="section">
+  <h2 class="section-title">二、MSC 如何嵌入我们的着色器管线</h2>
+  <p class="section-subtitle">关键洞察：Slang 可以输出 DXIL，MSC 将 DXIL 转为 metallib</p>
+  <hr class="section-rule">
+
+  <div class="highlight-box">
+    <div class="card-title">🔑 核心对接点：Slang → DXIL → MSC → metallib</div>
+    <div class="card-body" style="font-size:13px;">
+      <strong>MSC 只接受 DXIL 输入。</strong>但我们不需要自己生成 DXIL——<strong>Slang 编译器原生支持 <code>-target dxil</code> 输出</strong>。
+      这就形成了一个完美的接力：Ryujinx 生成 GLSL → Slang 编译为 DXIL → MSC 转换为 metallib。
+    </div>
+  </div>
+
+  <div class="card-grid" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title" style="color:var(--info-fg);">路径 A（v4.0 原推荐）：直接 MSL</div>
+      <div class="card-body">
+        <div class="num-flow">
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">1</div><div class="num-label">Maxwell SASS</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">2</div><div class="num-label">Ryujinx IR</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">3</div><div class="num-label">GLSL</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#E47700;">4</div><div class="num-label">Slang→MSL</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#717171;">5</div><div class="num-label">xcrun metal</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">6</div><div class="num-label">Metal GPU</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+          <strong>风险点：</strong>步骤④ Slang Metal 后端是实验性的。步骤⑤ 需要额外调用 xcrun。<br>
+          <strong>优势：</strong>MSL 人类可读，便于调试。
+        </p>
+      </div>
+    </div>
+    <div class="card" style="border:1px solid rgba(143,106,175,0.3);">
+      <div class="card-title" style="color:#8F6AAF;">🆕 路径 B（v5.0 新增）：Slang→DXIL→MSC</div>
+      <div class="card-body">
+        <div class="num-flow">
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">1</div><div class="num-label">Maxwell SASS</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">2</div><div class="num-label">Ryujinx IR</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">3</div><div class="num-label">GLSL</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#3E54CE;">4</div><div class="num-label">Slang→DXIL</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#8F6AAF;">5</div><div class="num-label">MSC</div></div>
+          <div class="num-line"></div>
+          <div class="num-step"><div class="num-circle" style="background:#5FA882;">6</div><div class="num-label">Metal GPU</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+          <strong>风险降低：</strong>步骤④ Slang 的 DXIL 后端是成熟稳定的（D3D12 主要目标）。步骤⑤ MSC 是 Apple 官方工具。<br>
+          <strong>额外收益：</strong>MSC 直接输出 metallib，跳过 xcrun 步骤。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:16px;">
+    <div class="alert-title">💡 最佳策略：双路径并行（A+B），互为 fallback</div>
+    <div class="alert-body">
+      <strong>首选路径 B</strong>（Slang→DXIL→MSC），因为两个环节都是成熟工具。<br>
+      <strong>路径 A 作为 fallback</strong>（Slang→MSL），当 MSC 输出有问题时回退。<br>
+      两条路径可以在同一 CI 流水线中同时运行，对比渲染结果。
+    </div>
+  </div>
+</div>
+
+<!-- Section 3: Impact Analysis -->
+<div class="section-alt">
+  <h2 class="section-title">三、对成功率的量化影响</h2>
+  <hr class="section-rule">
+
+  <div class="card-grid-3">
+    <div class="card">
+      <div class="card-title">v4.0 (无 MSC)</div>
+      <div class="card-body" style="text-align:center;">
+        <div style="font-size:48px;font-weight:700;color:var(--warning-fg);margin-bottom:8px;">80-90%</div>
+        <div style="font-size:13px;color:var(--text-secondary);">预估成功率</div>
+        <hr style="border:none;border-top:0.5px solid var(--border);margin:12px 0;">
+        <p style="font-size:12px;text-align:left;line-height:1.8;">
+          单一着色器路径（Slang→MSL）<br>
+          Slang Metal 后端实验性<br>
+          依赖社区维护的 MSL 生成
+        </p>
+      </div>
+    </div>
+    <div class="card" style="border:1px solid rgba(143,106,175,0.3);">
+      <div class="card-title"><span class="pill pill-apple">🆕</span> v5.0 (含 MSC)</div>
+      <div class="card-body" style="text-align:center;">
+        <div style="font-size:48px;font-weight:700;color:var(--success-fg);margin-bottom:8px;">85-95%</div>
+        <div style="font-size:13px;color:var(--text-secondary);">预估成功率</div>
+        <hr style="border:none;border-top:0.5px solid var(--border);margin:12px 0;">
+        <p style="font-size:12px;text-align:left;line-height:1.8;">
+          双着色器路径（DXIL+MSL）<br>
+          MSC 由 Apple 官方维护<br>
+          Slang DXIL 后端成熟稳定
+        </p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">提升分析</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>核心提升来源：</strong><br>
+        • Slang DXIL 后端比 Metal 后端成熟 → <span class="pill pill-success">风险↓</span><br>
+        • Apple 官方 MSC vs 社区 Slang MSL → <span class="pill pill-success">质量↑</span><br>
+        • 双路径 fallback 机制 → <span class="pill pill-success">容错↑</span><br>
+        • metallib 直接输出 → <span class="pill pill-success">跳过 xcrun</span><br><br>
+        <strong>提升幅度：+5~10%</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap" style="margin-top:16px;">
+    <table class="compare-table">
+      <thead><tr><th>维度</th><th>v4.0 (Slang→MSL)</th><th>v5.0 (+MSC)</th><th>变化</th></tr></thead>
+      <tbody>
+        <tr><td>着色器编译器成熟度</td><td>Slang Metal 后端（实验性）</td><td>Slang DXIL 后端（成熟） + Apple MSC</td><td><span class="pill pill-success">↑ 显著提升</span></td></tr>
+        <tr><td>Metal 输出质量</td><td>Slang 生成 MSL 文本</td><td>Apple 官方优化 + metallib 二进制</td><td><span class="pill pill-success">↑ 提升</span></td></tr>
+        <tr><td>运行时编译步骤</td><td>MSL → xcrun → metallib</td><td>DXIL → MSC → metallib（一步）</td><td><span class="pill pill-success">简化</span></td></tr>
+        <tr><td>Mesh Shader 支持</td><td>Slang 有限支持</td><td>MSC SM 6.5 完整支持</td><td><span class="pill pill-success">↑ 提升</span></td></tr>
+        <tr><td>Ray Tracing 支持</td><td>Slang 不支持</td><td>MSC SM 6.3 支持</td><td><span class="pill pill-success">🆕 新增能力</span></td></tr>
+        <tr><td>调试信息</td><td>MSL 文本可读</td><td>V2.0+ 支持着色器调试信息</td><td><span class="pill pill-info">互补</span></td></tr>
+        <tr><td>嵌入难度</td><td>调用 slangc/链接 libslang</td><td>额外链接 libmetalirconverter</td><td><span class="pill pill-warning">轻微增加</span></td></tr>
+        <tr><td>许可证</td><td>Slang: Apache 2.0</td><td>MSC: Apple EULA（可分发产物）</td><td><span class="pill pill-warning">需注意</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 4: Embedding Architecture -->
+<div class="section">
+  <h2 class="section-title">四、MSC 在运行时架构中的嵌入位置</h2>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">🔄 着色器编译流水线（v5.0）</div>
+      <div class="card-body">
+        <pre style="font-size:11px;line-height:2;font-family:'JetBrains Mono',monospace;">
+┌─────────────────────────────────────────────┐
+│         libswitch-metal.dylib                │
+│                                              │
+│  ┌─────────────────────────────────────┐    │
+│  │  ShaderCompiler::compile(maxwellBin) │    │
+│  │                                      │    │
+│  │  1. Maxwell Decoder → Structured IR  │    │
+│  │  2. IR → GLSL (Ryujinx CodeGen)      │    │
+│  │  3. GLSL → Slang IR (libslang)       │    │
+│  │                                      │    │
+│  │  ┌──── 双路径 ────┐                  │    │
+│  │  │                 │                  │    │
+│  │  │ 路径 A:          │ 路径 B: 🆕       │    │
+│  │  │ Slang→MSL text  │ Slang→DXIL bin  │    │
+│  │  │     ↓           │     ↓           │    │
+│  │  │ xcrun metal     │ libmetalir-     │    │
+│  │  │     ↓           │ converter       │    │
+│  │  │ metallib        │     ↓           │    │
+│  │  │                 │ metallib        │    │
+│  │  └─────────────────┘                  │    │
+│  │                                      │    │
+│  │  4. Cache metallib → disk            │    │
+│  │  5. newLibrary + newFunction         │    │
+│  └─────────────────────────────────────┘    │
+│                                              │
+│  依赖: libslang + libmetalirconverter 🆕     │
+└─────────────────────────────────────────────┘
+        </pre>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 伪代码：运行时着色器编译</div>
+      <div class="card-body">
+        <div class="api-block">// === 着色器编译函数（简化） ===
+
+MetalLibrary compile_maxwell_shader(
+    const uint8_t* maxwell_binary,
+    size_t size,
+    ShaderStage stage)
+{
+    // 1. Maxwell → GLSL (Ryujinx 管线)
+    std::string glsl = decode_maxwell_to_glsl(
+        maxwell_binary, size, stage);
+
+    // 2. GLSL → DXIL (Slang)
+    slang::Session* session = get_slang_session();
+    slang::IModule* module = session->loadModuleFromSource(
+        glsl.c_str(), "shader");
+    
+    std::vector<uint8_t> dxil;
+    module->getEntryPoint(0)
+        ->compileToTarget(dxil, "dxil");
+
+    // 3. DXIL → metallib (MSC) 🆕
+    IRCompiler* compiler = IRCompilerCreate();
+    IRCompilerSetEntryPointName(compiler, "main");
+    
+    IRObject* dxilObj = IRObjectCreateFromDXIL(
+        dxil.data(), dxil.size(), 
+        IRBytecodeOwnershipNone);
+    
+    IRError* error = nullptr;
+    IRObject* metalIR = IRCompilerAllocCompileAndLink(
+        compiler, NULL, dxilObj, &error);
+    
+    IRMetalLibBinary* metallib = IRMetalLibBinaryCreate();
+    IRObjectGetMetalLibBinary(metalIR, stage, metallib);
+    
+    // 4. 加载到 Metal Device
+    size_t libSize = IRMetalLibGetBytecodeSize(metallib);
+    std::vector<uint8_t> libBytes(libSize);
+    IRMetalLibGetBytecode(metallib, libBytes.data());
+    
+    dispatch_data_t data = dispatch_data_create(
+        libBytes.data(), libSize, 
+        dispatch_get_main_queue(), ^{});
+    
+    NSError* nsError = nil;
+    id&lt;MTLLibrary&gt; library = [device 
+        newLibraryWithData:data error:&nsError];
+    
+    // 5. 清理
+    IRMetalLibBinaryDestroy(metallib);
+    IRObjectDestroy(metalIR);
+    IRObjectDestroy(dxilObj);
+    IRCompilerDestroy(compiler);
+    
+    return library;
+}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warning" style="margin-top:16px;">
+    <div class="alert-title">⚠️ 构建依赖新增</div>
+    <div class="alert-body">
+      v5.0 方案在 v4.0 基础上新增一个编译时依赖：<strong>libmetalirconverter</strong>（来自 Metal Shader Converter）。
+      <br>• <strong>编译时：</strong>链接 <code>libmetalirconverter.dylib</code> + 包含 <code>metal_irconverter.h</code>
+      <br>• <strong>运行时：</strong>需要 Metal Shader Converter 安装在目标 Mac 上（或随 App Bundle 分发 dylib）
+      <br>• <strong>路径 B 为可选：</strong>如果 MSC 不可用，自动回退到路径 A（Slang→MSL→xcrun）
+    </div>
+  </div>
+</div>
+
+<!-- Section 5: Updated Toolset -->
+<div class="section-apple">
+  <h2 class="section-title">五、🆕 更新后的工具集（新增 T22）</h2>
+  <hr class="section-rule">
+
+  <div class="tool-card" style="background:var(--surface); border:1px solid rgba(143,106,175,0.3); padding:20px 24px; border-radius:12px;">
+    <div class="tool-header" style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--apple-bg);color:var(--apple-accent);">T22</span>
+      <span style="font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;">metal-shaderconverter</span>
+      <div style="display:flex;gap:6px;">
+        <span class="pill pill-apple">Apple 官方</span>
+        <span class="pill pill-success">核心 🆕</span>
+        <span class="pill pill-neutral">DXIL→Metal IR</span>
+        <span class="pill pill-neutral">已安装</span>
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text-body);line-height:1.5;margin-bottom:12px;">
+      Apple 官方的着色器中间表示转换器。将 DXIL（SM 6.0-6.6）转换为 Metal IR 并输出 <code>.metallib</code>。
+      支持顶点、片段、计算、几何、曲面细分、光线追踪、Mesh/Amplification 全管线阶段。
+    </div>
+    <div style="font-size:12px;font-family:'JetBrains Mono',monospace;background:var(--code-bg);padding:10px 14px;border-radius:6px;overflow-x:auto;margin-bottom:8px;">
+# CLI：DXIL → metallib
+metal-shaderconverter shader.dxil -o shader.metallib
+
+# 指定入口点和着色器阶段
+metal-shaderconverter shader.dxil -e MainVS -s vertex -o shader.metallib
+
+# 生成人类可读的 MSL（调试用）
+metal-shaderconverter shader.dxil -o shader.metallib --emit-msl shader.metal</div>
+    <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
+      <strong>API 接口：</strong><code>IRCompilerCreate</code> <code>IRObjectCreateFromDXIL</code> <code>IRCompilerAllocCompileAndLink</code> <code>IRObjectGetMetalLibBinary</code> 等 C API。<br>
+      <strong>在项目中的角色：</strong><span class="pill pill-success">核心</span> 着色器翻译管线第二步（Slang→DXIL→MSC→metallib）。与 Slang→MSL 路径形成双保险。<br>
+      <strong>Agent 调用建议：</strong>每次 Slang 输出 DXIL 后立即调用 MSC 转换为 metallib。若 MSC 失败，回退到 Slang MSL 路径。
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:16px;">
+    <div class="card-title">📊 更新后的工具数量：22 个（8 大类）</div>
+    <div class="card-body" style="font-size:13px;">
+      <table>
+        <tr><td style="width:180px;"><strong>9.2 着色器编译/转换</strong></td><td>T4 uam · T5 slangc · T6 glslangValidator · T7 spirv-cross · <strong>🆕 T22 metal-shaderconverter</strong></td></tr>
+      </table>
+      <p style="margin-top:8px;font-size:12px;color:var(--text-secondary);">MSC 归入"着色器编译/转换"分类，因为它是 DXIL→Metal IR 的编译器级转换工具。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Section 6: Updated Agent Quick Reference -->
+<div class="section">
+  <h2 class="section-title">六、🆕 更新后的 Agent 工具调用速查表（含 MSC）</h2>
+  <hr class="section-rule">
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>场景</th><th>调用工具</th><th>命令</th></tr></thead>
+      <tbody>
+        <tr><td>验证 Maxwell 解码</td><td>T1 envydis</td><td><code>envydis -V gm107 shader.bin</code></td></tr>
+        <tr><td>生成已知测试用例</td><td>T4 uam</td><td><code>uam --stage=vert -o out.dksh --raw=raw.bin test.glsl</code></td></tr>
+        <tr><td>验证 GLSL 合法性</td><td>T6 glslangValidator</td><td><code>glslangValidator shader.glsl</code></td></tr>
+        <tr><td>GLSL→SPIR-V</td><td>T6 glslangValidator</td><td><code>glslangValidator -V shader.glsl -o shader.spv</code></td></tr>
+        <tr><td>验证 SPIR-V 合法性</td><td>T8 spirv-val</td><td><code>spirv-val shader.spv</code></td></tr>
+        <tr><td>GLSL→MSL (路径A)</td><td>T5 slangc</td><td><code>slangc shader.glsl -target metal -entry main -stage vertex -o shader.metal</code></td></tr>
+        <tr style="background:rgba(143,106,175,0.06);"><td><strong>🆕 GLSL→DXIL (路径B-1)</strong></td><td><strong>T5 slangc</strong></td><td><strong><code>slangc shader.glsl -target dxil -entry main -stage vertex -o shader.dxil</code></strong></td></tr>
+        <tr style="background:rgba(143,106,175,0.06);"><td><strong>🆕 DXIL→metallib (路径B-2)</strong></td><td><strong>T22 metal-shaderconverter</strong></td><td><strong><code>metal-shaderconverter shader.dxil -o shader.metallib</code></strong></td></tr>
+        <tr><td>交叉验证 MSL</td><td>T7 spirv-cross</td><td><code>spirv-cross shader.spv --msl --output ref.metal</code></td></tr>
+        <tr><td>编译 Metal 着色器</td><td>T18 xcrun metal</td><td><code>xcrun -sdk macosx metal -c shader.metal -o shader.air</code></td></tr>
+        <tr><td>GPU 帧捕获</td><td>T12 Xcode</td><td>Xcode → GPU Frame Capture 按钮</td></tr>
+        <tr><td>Metal 运行时验证</td><td>T9+T10 env</td><td><code>MTL_SHADER_VALIDATION=1 MTL_DEBUG_LAYER=1 ./app</code></td></tr>
+        <tr><td>性能 Profiling</td><td>T13 Instruments</td><td><code>instruments -t "Metal System Trace" ./app</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Section 7: Conclusion -->
+<div class="section-alt">
+  <h2 class="section-title">七、结论</h2>
+  <hr class="section-rule">
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title" style="color:#8F6AAF;">🆕 MSC 对方案的核心提升</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>1. 成功率：</strong>80-90% → <strong>85-95%</strong>（+5~10%）<br>
+        <strong>2. 着色器质量：</strong>Apple 官方优化 vs 社区 Slang 实验性后端<br>
+        <strong>3. 双保险机制：</strong>Slang→DXIL→MSC（主力）+ Slang→MSL（备用）<br>
+        <strong>4. 新能力：</strong>光线追踪着色器、Mesh Shader 完整支持<br>
+        <strong>5. 运行时简化：</strong>跳过 xcrun 步骤，直接输出 metallib
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--warning-fg);">需要注意</div>
+      <div class="card-body" style="font-size:13px;line-height:2;">
+        <strong>1. 新增依赖：</strong>libmetalirconverter（需随 App 分发或要求用户安装）<br>
+        <strong>2. 许可证：</strong>MSC 为 Apple EULA，产物 metallib 可自由分发<br>
+        <strong>3. 仅 macOS 14+：</strong>完整功能需要 Sonoma 或更新系统<br>
+        <strong>4. 不替换 Slang：</strong>MSC 不能替代 Slang（GLSL→DXIL 仍需 Slang）<br>
+        <strong>5. 两条路径都保留：</strong>不删除路径 A，仅增加路径 B
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:16px;">
+    <div class="alert-title">✅ 最终结论</div>
+    <div class="alert-body">
+      <strong>Metal Shader Converter 能显著提升项目成功率（+5~10%），但它是增强性而非颠覆性的。</strong>
+      <br>• 它不改变着色器翻译的核心路径（Maxwell→GLSL→Slang），而是在 Slang 输出后增加了一个更可靠的 Metal 转换步骤。
+      <br>• 它最大的价值在于提供双保险：当 Slang 的实验性 Metal 后端遇到问题时，可以切换到 Slang（成熟的 DXIL 后端）+ MSC（Apple 官方转换器）。
+      <br>• 强烈建议在 Phase 1 就验证 MSC 路径的可行性。
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-content">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">Switch Metal Backend 调研 v5.0</div>
+        <div class="footer-label">🆕 新增：Metal Shader Converter 整合分析</div>
+      </div>
+      <div class="footer-links">
+        <strong>新增工具</strong><br>
+        <a href="https://developer.apple.com/metal/shader-converter/" target="_blank">Metal Shader Converter</a> ·
+        <a href="https://developer.apple.com/download/all/?q=metal%20shader%20converter" target="_blank">MSC 下载</a>
+      </div>
+      <div class="footer-links">
+        <strong>核心项目</strong><br>
+        <a href="https://github.com/shader-slang/slang" target="_blank">Slang</a> ·
+        <a href="https://github.com/3Shain/dxmt" target="_blank">dxmt</a> ·
+        <a href="https://github.com/devkitPro/deko3d" target="_blank">deko3d</a>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>2026-06-11 · v5.0 · Metal Shader Converter 整合</span>
+      <span>Generated by <a href="https://allyhub.com" target="_blank" style="color:var(--text-secondary);">AllyHub AI</a></span>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

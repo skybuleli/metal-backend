@@ -1,0 +1,15 @@
+{
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.renderWhitespace": "boundary",
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "[csharp]": { "editor.tabSize": 4 },
+  "[cpp]": { "editor.tabSize": 4 },
+  "[metal]": { "editor.tabSize": 4 },
+  "[python]": { "editor.tabSize": 4 },
+  "cmake.sourceDirectory": "${workspaceFolder}/libmetal_bridge",
+  "dotnet.defaultSolution": "ryubing/Ryujinx.sln"
+}
