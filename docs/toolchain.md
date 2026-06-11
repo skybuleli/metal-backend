@@ -28,10 +28,11 @@
 
 ```bash
 slangc input.glsl -target dxil -entry main -stage vertex -profile sm_6_0 -o output.dxil
+slangc input.glsl -target dxil -entry main -stage fragment -profile ps_6_0 -o output.dxil
 metal-shaderconverter output.dxil -o output.metallib
 ```
 
-> 注意：必须加 `-profile sm_6_0`，否则 slangc 不生成 DXIL。
+> 注意：必须显式指定 profile。顶点阶段使用 `sm_6_0`；片段阶段 P1.7 验证后固定使用 `ps_6_0`，部分简单片段样本使用 `sm_6_0` 时 slangc 会返回 0 但不生成 DXIL。
 
 ### Path C — SPIR-V 桥接 ✅
 
@@ -59,6 +60,7 @@ slangc input.glsl -target dxil -target spirv \     # 多目标输出
 | 陷阱 | 表现 | 解决方案 |
 |------|------|----------|
 | slangc DXIL 不生成输出 | 无文件 | 加 `-profile sm_6_0` |
+| 片段阶段 DXIL 不生成输出 | slangc 返回 0 但无 DXIL | 使用 `-stage fragment -profile ps_6_0` |
 | MSC CLT 环境 | Apple 说需 Xcode 15+ | ✅ CLT SDK 足够 |
 | 路径 B/C 不可用 | xcrun 报错 | 仅用 Path A |
 | Ryubing 构建目录 | 无 RID 子目录 | 不带 `-r` 正确行为 |

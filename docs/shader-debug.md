@@ -13,6 +13,7 @@
 | 简单 FS（颜色输出） | ✅ | ✅ | — |
 | texture() 采样 (VS) | ✅ | ✅ | — |
 | texture() 采样 (FS) | ✅ (Path A) | ✅ | Path B 的 slang -target metal ❌ |
+| FS 使用 `ps_6_0` profile | ✅ | — | P1.7 固定片段阶段 profile |
 | layout(std140) UBO | ❌ E36107 | ✅ | 改用 Slang `ConstantBuffer<T>` 语法 |
 | push_constant | ❌ E36107 | ✅ | 改用 Slang `[[vk::push_constant]]` 或 constant buffer |
 | gl_PointSize (VS) | ❌ SV_PointSize 无效 | ✅ | DXIL SM 6.0 VS 无此语义，需用其他机制 |
@@ -39,6 +40,7 @@
 | `E36107: unavailable features` | slangc DXIL | GLSL std140/push_constant 在 DXIL SM 6.0 无对应语义 | CommandMapper 直接输出 Slang 原生语法（ConstantBuffer<T>、[shader("vertex")]）| P4 已决策：不使用 GLSL 作为 Path A 输入 |
 | `SV_PointSize is invalid` | slangc DXIL (dxc) | DXIL SM 6.0 VS 无 gl_PointSize 语义 | 移除 gl_PointSize 或用其他方式传递点大小 | Switch 游戏常用点精灵，P4/P8 需处理 |
 | `E36107` (fragment texture) | slangc -target metal | Slang metal 目标 FS 不支持 texture() | Path A 不受影响 | 仅 Path B 不可用，非阻塞 |
+| slangc 返回 0 但无 DXIL | slangc DXIL (FS) | 部分简单片段样本使用 `sm_6_0` 时未产物 | 片段阶段固定 `-profile ps_6_0` | P1.7 已在脚本中固化 |
 | `unrecognized source file` | glslangValidator | `.glsl` 后缀无法识别着色器阶段 | 用 `.vert.glsl` / `.frag.glsl` 复合后缀 | 所有脚本均应用复合后缀 |
 | MSL 有效但无法编译 metallib | xcrun metal | 需完整 Xcode.app，CLT-only 无此工具 | 用 Path A (MSC) 代替 | P4+ 需安装 Xcode 或使用 MSC |
 | mktemp Operation not permitted | 沙箱环境 | macOS 沙箱限制 /tmp 写入 | 回退到 `$SCRIPT_DIR/.tmp_test` | 所有脚本均已内置回退逻辑 |
@@ -109,6 +111,7 @@ spirv-val output.spv
 - metallib < DXIL → MSC 转换失败
 - 典型：2840B DXIL → 5804B metallib
 - deko3d 简单 VS：3176B DXIL → 6216B metallib（≈1.96×）
+- deko3d 简单 FS：2816B DXIL → 4884B metallib（≈1.73×，P1.7）
 - Ryujinx 真实 VS（msl_dump）：23~42KB MSL 文本（600~1000 行）
 
 ## 调试命令速查

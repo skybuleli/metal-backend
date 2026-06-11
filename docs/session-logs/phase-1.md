@@ -4,12 +4,13 @@
 
 - **阶段**: Phase 1 — 着色器管道概念验证
 - **当前状态**: 进行中
-- **已完成任务**: P1.1–P1.6
-- **下一任务**: P1.7 真实游戏片段着色器 Path A 测试
+- **已完成任务**: P1.1–P1.7
+- **下一任务**: P1.8 真实游戏计算着色器 Path A 测试
 - **关键发现**:
   - Path A 端到端可用，但 Path A 输入应转向 Slang 原生语法
   - GLSL std140 UBO / push_constant 在 slangc DXIL SM 6.0 下不兼容
   - `gl_PointSize` 在 DXIL SM 6.0 VS 中无 SV_PointSize 语义
+  - 片段阶段 Path A 固定使用 `ps_6_0`，避免 slangc 返回 0 但无 DXIL
   - Path B 可生成 MSL，但 CLT-only 环境无法用 `xcrun metal` 编译 metallib
 
 ---
@@ -147,3 +148,23 @@
 - **后续建议**:
   - P1.7 开始前仍按 AGENTS.md 协议先标记 🔄
   - 后续可继续把证据文件路径结构化，但本次未强制改旧证据格式
+
+---
+
+## 2026-06-12 凌晨 | P1.7 真实片段着色器 Path A 测试 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P1.7 完成，`tools/test_real_fs_path_a.sh` 通过
+- **变更**:
+  - 新增 `tools/test_real_fs_path_a.sh`：覆盖 deko3d GLSL 片段样本、Slang 原生真实片段样本、内嵌片段特性、Ryujinx Fragment MSL 抽样
+  - 新增 `docs/evidence/P1.7-real-fs-path-a.log`：保存完整验证输出
+  - 更新 `docs/toolchain.md`：记录片段阶段 Path A 命令使用 `ps_6_0`
+  - 更新 `docs/shader-debug.md`：补充 FS profile 兼容性矩阵、失败模式和大小健康检查
+- **验证**:
+  - `bash tools/test_real_fs_path_a.sh` → 11 Path A 通过 / 0 失败 / 6 MSL 跳过 / 总计 17
+  - `python3 tools/verify_progress.py` → 22/124 任务完成，验证通过
+- **关键发现**:
+  - 部分简单片段样本使用 `sm_6_0` 时 slangc 返回 0 但不生成 DXIL
+  - 片段阶段固定 `-stage fragment -profile ps_6_0` 后，GLSL 与 Slang 原生片段样本均可生成 DXIL 并通过 MSC
+  - Ryujinx Fragment MSL 抽样含 `metal_stdlib` 与 `fragment` 关键字；CLT-only 环境下仍仅做格式抽检
+- **Commit**: `feat(tools): P1.7 真实片段着色器 Path A 测试 [done]`

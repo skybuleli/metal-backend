@@ -19,11 +19,26 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 1 — 着色器管道概念验证
-- 当前进度：21/124 任务完成
-- 下一任务：P1.7 真实游戏片段着色器 Path A 测试
+- 当前进度：22/124 任务完成
+- 下一任务：P1.8 真实游戏计算着色器 Path A 测试
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 凌晨 | P1.7 真实片段着色器 Path A 测试 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P1.7 完成，`tools/test_real_fs_path_a.sh` 通过
+- **变更**:
+  - 新增 `tools/test_real_fs_path_a.sh`，覆盖 deko3d GLSL 片段、Slang 原生片段、内嵌片段特性和 Ryujinx Fragment MSL 抽样
+  - 新增 `docs/evidence/P1.7-real-fs-path-a.log` 作为任务证据
+  - 更新 `docs/toolchain.md` 和 `docs/shader-debug.md`，记录片段阶段固定使用 `ps_6_0`
+- **验证**:
+  - `bash tools/test_real_fs_path_a.sh` → 11 Path A 通过 / 0 失败 / 6 MSL 跳过
+- **关键发现**:
+  - 部分简单片段样本使用 `sm_6_0` 时 slangc 返回 0 但不生成 DXIL
+  - 片段阶段使用 `-stage fragment -profile ps_6_0` 可稳定生成 DXIL 并通过 MSC
+- **归档**: `docs/session-logs/phase-1.md`
 
 ### 2026-06-12 凌晨 | 状态机循环加固 | ✅ 完成
 
