@@ -94,9 +94,10 @@ Mat4 Mat4Perspective(float fovY, float aspect, float nearZ, float farZ)
     Mat4 r;
     r.m[0]  = 1.0f / (aspect * tanHalf);
     r.m[5]  = 1.0f / tanHalf;
-    r.m[10] = -(farZ + nearZ) / (farZ - nearZ);
+    // Metal RH: z_ndc ∈ [0,1], w_clip = -z_view
+    r.m[10] = farZ / (nearZ - farZ);     // = -farZ / (farZ - nearZ)
     r.m[11] = -1.0f;
-    r.m[14] = -2.0f * nearZ * farZ / (farZ - nearZ);
+    r.m[14] = nearZ * farZ / (nearZ - farZ);  // = -nearZ * farZ / (farZ - nearZ)
     return r;
 }
 
@@ -248,12 +249,12 @@ struct VertexOut {
 };
 
 vertex VertexOut vertexMain(uint vertexId [[vertex_id]],
-                            constant float3* positions [[buffer(0)]],
-                            constant float3* normals [[buffer(1)]],
+                            constant packed_float3* positions [[buffer(0)]],
+                            constant packed_float3* normals [[buffer(1)]],
                             constant UniformData& uniforms [[buffer(2)]])
 {
-    float3 pos = positions[vertexId];
-    float3 norm = normals[vertexId];
+    packed_float3 pos = positions[vertexId];
+    packed_float3 norm = normals[vertexId];
 
     VertexOut out;
     out.position = uniforms.mvpMatrix * float4(pos, 1.0);
@@ -372,6 +373,26 @@ int main()
     Mat4 proj  = Mat4Perspective(3.14159f * 0.45f, float(kWidth)/float(kHeight), 0.1f, 100.0f);
     Mat4 mvp  = Mat4Mul(Mat4Mul(proj, view), model);
     std::memcpy(uniformData.mvpMatrix, mvp.m, sizeof(mvp.m));
+
+    // 调试：打印 MVP 矩阵和测试顶点
+    std::cout << "MVP 矩阵:\n";
+    for (int r = 0; r < 4; ++r)
+    {
+        std::cout << "  [";
+        for (int c = 0; c < 4; ++c)
+            std::cout << mvp.m[c*4 + r] << (c < 3 ? ", " : "");
+        std::cout << "]\n";
+    }
+    // 测试一个立方体顶点乘以 MVP
+    float testVertex[4] = {0.5f, 0.5f, 0.5f, 1.0f};
+    float result[4] = {0};
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c)
+            result[r] += mvp.m[c*4 + r] * testVertex[c];
+    std::cout << "测试顶点 (0.5,0.5,0.5) → clip ("
+              << result[0] << ", " << result[1] << ", " << result[2] << ", " << result[3] << ")\n";
+    if (result[3] != 0)
+        std::cout << "  归一化 NDC: (" << result[0]/result[3] << ", " << result[1]/result[3] << ", " << result[2]/result[3] << ")\n";
 
     uniformData.lightPos[0] = 2.5f;
     uniformData.lightPos[1] = 3.0f;
