@@ -1,0 +1,173 @@
+{
+  "meta": {
+    "task": "P1.9",
+    "tool": "bench_compile.sh",
+    "timestamp": "2026-06-11T20:06:00Z",
+    "slangc": "/usr/local/bin/slangc",
+    "msc": "/usr/local/bin/metal-shaderconverter"
+  },
+  "summary": {
+    "total": 9,
+    "pass": 6,
+    "fail": 3,
+    "pass_rate": 66,
+    "regression_count": 0,
+    "drift_count": 0
+  },
+  "by_bucket": {
+    "must-pass": {"total": 3, "pass": 3, "fail": 0, "pass_rate": 100}
+    ,
+    "known-good": {"total": 3, "pass": 3, "fail": 0, "pass_rate": 100}
+    ,
+    "known-failure": {"total": 3, "pass": 0, "fail": 3, "pass_rate": 0}
+  },
+  "by_stage": {
+    "vertex": {"total": 4, "pass": 2, "fail": 2}
+    ,
+    "fragment": {"total": 3, "pass": 2, "fail": 1}
+    ,
+    "compute": {"total": 2, "pass": 2, "fail": 0}
+  },
+  "by_error_kind": {
+    "missing_entry": 1,
+    "syntax_error": 1,
+    "type_error": 1
+  },
+  "samples": [
+    {
+      "bucket": "must-pass",
+      "name": "vs-simple",
+      "stage": "vertex",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/vs-simple.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 99,
+      "dxil_bytes": 2848,
+      "metallib_bytes": 5804,
+      "slang_ms": 326,
+      "msc_ms": 86,
+      "total_ms": 412
+    },
+    {
+      "bucket": "must-pass",
+      "name": "ps-simple",
+      "stage": "fragment",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/ps-simple.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 112,
+      "dxil_bytes": 2548,
+      "metallib_bytes": 4728,
+      "slang_ms": 161,
+      "msc_ms": 34,
+      "total_ms": 195
+    },
+    {
+      "bucket": "must-pass",
+      "name": "cs-simple",
+      "stage": "compute",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/cs-simple.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 94,
+      "dxil_bytes": 2064,
+      "metallib_bytes": 4308,
+      "slang_ms": 261,
+      "msc_ms": 38,
+      "total_ms": 299
+    },
+    {
+      "bucket": "known-good",
+      "name": "vs-multi-io",
+      "stage": "vertex",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/vs-multi-io.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 246,
+      "dxil_bytes": 3260,
+      "metallib_bytes": 6248,
+      "slang_ms": 226,
+      "msc_ms": 35,
+      "total_ms": 261
+    },
+    {
+      "bucket": "known-good",
+      "name": "ps-texture",
+      "stage": "fragment",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/ps-texture.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 182,
+      "dxil_bytes": 3676,
+      "metallib_bytes": 5228,
+      "slang_ms": 199,
+      "msc_ms": 42,
+      "total_ms": 241
+    },
+    {
+      "bucket": "known-good",
+      "name": "cs-buffer",
+      "stage": "compute",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/cs-buffer.glsl",
+      "result": "pass",
+      "fail_stage": "none",
+      "error_kind": "none",
+      "src_bytes": 291,
+      "dxil_bytes": 3116,
+      "metallib_bytes": 4612,
+      "slang_ms": 183,
+      "msc_ms": 40,
+      "total_ms": 223
+    },
+    {
+      "bucket": "known-failure",
+      "name": "vs-syntax-err",
+      "stage": "vertex",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/vs-syntax-err.glsl",
+      "result": "fail",
+      "fail_stage": "slang",
+      "error_kind": "syntax_error",
+      "src_bytes": 98,
+      "dxil_bytes": 0,
+      "metallib_bytes": 0,
+      "slang_ms": 118,
+      "msc_ms": 0,
+      "total_ms": 118
+    },
+    {
+      "bucket": "known-failure",
+      "name": "ps-no-entry",
+      "stage": "fragment",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/ps-no-entry.glsl",
+      "result": "fail",
+      "fail_stage": "slang",
+      "error_kind": "missing_entry",
+      "src_bytes": 99,
+      "dxil_bytes": 0,
+      "metallib_bytes": 0,
+      "slang_ms": 128,
+      "msc_ms": 0,
+      "total_ms": 128
+    },
+    {
+      "bucket": "known-failure",
+      "name": "vs-type-err",
+      "stage": "vertex",
+      "path": "/var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.5c0BmNLHAA/vs-type-err.glsl",
+      "result": "fail",
+      "fail_stage": "slang",
+      "error_kind": "type_error",
+      "src_bytes": 137,
+      "dxil_bytes": 0,
+      "metallib_bytes": 0,
+      "slang_ms": 133,
+      "msc_ms": 0,
+      "total_ms": 133
+    }
+  ]
+}
