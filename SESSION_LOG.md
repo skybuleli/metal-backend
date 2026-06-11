@@ -18,12 +18,27 @@
 
 ## 当前状态摘要
 
-- 当前阶段：Phase 1 — 着色器管道概念验证
-- 当前进度：17/220 任务完成
-- 下一任务：P2.1 — D1: C++ Metal 三角形 Demo
+- 当前阶段：Phase 2 — 渐进式渲染 Demo
+- 当前进度：25/132 任务完成
+- 下一任务：P2.0 — 收口 P2 规格：同步 D1-D8 验收标准、构建入口和证据格式
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 | P2 任务扩充与 Demo 验收标准收口 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 将 P2 从 6 个粗任务扩展为 D1-D8 渐进式验证链
+- **变更**:
+  - 更新 `PROGRESS.md`：P2 增加 `P2.0` 到 `P2.12`，覆盖 D1-D8 构建、运行、证据和 D8 性能验证
+  - 更新 `src/demos/README.md`：补充 D1-D8 路线图、任务映射、证据要求和约束
+  - 重新生成 `NEXT_TASK.md`：下一任务切换为 `P2.0`
+  - 将 Phase 1 阶段状态标记为完成，避免阶段状态与 P1 全部完成事实冲突
+- **验证**:
+  - `python3 tools/gen_next_task.py`
+  - `python3 tools/verify_progress.py` → 25/132 任务完成，验证通过
+- **说明**:
+  - Rust FFI 两项从 P2 移出；当前蓝图主线是 C++/C# 混合，P2 应聚焦 Metal Demo 能力验证
 
 ### 2026-06-12 | 仓库重建与 P1.9 补提交 | ✅ 完成
 

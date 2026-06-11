@@ -1,32 +1,50 @@
 # 渐进式渲染 Demo（D1–D8）
 
 > Phase 2 实现。8 个渐进复杂度 Demo，从三角形到完整 3D 场景。
+>
+> 目标不是做展示页面，而是建立一条可重复验证的 Metal 能力梯子：每一级只新增一组能力，保留构建日志、运行截图或帧缓冲、必要的 JSON 性能数据，供 P4/P6/P7 继续复用。
 
 ## Demo 路线图
 
 | 级别 | 名称 | 新增内容 | 出口标准 |
 |------|------|----------|----------|
-| D1 | 三角形 | MTLDevice + 硬编码着色器 | 彩色三角形渲染 |
-| D2 | 顶点缓冲 | MTLBuffer + 顶点数据 | 正方形渲染 |
-| D3 | 统一缓冲 | UBO + 旋转动画 | 旋转三角形 |
-| D4 | 纹理 | MTLTexture + 采样器 | 纹理贴图正方形 |
-| D5 | 深度测试 | DepthStencilState | 3D 立方体 |
-| D6 | Path A 着色器 | Slang→DXIL→MSC→metallib | metallib 加载渲染 |
-| D7 | 多通道 | 离屏渲染 + 后处理 | Bloom 效果 |
-| D8 | 复杂场景 | 所有 D1-D7 组合 + Phong 光照 | ≥60fps |
+| D1 | Hello Triangle | metal-cpp、MTLDevice、MTLCommandQueue、手写 MSL、RenderPipelineState | 彩色三角形可渲染，有截图或帧缓冲证据 |
+| D2 | Textured Quad | Path A：Slang→DXIL→MSC→metallib，MTLTexture，MTLSampler，UV 坐标 | 纹理 quad 可渲染，有 metallib 加载日志 |
+| D3 | Multi-Texture | 多纹理混合、filter/wrap/mipmap 采样模式 | 同一画面可区分多纹理和采样器模式 |
+| D4 | Basic Lighting | Uniform Buffer、矩阵变换、深度测试、背面剔除、Phong 光照 | 旋转 3D 物体有稳定深度和光照 |
+| D5 | Advanced Texturing | 法线贴图、Cubemap/Skybox、RTT 或 MSAA 子集 | 天空盒和高级贴图路径至少各有一项通过 |
+| D6 | Advanced Lighting | Shadow Map、HDR、Tone Mapping、Bloom 后处理 | 阴影和 Bloom 可见，离屏渲染链路可复用 |
+| D7 | GPU-Driven | Compute 粒子、Instancing、Indirect Draw | 粒子或实例渲染由 GPU 数据驱动，CPU 每帧提交量可记录 |
+| D8 | Complex Showcase | PBR 材质球、阴影、天空盒、后处理、粒子、HUD、自由摄像机 | M1 上 ≥60fps；若未达标，必须产出瓶颈报告 |
+
+## P2 任务映射
+
+| 任务 | 对应 Demo | 交付物 |
+|------|-----------|--------|
+| P2.0 | 全部 | D1-D8 验收标准、构建入口、证据目录规范 |
+| P2.1-P2.2 | D1 | 可构建 Demo、运行截图或帧缓冲、构建日志 |
+| P2.3-P2.4 | D2 | Path A metallib、纹理渲染证据、加载日志 |
+| P2.5 | D3 | 多纹理采样 Demo 和截图 |
+| P2.6 | D4 | 光照与深度 Demo 和截图 |
+| P2.7 | D5 | 高级贴图子集 Demo 和截图 |
+| P2.8 | D6 | 阴影/HDR/Bloom Demo 和截图 |
+| P2.9 | D7 | GPU 驱动 Demo 和性能记录 |
+| P2.10-P2.11 | D8 | 综合场景、FPS/帧时间 JSON、瓶颈报告或通过证据 |
+| P2.12 | 全部 | `make build-demos`、回归入口和证据格式 |
 
 ## 技术栈
 
 - **语言**: C++17 + metal-cpp
-- **着色器**: 硬编码 MSL（D1–D5），Path A metallib（D6–D8）
-- **构建**: CMake 或独立 Makefile
+- **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；必要时保留手写 MSL 作为隔离对照
+- **构建**: 顶层 Makefile 调用 `src/demos/Makefile`，每个 Demo 可有独立构建入口
+- **证据**: `docs/evidence/` 下保存构建日志、截图说明、帧缓冲摘要或性能 JSON
 
 ## 构建
 
 ```bash
-make all     # 编译所有 Demo
-make d1      # 仅编译 D1
-make run-d1  # 运行 D1
+make build-demos  # 编译所有 Demo
+make -C src/demos d1
+make -C src/demos run-d1
 ```
 
 ## 依赖
@@ -34,6 +52,13 @@ make run-d1  # 运行 D1
 - Xcode Command Line Tools（含 Metal 框架）
 - metal-cpp 头文件
 - metal-shaderconverter 4.0（D6–D8）
+
+## 约束
+
+- D1-D8 每一级必须独立可运行，不能依赖后一级代码。
+- 每一级只能新增本级目标能力；公共工具可以抽到 `src/demos/common/`，但需要保持接口稳定。
+- D2 起必须记录着色器来源、成功路径和 metallib 文件大小，避免把 Path A 失败误判成渲染错误。
+- D8 不达 60fps 时不能简单标记完成，必须给出 CPU/GPU/编译/资源绑定中至少一个明确瓶颈。
 
 ## 参考
 
