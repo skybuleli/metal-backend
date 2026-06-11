@@ -1,14 +1,14 @@
-# 下一任务 — P1.5 编写 test_slang_metal.sh (Path B 尝试)
+# 下一任务 — P1.6 真实游戏顶点着色器 Path A 测试
 
-> 生成时间：2026-06-12 00:45:05  
+> 生成时间：2026-06-12 00:56:28  
 > 所属阶段：未知
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P1.5 |
-| 任务名称 | 编写 test_slang_metal.sh (Path B 尝试) |
+| 任务 ID | P1.6 |
+| 任务名称 | 真实游戏顶点着色器 Path A 测试 |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
@@ -24,7 +24,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P1.5 → ✅
+- 更新 PROGRESS.md：P1.6 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

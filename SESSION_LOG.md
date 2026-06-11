@@ -107,3 +107,19 @@
   - spirv-cross MSL 输出紧凑有效，包含完整 Metal 着色器结构
   - MSL→metallib 需完整 Xcode (xcrun metal)，当前 CLT 环境暂不可用，非阻塞
 - **Commit**: `feat(tools): P1.4 Path C 端到端验证脚本 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.5 Path B 尝试脚本 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.5 完成，test_slang_metal.sh 4 PASS + 2 预期 SKIP
+- **变更**:
+  - 编写 tools/test_slang_metal.sh：Slang→MSL + 环境检测 + xcrun metal 尝试
+  - 顶点着色器 MSL 1060 bytes (64 行)，片段着色器 MSL 735 bytes (49 行)
+  - xcrun metal 不可用（CLT-only），整体仍 PASS
+- **关键发现**:
+  - Slang `-target metal` 的 fragment 阶段不支持 GLSL `texture()` 采样，需简化着色器
+  - Slang MSL 输出有效但无法编译为 metallib（需完整 Xcode）
+  - Path B 部分可用：MSL 生成 OK，编译 metallib 不可用
+- **Commit**: `feat(tools): P1.5 Path B 尝试脚本 [done]`
