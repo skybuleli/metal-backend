@@ -45,3 +45,20 @@
   - 更新 PROGRESS.md（15/220, 6.8%）+ NEXT_TASK.md（→P1.1）
 - **问题**: 沙箱文件暂存缓存导致需直接覆写
 - **Commit**: 仓库模板完善
+
+---
+
+## 2026-06-12 凌晨 | P1.1 Path A 端到端验证脚本 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.1 完成，test_slang_dxil.sh 4/4 PASS
+- **变更**:
+  - 编写 tools/test_slang_dxil.sh：内嵌 VS + FS 两个 GLSL 着色器，验证 GLSL→DXIL→metallib 全流程
+  - 修复 verify_progress.py + gen_next_task.py 正则，支持三级任务 ID（P4.1.1）
+  - 补充 .githooks/pre-commit 调用 verify_progress.py
+  - 校正 PROGRESS.md 统计：76→124 个任务
+- **关键发现**:
+  - GLSL 460 UBO 语法（`uniform Uniforms { mat4 uMVP; }`）与 slangc DXIL SM 6.0 不兼容，需用简化写法
+  - 项点着色器 DXIL 3128 bytes → metallib 6116 bytes
+  - 片段着色器 DXIL 3828 bytes → metallib 5388 bytes
+- **Commit**: `feat(tools): P1.1 Path A 端到端验证脚本 [done]`
