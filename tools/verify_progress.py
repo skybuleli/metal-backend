@@ -15,8 +15,10 @@ import re
 import sys
 from pathlib import Path
 
+from gen_next_task import find_current_phase, find_next_task, parse_tasks, task_counts
 
-def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
+
+def verify_progress(progress_path: Path, next_task_path: Path) -> tuple[bool, list[str]]:
     """验证 PROGRESS.md。返回 (是否通过, 错误列表)。"""
     errors = []
 
@@ -25,38 +27,43 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
         return False, errors
 
     content = progress_path.read_text(encoding="utf-8")
+    tasks = parse_tasks(content)
+    counts = task_counts(tasks)
+    next_task = find_next_task(tasks)
+    current_phase = find_current_phase(tasks, next_task)
 
     # 检查 1：不能有两个 🔄 同时存在
-    in_progress = re.findall(r"🔄", content)
-    if len(in_progress) > 1:
-        errors.append(f"发现 {len(in_progress)} 个 🔄（进行中）任务，同时只能有一个！")
-    elif len(in_progress) == 0:
-        pass  # 可以没有进行中的任务
+    if counts["in_progress"] > 1:
+        errors.append(f"发现 {counts['in_progress']} 个 🔄（进行中）任务，同时只能有一个！")
 
     # 检查 2：任务总数与进度百分比
-    # 匹配 | P0.1 | ... | ✅ | 或类似格式
-    all_tasks = re.findall(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|", content)
-    completed_tasks = re.findall(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|.*?\|\s*✅\s*\|", content)
-
-    total = len(set(all_tasks))
-    completed = len(set(completed_tasks))
-
-    if total == 0:
+    if counts["total"] == 0:
         errors.append("未找到任何任务行（格式：| P0.1 | 描述 | 状态 |）")
     else:
-        # 检查完成的百分比
-        reported_pct = re.search(r"(\d+\.?\d*)%", content)
-        if reported_pct:
-            actual_pct = round(completed / total * 100, 1)
-            reported_val = float(reported_pct.group(1))
-            if abs(actual_pct - reported_val) > 1:
+        header_match = re.search(
+            r"^# 完成度:\s*(\d+)/(\d+)\s*任务\s*\((\d+\.?\d*)%\)",
+            content,
+            flags=re.MULTILINE,
+        )
+        if header_match:
+            reported_completed = int(header_match.group(1))
+            reported_total = int(header_match.group(2))
+            reported_pct = float(header_match.group(3))
+            if reported_completed != counts["completed"] or reported_total != counts["total"]:
                 errors.append(
-                    f"百分比不一致：报告中 {reported_val}%，实际 {actual_pct}%"
-                    f"（{completed}/{total}）"
+                    "顶部完成度不一致："
+                    f"报告中 {reported_completed}/{reported_total}，"
+                    f"实际 {counts['completed']}/{counts['total']}"
                 )
+            if abs(reported_pct - counts["percent"]) > 0.1:
+                errors.append(
+                    f"顶部百分比不一致：报告中 {reported_pct}%，实际 {counts['percent']}%"
+                )
+        else:
+            errors.append("缺少顶部完成度行：# 完成度: N/M 任务 (P%)")
 
     # 检查 3：重复的任务 ID
-    task_ids = [m.group(1) for m in re.finditer(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|", content)]
+    task_ids = [task["task_id"] for task in tasks]
     seen = {}
     for tid in task_ids:
         if tid in seen:
@@ -64,19 +71,51 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
         seen[tid] = True
 
     # 检查 4：✅ 任务必须有日期
-    completed_lines = re.findall(
-        r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|.*?\|\s*✅\s*\|.*?\|",
-        content,
-    )
-    for line_match in re.finditer(
-        r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|(.*?)\|\s*✅\s*\|(.*?)\|",
-        content,
-    ):
-        date_col = line_match.group(3).strip()
-        if not re.search(r"\d{4}-\d{2}-\d{2}", date_col):
+    for task in tasks:
+        if task["status"] == "✅" and not re.search(r"\d{4}-\d{2}-\d{2}", task["done_at"]):
+            errors.append(f"{task['task_id']} 标记为 ✅ 但没有完成日期")
+
+    # 检查 5：底部统计必须与任务表一致
+    expected_stats = {
+        "总任务数": str(counts["total"]),
+        "已完成": f"{counts['completed']} ({counts['percent']}%)",
+        "进行中": str(counts["in_progress"]),
+        "阻塞": str(counts["blocked"]),
+        "跳过": str(counts["skipped"]),
+        "待开始": str(counts["pending"]),
+        "当前阶段": current_phase,
+        "下一任务": (
+            f"{next_task['task_id']} — {next_task['task_desc']}"
+            if next_task is not None
+            else "无"
+        ),
+    }
+    for key, expected in expected_stats.items():
+        stat_match = re.search(rf"^- {re.escape(key)}:\s*(.+)$", content, flags=re.MULTILINE)
+        if not stat_match:
+            errors.append(f"统计区缺少字段：{key}")
+            continue
+        actual = stat_match.group(1).strip()
+        if actual != expected:
+            errors.append(f"统计区字段 {key} 不一致：报告中 {actual}，实际 {expected}")
+
+    # 检查 6：NEXT_TASK.md 必须与 PROGRESS.md 的当前/下一任务一致
+    if not next_task_path.exists():
+        errors.append(f"文件不存在：{next_task_path}")
+    elif next_task is not None:
+        next_task_content = next_task_path.read_text(encoding="utf-8")
+        id_match = re.search(r"\| 任务 ID \|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|", next_task_content)
+        if not id_match:
+            errors.append("NEXT_TASK.md 缺少任务 ID")
+        elif id_match.group(1) != next_task["task_id"]:
             errors.append(
-                f"{line_match.group(1)} 标记为 ✅ 但没有完成日期"
+                f"NEXT_TASK.md 指向 {id_match.group(1)}，"
+                f"但 PROGRESS.md 当前/下一任务是 {next_task['task_id']}"
             )
+    else:
+        next_task_content = next_task_path.read_text(encoding="utf-8")
+        if "所有任务已完成" not in next_task_content:
+            errors.append("PROGRESS.md 无待办任务，但 NEXT_TASK.md 未显示所有任务已完成")
 
     return len(errors) == 0, errors
 
@@ -84,14 +123,14 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
 def main():
     repo_root = Path(__file__).resolve().parent.parent
     progress_path = repo_root / "PROGRESS.md"
+    next_task_path = repo_root / "NEXT_TASK.md"
 
     print(f"验证 {progress_path} ...")
-    passed, errors = verify_progress(progress_path)
+    passed, errors = verify_progress(progress_path, next_task_path)
 
     if passed:
-        total = len(re.findall(r"\|\s*P\d+\.\d+(?:\.\d+)?[a-z]?\s*\|", progress_path.read_text()))
-        completed = len(re.findall(r"\|\s*P\d+\.\d+(?:\.\d+)?[a-z]?\s*\|.*?\|\s*✅\s*\|", progress_path.read_text()))
-        print(f"✅ 验证通过！{completed}/{total} 任务完成")
+        counts = task_counts(parse_tasks(progress_path.read_text(encoding="utf-8")))
+        print(f"✅ 验证通过！{counts['completed']}/{counts['total']} 任务完成")
         return 0
     else:
         print(f"🚫 验证失败（{len(errors)} 个问题）：")

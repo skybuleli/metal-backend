@@ -1,7 +1,7 @@
 # 下一任务 — P1.7 真实游戏片段着色器 Path A 测试（龙神缓存 + deko3d 示例，目标：管线不崩）
 
-> 生成时间：2026-06-12 01:54:40  
-> 所属阶段：未知
+> 生成时间：2026-06-12 02:42:39
+> 所属阶段：Phase 1 — 着色器管道概念验证
 
 ## 任务详情
 
@@ -9,12 +9,13 @@
 |------|------|
 | 任务 ID | P1.7 |
 | 任务名称 | 真实游戏片段着色器 Path A 测试（龙神缓存 + deko3d 示例，目标：管线不崩） |
+| 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
 ## 执行步骤
 
-1. 阅读相关技术规格（`.blueprint/architecture.md`）
+1. 阅读相关技术规格（`blueprint/architecture.md`）
 2. 在 PROGRESS.md 中将任务标记为 🔄
 3. 执行任务
 4. 验证出口标准
@@ -32,4 +33,4 @@
 
 - [AGENTS.md](AGENTS.md) — Agent 行为规范
 - [PROGRESS.md](PROGRESS.md) — 总体进度
-- [.blueprint/architecture.md](.blueprint/architecture.md) — 技术规格
+- [blueprint/architecture.md](blueprint/architecture.md) — 技术规格

@@ -4,19 +4,19 @@
 
 set -e
 
-# 第一步：验证 PROGRESS.md 格式与一致性
-if [ -f "tools/verify_progress.py" ]; then
-    echo "🔍 正在验证 PROGRESS.md……"
-    python3 tools/verify_progress.py
-fi
-
-# 第二步：重新生成 NEXT_TASK.md
+# 第一步：重新生成 NEXT_TASK.md，并刷新 PROGRESS.md 统计区
 echo "🔄 正在从 PROGRESS.md 更新 NEXT_TASK.md……"
 
 if [ -f "tools/gen_next_task.py" ] && [ -f "PROGRESS.md" ]; then
     python3 tools/gen_next_task.py --path PROGRESS.md
-    git add NEXT_TASK.md
-    echo "✅ NEXT_TASK.md 已更新"
+    git add PROGRESS.md NEXT_TASK.md
+    echo "✅ PROGRESS.md 统计区与 NEXT_TASK.md 已更新"
 else
     echo "⚠️  未找到 gen_next_task.py 或 PROGRESS.md，跳过"
+fi
+
+# 第二步：验证 PROGRESS.md 与 NEXT_TASK.md 一致性
+if [ -f "tools/verify_progress.py" ]; then
+    echo "🔍 正在验证进度状态机……"
+    python3 tools/verify_progress.py
 fi
