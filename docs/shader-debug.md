@@ -3,6 +3,9 @@
 ## GLSL 特性兼容性矩阵（P1 验证结论）
 
 > 任何阶段的着色器编译失败，先查此表。
+>
+> **重要**: Path A 的输入不限于 GLSL。slangc 同时接受 GLSL、HLSL 和 Slang 原生语法。
+> **P4 决策**: CommandMapper 应输出 **Slang 原生语法**（HLSL 风格），绕过 GLSL UBO/push_constant 的兼容性问题。
 
 | GLSL 特性 | Path A (slangc→DXIL→MSC) | Path C (glslang→SPIR-V) | 绕过方案 |
 |-----------|:---:|:---:|----------|
@@ -33,12 +36,51 @@
 
 | 错误 | 阶段 | 根因 | 绕过 | 未来影响 |
 |------|------|------|------|----------|
-| `E36107: unavailable features` | slangc DXIL | GLSL UBO/push_constant 在 DXIL SM 6.0 无对应 | 改用 Slang 原生语法 | P4 CommandMapper 生成着色器时必须用 Slang 语法 |
+| `E36107: unavailable features` | slangc DXIL | GLSL std140/push_constant 在 DXIL SM 6.0 无对应语义 | CommandMapper 直接输出 Slang 原生语法（ConstantBuffer<T>、[shader("vertex")]）| P4 已决策：不使用 GLSL 作为 Path A 输入 |
 | `SV_PointSize is invalid` | slangc DXIL (dxc) | DXIL SM 6.0 VS 无 gl_PointSize 语义 | 移除 gl_PointSize 或用其他方式传递点大小 | Switch 游戏常用点精灵，P4/P8 需处理 |
 | `E36107` (fragment texture) | slangc -target metal | Slang metal 目标 FS 不支持 texture() | Path A 不受影响 | 仅 Path B 不可用，非阻塞 |
 | `unrecognized source file` | glslangValidator | `.glsl` 后缀无法识别着色器阶段 | 用 `.vert.glsl` / `.frag.glsl` 复合后缀 | 所有脚本均应用复合后缀 |
 | MSL 有效但无法编译 metallib | xcrun metal | 需完整 Xcode.app，CLT-only 无此工具 | 用 Path A (MSC) 代替 | P4+ 需安装 Xcode 或使用 MSC |
 | mktemp Operation not permitted | 沙箱环境 | macOS 沙箱限制 /tmp 写入 | 回退到 `$SCRIPT_DIR/.tmp_test` | 所有脚本均已内置回退逻辑 |
+
+## Path A 输入语言决策（P1 实验结论）
+
+```
+❌ 原假设:  Maxwell → Ryujinx 解码 → GLSL → slangc → DXIL → MSC → metallib
+✅ 实际方案: Maxwell → Ryujinx 解码 → Slang 原生语法 → slangc → DXIL → MSC → metallib
+```
+
+**原因**: slangc 处理 GLSL 的 std140 UBO 和 push_constant 时无法映射到 DXIL SM 6.0 语义，而 Slang 原生语法（`ConstantBuffer<T>`、`[shader("vertex")]`、`SV_Position`）与 DXIL 完全对齐，不存在兼容性问题。
+
+**Slang 原生语法示例**（CommandMapper 参考模板）：
+```slang
+struct SceneData {
+    float4x4 mvp;
+    float4 lightDir;
+};
+
+ConstantBuffer<SceneData> scene;   // 替代 GLSL layout(std140) uniform
+
+struct VSInput {
+    float3 pos : POSITION;
+    float3 normal : NORMAL;
+};
+
+struct VSOutput {
+    float4 sv_pos : SV_Position;   // 替代 gl_Position + gl_PointSize
+    float3 worldNormal : NORMAL;
+};
+
+[shader("vertex")]                 // 替代 layout(location=N)
+VSOutput main(VSInput input) {
+    VSOutput output;
+    output.sv_pos = mul(scene.mvp, float4(input.pos, 1.0));
+    output.worldNormal = input.normal;
+    return output;
+}
+```
+
+**不需要 IR 中间层**：slangc 本身是完整编译器，内置常量折叠/死代码消除/循环展开，加 IR 层只增加转换损耗。Ryujinx 解码器已提供结构化 Maxwell 指令表示，CommandMapper 可直接生成 Slang。
 
 ## SPIR-V 验证（每次编译后强制执行）
 

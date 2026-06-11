@@ -5,14 +5,20 @@
 ## 着色器管线：五条路径
 
 ```
-Maxwell SASS → Ryujinx 解码器 → 结构化 IR → CodeGen/Glsl → GLSL
-│
-├── 路径 A（主⭐）：→ Slang -target dxil → DXIL → MSC → metallib
-├── 路径 B（备选）：→ Slang -target metal → MSL → xcrun metal → metallib
-├── 路径 C（SPIR-V桥）：→ glslangValidator → SPIR-V → spirv-opt → SPIRV-Cross → MSL
-├── 路径 D（优化）：  → Slang -target spirv → SPIR-V → spirv-opt → Slang -target dxil → MSC
-└── 路径 E（交叉验证）：→ shader-compiler-rs → GLSL' → 任意路径
+Maxwell SASS → Ryujinx 解码器 → 结构化 IR
+    │
+    ├── CommandMapper → Slang 原生语法 (HLSL 风格)
+    │       ├── 路径 A（主⭐）：→ Slang -target dxil → DXIL → MSC → metallib
+    │       ├── 路径 B（备选）：→ Slang -target metal → MSL → xcrun metal → metallib
+    │       └── 路径 D（优化）：→ Slang -target spirv → SPIR-V → spirv-opt → Slang -target dxil → MSC
+    │
+    ├── CodeGen/Glsl → GLSL
+    │       └── 路径 C（SPIR-V桥）：→ glslangValidator → SPIR-V → spirv-opt → SPIRV-Cross → MSL
+    │
+    └── 路径 E（交叉验证）：→ shader-compiler-rs → GLSL' → 任意路径
 ```
+
+> **P1 实验结论**: CommandMapper 输出 Slang 原生语法而非 GLSL，因为 slangc DXIL 对 GLSL 的 std140/push_constant 不兼容，而 Slang 原生语法与 DXIL SM 6.0 完全对齐。详见 docs/shader-debug.md。
 
 回退策略：路径 A → 路径 C → 路径 B
 

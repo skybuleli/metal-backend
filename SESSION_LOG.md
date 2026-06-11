@@ -142,3 +142,24 @@
   - GLSL UBO/push_constant 在 slangc DXIL 下不兼容，需 Slang 原生语法
   - Ryujinx msl_dump 是完整游戏着色器 (600~1000 行)，MSL 格式有效
 - **Commit**: `feat(tools): P1.6 真实顶点着色器 Path A 测试 [done]`
+
+## P1.6 补充 — 多样化特性覆盖（2026-06-12）
+
+**任务**: 补充 P1.6 着色器验证覆盖不足问题
+**结果**: 11 PASS / 0 FAIL / 8 预期跳过（原 3 PASS / 0 FAIL / 7 SKIP）
+
+新增测试：
+- 矩阵运算 (mat4*mat4, mat4*vec4) ✅
+- 条件分支 (if/else + ternary) ✅
+- 循环 (for + while) ✅
+- 数学函数 (sin/cos/pow/sqrt/abs/clamp/mix/min/max) ✅
+- 多输出 (多个 varying) ✅ (无 gl_PointSize) / ❌ (含 gl_PointSize → 已知失败)
+- 整数位运算 (&/|/<</>>) ✅
+- 数组 + swizzle ✅
+- SPV→GLSL roundtrip (vertex_0003.spv → spirv-cross → Path A) ✅
+
+新发现不兼容：
+- `gl_PointSize` 在 DXIL SM 6.0 VS 中无 SV_PointSize 语义
+- Switch 游戏常用点精灵，P4/P8 需处理
+
+兼容性矩阵从 12 → 22 项特性，失败模式表从 3 → 4 条。
