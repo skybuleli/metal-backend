@@ -25,6 +25,18 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 凌晨 | P1.9 基准脚本交接规格准备 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 补齐 P1.9 文档输入，便于下一个会话直接实现基准脚本
+- **变更**:
+  - 新增 `docs/p1-bench-compile-spec.md`，定义 `must-pass / known-good / known-failure` 分桶、计时口径和输出字段
+  - 新增 `docs/p4-shader-risk-checklist.md`，把 P1 语料发现映射到 P4/P5 的阻塞点和延后项
+  - 更新 `docs/shader-corpus.md`，串起语料策略、P4 风险和 P1.9 规格
+- **说明**:
+  - 本次仅做交接文档准备，不变更 `PROGRESS.md` 任务状态
+  - 下一会话应直接进入 `P1.9 bench_compile.sh` 实现
+
 ### 2026-06-12 凌晨 | P1.8b 扩展真实/近真实着色器语料回归测试 | ✅ 完成
 
 - **Agent**: Codex
