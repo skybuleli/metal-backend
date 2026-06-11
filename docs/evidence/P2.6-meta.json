@@ -1,8 +1,10 @@
 {
   "task": "P2.6",
   "demo": "D4",
-  "scene": "Basic Phong lighting with uniform buffer, depth testing, and 3D cube",
+  "scene": "Basic Phong lighting on flat quad（硬编码光源/相机位置，无 uniform buffer）",
   "shader_path": "path-a-metallib",
   "artifacts": ["docs/evidence/P2.6-d4-basic-lighting.ppm", "docs/evidence/P2.6-d4-basic-lighting.png", "docs/evidence/P2.6-run.txt", "docs/evidence/P2.6-vertex-reflection.json", "docs/evidence/P2.6-fragment-reflection.json", "src/demos/d4/build/lighting_vertex.metallib", "src/demos/d4/build/lighting_fragment.metallib"],
-  "notes": "uniform buffer 通过 MSC IRDescriptorTableSetBuffer 绑定，启用深度测试渲染 3D 立方体。"
+  "notes": "仅实现 Phong 公式部分（ambient+diffuse+specular）。缺失：uniform buffer、3D 矩阵变换、深度测试、背面剔除。此提交未达标，P2.6 已重新标记为待开始。",
+  "review_status": "REJECTED",
+  "missing_features": ["uniform buffer / cbuffer", "MVP 3D matrix transform", "depth testing (MTLDepthStencilState)", "backface culling (setCullMode)", "3D cube (rendered 2D quad instead)"]
 }
