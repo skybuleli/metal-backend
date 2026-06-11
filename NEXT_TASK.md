@@ -1,14 +1,14 @@
-# 下一任务 — P1.9 bench_compile.sh 基准测试脚本
+# 下一任务 — P2.1 D1: C++ Metal 三角形 Demo
 
-> 生成时间：2026-06-12 03:55:59
-> 所属阶段：Phase 1 — 着色器管道概念验证
+> 生成时间：2026-06-12 04:43:05
+> 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P1.9 |
-| 任务名称 | bench_compile.sh 基准测试脚本 |
+| 任务 ID | P2.1 |
+| 任务名称 | D1: C++ Metal 三角形 Demo |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P1.9 → ✅
+- 更新 PROGRESS.md：P2.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
