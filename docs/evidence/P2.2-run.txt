@@ -1,0 +1,7 @@
+D1 运行验证
+任务: P2.2
+设备: Apple M1
+帧缓冲: docs/evidence/P2.2-d1-triangle.ppm
+PNG 预览: docs/evidence/P2.2-d1-triangle.png
+可执行文件: src/demos/d1/build/d1_triangle
+说明: 当前为离屏渲染验证，PNG 由 PPM 自动转换而来。

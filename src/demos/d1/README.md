@@ -28,10 +28,25 @@ make -C src/demos/d1 build METAL_CPP_DIR=/你的/metal-cpp
 make -C src/demos/d1 run
 ```
 
+## 生成验证证据
+
+```bash
+make -C src/demos/d1 evidence
+```
+
+该命令会：
+
+- 重新运行离屏渲染
+- 复制 `out/triangle.ppm` 到 `docs/evidence/`
+- 自动转换出 `docs/evidence/P2.2-d1-triangle.png`
+- 生成运行说明 `docs/evidence/P2.2-run.txt`
+- 生成元数据 `docs/evidence/P2.2-meta.json`
+
 ## 预期产物
 
 - 可执行文件：`src/demos/d1/build/d1_triangle`
 - 离屏图像：`src/demos/d1/out/triangle.ppm`
+- 人工查看图像：`docs/evidence/P2.2-d1-triangle.png`
 
 ## 说明
 

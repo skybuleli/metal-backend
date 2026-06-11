@@ -25,6 +25,25 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.2 D1 运行验证与 PNG 证据产物 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ D1 已补齐人眼可读的 PNG 证据和运行说明
+- **变更**:
+  - 更新 `src/demos/d1/Makefile`：新增 `evidence` 目标，自动生成 `PPM`、`PNG`、运行说明和元数据 JSON
+  - 更新 `src/demos/d1/README.md`：补充 `make -C src/demos/d1 evidence` 用法
+  - 新增 `docs/evidence/P2.2-d1-triangle.ppm`
+  - 新增 `docs/evidence/P2.2-d1-triangle.png`
+  - 新增 `docs/evidence/P2.2-run.txt`
+  - 新增 `docs/evidence/P2.2-meta.json`
+- **验证**:
+  - `make -C src/demos/d1 evidence`
+  - `file docs/evidence/P2.2-d1-triangle.ppm docs/evidence/P2.2-d1-triangle.png`
+  - `wc -c docs/evidence/P2.2-d1-triangle.ppm docs/evidence/P2.2-d1-triangle.png`
+  - 人工查看 `docs/evidence/P2.2-d1-triangle.png`，图像正常显示彩色三角形
+- **说明**:
+  - 当前仍是离屏渲染验证；窗口呈现建议放在后续 Demo 或单独切片中处理
+
 ### 2026-06-12 | P2.1 D1 Hello Triangle 离屏渲染落地 | ✅ 完成
 
 - **Agent**: Codex

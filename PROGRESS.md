@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T05:26:17+08:00
+# 最后更新: 2026-06-12T05:37:06+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 27/132 任务 (20.5%)
+# 完成度: 28/132 任务 (21.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -61,7 +61,7 @@
 |----|------|------|----------|------|
 | P2.0 | 收口 P2 规格：同步 D1-D8 验收标准、构建入口和证据格式 | ✅ | 2026-06-12T05:14:30+08:00 | docs/evidence/P2.0-build-entry.txt + docs/p2-demo-evidence.md |
 | P2.1 | D1 Hello Triangle：metal-cpp + 手写 MSL + 彩色三角形 | ✅ | 2026-06-12T05:27:30+08:00 | docs/evidence/P2.1-build.txt |
-| P2.2 | D1 运行验证：M1 截图或帧缓冲证据 + 构建日志 | ⬜ | — | — |
+| P2.2 | D1 运行验证：M1 截图或帧缓冲证据 + 构建日志 | ✅ | 2026-06-12T05:39:10+08:00 | docs/evidence/P2.2-run.txt + docs/evidence/P2.2-d1-triangle.png + docs/evidence/P2.2-meta.json |
 | P2.3 | D2 Textured Quad：Path A Slang→DXIL→MSC→metallib + 纹理采样 | ⬜ | — | — |
 | P2.4 | D2 运行验证：纹理 quad 截图 + metallib 加载日志 | ⬜ | — | — |
 | P2.5 | D3 Multi-Texture：多纹理混合 + 采样器 filter/wrap/mipmap 模式 | ⬜ | — | — |
@@ -260,10 +260,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 132
-- 已完成: 27 (20.5%)
+- 已完成: 28 (21.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 105
+- 待开始: 104
 - 当前阶段: Phase 2 — 渐进式渲染 Demo
-- 下一任务: P2.2 — D1 运行验证：M1 截图或帧缓冲证据 + 构建日志
+- 下一任务: P2.3 — D2 Textured Quad：Path A Slang→DXIL→MSC→metallib + 纹理采样

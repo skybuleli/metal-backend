@@ -1,0 +1,8 @@
+{
+  "task": "P2.2",
+  "demo": "D1",
+  "scene": "Hello Triangle offscreen validation",
+  "shader_path": "handwritten-msl",
+  "artifacts": ["docs/evidence/P2.2-d1-triangle.ppm", "docs/evidence/P2.2-d1-triangle.png", "src/demos/d1/build/d1_triangle"],
+  "notes": "离屏 PPM 已转换为 PNG 供人工验证。"
+}

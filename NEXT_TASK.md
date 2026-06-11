@@ -1,14 +1,14 @@
-# 下一任务 — P2.2 D1 运行验证：M1 截图或帧缓冲证据 + 构建日志
+# 下一任务 — P2.3 D2 Textured Quad：Path A Slang→DXIL→MSC→metallib + 纹理采样
 
-> 生成时间：2026-06-12 05:26:17
+> 生成时间：2026-06-12 05:37:06
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.2 |
-| 任务名称 | D1 运行验证：M1 截图或帧缓冲证据 + 构建日志 |
+| 任务 ID | P2.3 |
+| 任务名称 | D2 Textured Quad：Path A Slang→DXIL→MSC→metallib + 纹理采样 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.2 → ✅
+- 更新 PROGRESS.md：P2.3 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
