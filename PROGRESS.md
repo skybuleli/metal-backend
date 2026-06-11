@@ -46,8 +46,8 @@
 | P1.3 | 编写 test_slang_spirv.sh (Slang→SPIR-V) | ✅ | 2026-06-12T00:40:20+08:00 | tools/test_slang_spirv.sh 8/8 PASS |
 | P1.4 | 编写 test_spirv_cross_msl.sh (Path C 端到端) | ✅ | 2026-06-12T00:44:10+08:00 | tools/test_spirv_cross_msl.sh 10/10 PASS |
 | P1.5 | 编写 test_slang_metal.sh (Path B 尝试) | ✅ | 2026-06-12T00:55:35+08:00 | tools/test_slang_metal.sh 4/4 PASS + 2 预期 SKIP |
-| P1.6 | 真实游戏顶点着色器 Path A 测试 | ⬜ | — | — |
-| P1.7 | 真实游戏片段着色器 Path A 测试 | ⬜ | — | — |
+| P1.6 | 真实游戏顶点着色器 Path A 测试（龙神缓存 + deko3d 示例，目标：管线不崩） | ⬜ | — | — |
+| P1.7 | 真实游戏片段着色器 Path A 测试（龙神缓存 + deko3d 示例，目标：管线不崩） | ⬜ | — | — |
 | P1.8 | 真实游戏计算着色器 Path A 测试 | ⬜ | — | — |
 | P1.9 | bench_compile.sh 基准测试脚本 | ⬜ | — | — |
 
