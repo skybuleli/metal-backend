@@ -35,8 +35,8 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
 
     # 检查 2：任务总数与进度百分比
     # 匹配 | P0.1 | ... | ✅ | 或类似格式
-    all_tasks = re.findall(r"\|\s*(P\d+\.\d+[a-z]?)\s*\|", content)
-    completed_tasks = re.findall(r"\|\s*(P\d+\.\d+[a-z]?)\s*\|.*?\|\s*✅\s*\|", content)
+    all_tasks = re.findall(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|", content)
+    completed_tasks = re.findall(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|.*?\|\s*✅\s*\|", content)
 
     total = len(set(all_tasks))
     completed = len(set(completed_tasks))
@@ -56,7 +56,7 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
                 )
 
     # 检查 3：重复的任务 ID
-    task_ids = [m.group(1) for m in re.finditer(r"\|\s*(P\d+\.\d+[a-z]?)\s*\|", content)]
+    task_ids = [m.group(1) for m in re.finditer(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|", content)]
     seen = {}
     for tid in task_ids:
         if tid in seen:
@@ -65,11 +65,11 @@ def verify_progress(progress_path: Path) -> tuple[bool, list[str]]:
 
     # 检查 4：✅ 任务必须有日期
     completed_lines = re.findall(
-        r"\|\s*(P\d+\.\d+[a-z]?)\s*\|.*?\|\s*✅\s*\|.*?\|",
+        r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|.*?\|\s*✅\s*\|.*?\|",
         content,
     )
     for line_match in re.finditer(
-        r"\|\s*(P\d+\.\d+[a-z]?)\s*\|(.*?)\|\s*✅\s*\|(.*?)\|",
+        r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|(.*?)\|\s*✅\s*\|(.*?)\|",
         content,
     ):
         date_col = line_match.group(3).strip()
@@ -89,8 +89,8 @@ def main():
     passed, errors = verify_progress(progress_path)
 
     if passed:
-        total = len(re.findall(r"\|\s*P\d+\.\d+[a-z]?\s*\|", progress_path.read_text()))
-        completed = len(re.findall(r"\|\s*P\d+\.\d+[a-z]?\s*\|.*?\|\s*✅\s*\|", progress_path.read_text()))
+        total = len(re.findall(r"\|\s*P\d+\.\d+(?:\.\d+)?[a-z]?\s*\|", progress_path.read_text()))
+        completed = len(re.findall(r"\|\s*P\d+\.\d+(?:\.\d+)?[a-z]?\s*\|.*?\|\s*✅\s*\|", progress_path.read_text()))
         print(f"✅ 验证通过！{completed}/{total} 任务完成")
         return 0
     else:

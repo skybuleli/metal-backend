@@ -24,9 +24,9 @@ def find_next_task(progress_path: Path) -> dict | None:
     # 或：- [ ] P0.1 验证 devkitPro
     patterns = [
         # 表格格式
-        re.compile(r"\|\s*(P\d+\.\d+[a-z]?)\s*\|\s*(.+?)\s*\|\s*⬜\s*\|"),
+        re.compile(r"\|\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s*\|\s*(.+?)\s*\|\s*⬜\s*\|"),
         # 列表格式
-        re.compile(r"-\s*\[\s*\]\s*(P\d+\.\d+[a-z]?)\s+(.+)"),
+        re.compile(r"-\s*\[\s*\]\s*(P\d+\.\d+(?:\.\d+)?[a-z]?)\s+(.+)"),
     ]
 
     for pattern in patterns:

@@ -1,7 +1,16 @@
 #!/bin/bash
-# .githooks/pre-commit — 提交前自动更新 NEXT_TASK.md
+# .githooks/pre-commit — 提交前自动验证 + 更新 NEXT_TASK.md
 # 安装: git config core.hooksPath .githooks
 
+set -e
+
+# 第一步：验证 PROGRESS.md 格式与一致性
+if [ -f "tools/verify_progress.py" ]; then
+    echo "🔍 正在验证 PROGRESS.md……"
+    python3 tools/verify_progress.py
+fi
+
+# 第二步：重新生成 NEXT_TASK.md
 echo "🔄 正在从 PROGRESS.md 更新 NEXT_TASK.md……"
 
 if [ -f "tools/gen_next_task.py" ] && [ -f "PROGRESS.md" ]; then
