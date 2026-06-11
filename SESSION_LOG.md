@@ -76,3 +76,18 @@
   - glslangValidator 不识别 `.glsl` 扩展名，需用 `.vert.glsl` / `.frag.glsl` 复合后缀
   - spirv-opt -O 对简单着色器优化效果有限（顶点不变，片段 1144→888）
 - **Commit**: `feat(tools): P1.2 Path C SPIR-V 验证脚本 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.3 Slang→SPIR-V 验证脚本 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.3 完成，test_slang_spirv.sh 8/8 PASS
+- **变更**:
+  - 编写 tools/test_slang_spirv.sh：Slang→SPIR-V + spirv-val + spirv-dis + 交叉对比
+  - 顶点着色器 SPIR-V 584 bytes（41 行反汇编）
+  - 片段着色器 SPIR-V 836 bytes（53 行反汇编）
+- **关键发现**:
+  - Slang 生成的 SPIR-V 比 glslangValidator 小 43%（584 vs 1016 bytes），优化更激进
+  - 两种编译器输出均通过 spirv-val 验证
+- **Commit**: `feat(tools): P1.3 Slang→SPIR-V 验证脚本 [done]`
