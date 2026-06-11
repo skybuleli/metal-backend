@@ -25,6 +25,29 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.5 D3 Multi-Texture 与多采样器状态 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ D3 已通过 Path A 渲染双纹理混合结果，并固化 PNG、运行日志和反射文件
+- **变更**:
+  - 新增 `src/demos/d3/shaders/multi_texture.slang`，实现主纹理平铺采样与叠加纹理混合
+  - 新增 `src/demos/d3/src/main.cpp`，创建 mipmapped 主纹理、叠加纹理，以及 `repeat + linear + mipLinear` / `clamp + nearest + notMipmapped` 两组采样器
+  - 新增 `src/demos/d3/Makefile`，支持构建、运行、证据导出和 MSC 反射文件落盘
+  - 更新 `src/demos/d3/README.md`、`src/demos/README.md`、`src/demos/Makefile`，把 D3 纳入 Phase 2 统一入口
+  - 新增 `docs/evidence/P2.5-d3-multi-texture.ppm`
+  - 新增 `docs/evidence/P2.5-d3-multi-texture.png`
+  - 新增 `docs/evidence/P2.5-run.txt`
+  - 新增 `docs/evidence/P2.5-meta.json`
+  - 新增 `docs/evidence/P2.5-vertex-reflection.json`
+  - 新增 `docs/evidence/P2.5-fragment-reflection.json`
+- **验证**:
+  - `make -C src/demos/d3 evidence`
+  - `make -C src/demos build-demos`
+  - 人工查看 `docs/evidence/P2.5-d3-multi-texture.png`，主纹理平铺与中央叠加混合效果可见
+- **关键发现**:
+  - D3 的 MSC 顶层参数缓冲布局为“全部 SRV，随后全部 Sampler”，不能沿用 D2 的交错直觉
+  - `docs/evidence/P2.5-fragment-reflection.json` 的 `TopLevelArgumentBuffer` 顺序是修复黑图问题的直接依据
+
 ### 2026-06-12 | P2.4 D2 运行验证与 MSC 参数绑定修复 | ✅ 完成
 
 - **Agent**: Codex

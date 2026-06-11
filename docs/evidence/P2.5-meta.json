@@ -1,0 +1,8 @@
+{
+  "task": "P2.5",
+  "demo": "D3",
+  "scene": "Multi-texture mix with repeat/clamp samplers and mipmapped primary texture",
+  "shader_path": "path-a-metallib",
+  "artifacts": ["docs/evidence/P2.5-d3-multi-texture.ppm", "docs/evidence/P2.5-d3-multi-texture.png", "docs/evidence/P2.5-run.txt", "docs/evidence/P2.5-vertex-reflection.json", "docs/evidence/P2.5-fragment-reflection.json", "src/demos/d3/build/multi_texture_vertex.metallib", "src/demos/d3/build/multi_texture_fragment.metallib"],
+  "notes": "主纹理使用 repeat + linear + mipLinear，叠加纹理使用 clamp + nearest，多纹理混合通过 MSC 顶层参数缓冲绑定。"
+}

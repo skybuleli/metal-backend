@@ -1,0 +1,17 @@
+D3 离屏渲染完成: "out/multi_texture.ppm"
+设备: Apple M1
+顶点 metallib: build/multi_texture_vertex.metallib
+片段 metallib: build/multi_texture_fragment.metallib
+主采样器: repeat + linear + mipLinear
+叠加采样器: clamp + nearest + notMipmapped
+vertex 反射参数数量: 5
+  - name=struct.top_level_global_ab, type=0, index=2, active=false
+  - name=struct.res_desc_heap_ab, type=0, index=0, active=false
+  - name=struct.smp_desc_heap_ab, type=0, index=1, active=false
+  - name=drawArguments, type=0, index=4, active=false
+  - name=uniforms, type=0, index=5, active=false
+fragment 反射参数数量: 4
+  - name=struct.top_level_global_ab, type=0, index=2, active=true
+  - name=struct.res_desc_heap_ab, type=0, index=0, active=false
+  - name=struct.smp_desc_heap_ab, type=0, index=1, active=false
+  - name=uniform_frag, type=0, index=5, active=false

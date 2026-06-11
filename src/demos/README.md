@@ -53,7 +53,7 @@ make -C src/demos run-d1
 
 - Xcode Command Line Tools（含 Metal 框架）
 - metal-cpp 头文件
-- metal-shaderconverter 4.0（D6–D8）
+- metal-shaderconverter 4.0（D2 起的 Path A Demo）
 
 ## 约束
 
