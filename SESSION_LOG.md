@@ -62,3 +62,17 @@
   - 项点着色器 DXIL 3128 bytes → metallib 6116 bytes
   - 片段着色器 DXIL 3828 bytes → metallib 5388 bytes
 - **Commit**: `feat(tools): P1.1 Path A 端到端验证脚本 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.2 Path C SPIR-V 验证脚本 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.2 完成，test_glslang_spirv.sh 8/8 PASS
+- **变更**:
+  - 编写 tools/test_glslang_spirv.sh：GLSL→SPIR-V + spirv-val + spirv-opt 全流程
+  - 顶点着色器 SPIR-V 1016 bytes，片段着色器 1144→888 bytes（优化后）
+- **关键发现**:
+  - glslangValidator 不识别 `.glsl` 扩展名，需用 `.vert.glsl` / `.frag.glsl` 复合后缀
+  - spirv-opt -O 对简单着色器优化效果有限（顶点不变，片段 1144→888）
+- **Commit**: `feat(tools): P1.2 Path C SPIR-V 验证脚本 [done]`

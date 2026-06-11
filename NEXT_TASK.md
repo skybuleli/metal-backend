@@ -1,14 +1,14 @@
-# 下一任务 — P1.2 编写 test_glslang_spirv.sh (Path C SPIR-V)
+# 下一任务 — P1.3 编写 test_slang_spirv.sh (Slang→SPIR-V)
 
-> 生成时间：2026-06-12 00:27:43  
+> 生成时间：2026-06-12 00:33:06  
 > 所属阶段：未知
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P1.2 |
-| 任务名称 | 编写 test_glslang_spirv.sh (Path C SPIR-V) |
+| 任务 ID | P1.3 |
+| 任务名称 | 编写 test_slang_spirv.sh (Slang→SPIR-V) |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
@@ -24,7 +24,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P1.2 → ✅
+- 更新 PROGRESS.md：P1.3 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
