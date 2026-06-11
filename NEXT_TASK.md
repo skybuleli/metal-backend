@@ -1,14 +1,14 @@
-# 下一任务 — P2.4 D2 运行验证：纹理 quad 截图 + metallib 加载日志
+# 下一任务 — P2.5 D3 Multi-Texture：多纹理混合 + 采样器 filter/wrap/mipmap 模式
 
-> 生成时间：2026-06-12 05:46:29
+> 生成时间：2026-06-12 06:02:42
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.4 |
-| 任务名称 | D2 运行验证：纹理 quad 截图 + metallib 加载日志 |
+| 任务 ID | P2.5 |
+| 任务名称 | D3 Multi-Texture：多纹理混合 + 采样器 filter/wrap/mipmap 模式 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.4 → ✅
+- 更新 PROGRESS.md：P2.5 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

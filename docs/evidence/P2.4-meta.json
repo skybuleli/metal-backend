@@ -1,0 +1,8 @@
+{
+  "task": "P2.4",
+  "demo": "D2",
+  "scene": "Textured Quad offscreen validation",
+  "shader_path": "path-a-metallib",
+  "artifacts": ["docs/evidence/P2.4-d2-textured-quad.ppm", "docs/evidence/P2.4-d2-textured-quad.png", "docs/evidence/P2.4-run.txt", "docs/evidence/P2.4-vertex-reflection.json", "docs/evidence/P2.4-fragment-reflection.json", "src/demos/d2/build/quad_vertex.metallib", "src/demos/d2/build/quad_fragment.metallib"],
+  "notes": "Path A 已生成 vertex/fragment metallib，运行期通过 metal_irconverter_runtime 约定绑定顶层参数缓冲，离屏 PPM 已转换为 PNG。"
+}

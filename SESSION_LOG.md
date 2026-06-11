@@ -25,6 +25,28 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.4 D2 运行验证与 MSC 参数绑定修复 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ D2 已生成可人工查看的 PNG 截图与真实运行日志，纹理 quad 可见
+- **变更**:
+  - 更新 `src/demos/d2/src/main.cpp`：按 `metal_irconverter_runtime` 约定创建顶层参数缓冲，修复 MSC 片段着色器仅输出清屏色的问题
+  - 更新 `src/demos/d2/Makefile`：构建时导出 MSC 反射 JSON，`make evidence` 固化运行日志、PNG、PPM 与反射文件
+  - 更新 `src/demos/d2/README.md`：补充 D2 当前采用的参数缓冲绑定方式和证据产物说明
+  - 新增 `docs/evidence/P2.4-d2-textured-quad.ppm`
+  - 新增 `docs/evidence/P2.4-d2-textured-quad.png`
+  - 新增 `docs/evidence/P2.4-run.txt`
+  - 新增 `docs/evidence/P2.4-meta.json`
+  - 新增 `docs/evidence/P2.4-vertex-reflection.json`
+  - 新增 `docs/evidence/P2.4-fragment-reflection.json`
+- **验证**:
+  - `make -C src/demos/d2 evidence`
+  - 人工查看 `docs/evidence/P2.4-d2-textured-quad.png`，纹理 quad 正常可见
+  - 检查 `docs/evidence/P2.4-fragment-reflection.json`，确认 `struct.top_level_global_ab` 为活跃绑定
+- **关键发现**:
+  - `metal-shaderconverter` 生成的片段 `metallib` 不直接消费 `setFragmentTexture(0)`，而是要求通过顶层参数缓冲传入纹理与采样器描述
+  - D2 首次输出空白 PNG 的根因是 MSC 资源绑定约定未被满足，而不是截图或 PPM 转换逻辑异常
+
 ### 2026-06-12 | P2.3 D2 Textured Quad 接入 Path A 与纹理采样 | ✅ 完成
 
 - **Agent**: Codex

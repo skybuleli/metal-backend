@@ -1,8 +1,11 @@
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
+#define IR_RUNTIME_METALCPP
+#define IR_PRIVATE_IMPLEMENTATION
 
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
+#include <metal_irconverter_runtime/metal_irconverter_runtime.h>
 
 #include <cstdint>
 #include <filesystem>
@@ -22,12 +25,6 @@ struct Pixel
     std::uint8_t g;
     std::uint8_t r;
     std::uint8_t a;
-};
-
-struct Vertex
-{
-    float position[2];
-    float uv[2];
 };
 
 bool WritePpm(const std::filesystem::path& output_path, const std::vector<Pixel>& pixels)
@@ -72,6 +69,27 @@ MTL::Library* LoadMetallib(MTL::Device* device, const std::filesystem::path& pat
     }
 
     return library;
+}
+
+void DumpArguments(const char* stage_name, NS::Array* arguments)
+{
+    if (arguments == nullptr)
+    {
+        std::cout << stage_name << " 反射参数: <none>\n";
+        return;
+    }
+
+    std::cout << stage_name << " 反射参数数量: " << arguments->count() << "\n";
+    for (NS::UInteger index = 0; index < arguments->count(); ++index)
+    {
+        MTL::Argument* argument = arguments->object<MTL::Argument>(index);
+        std::cout
+            << "  - name=" << argument->name()->utf8String()
+            << ", type=" << static_cast<int>(argument->type())
+            << ", index=" << argument->index()
+            << ", active=" << (argument->active() ? "true" : "false")
+            << "\n";
+    }
 }
 }
 
@@ -118,27 +136,15 @@ int main()
     pipeline_descriptor->setFragmentFunction(fragment_function);
     pipeline_descriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
 
-    MTL::RenderPipelineState* pipeline_state = device->newRenderPipelineState(pipeline_descriptor, &error);
+    MTL::RenderPipelineReflection* reflection = nullptr;
+    MTL::RenderPipelineState* pipeline_state = device->newRenderPipelineState(
+        pipeline_descriptor,
+        MTL::PipelineOptionArgumentInfo,
+        &reflection,
+        &error);
     if (pipeline_state == nullptr)
     {
         std::cerr << "无法创建 RenderPipelineState: " << ErrorToString(error) << "\n";
-        pool->drain();
-        return 1;
-    }
-
-    const Vertex quad_vertices[6] = {
-        {{-0.8f,  0.8f}, {0.0f, 0.0f}},
-        {{-0.8f, -0.8f}, {0.0f, 1.0f}},
-        {{ 0.8f, -0.8f}, {1.0f, 1.0f}},
-        {{-0.8f,  0.8f}, {0.0f, 0.0f}},
-        {{ 0.8f, -0.8f}, {1.0f, 1.0f}},
-        {{ 0.8f,  0.8f}, {1.0f, 0.0f}},
-    };
-
-    MTL::Buffer* vertex_buffer = device->newBuffer(quad_vertices, sizeof(quad_vertices), MTL::ResourceStorageModeShared);
-    if (vertex_buffer == nullptr)
-    {
-        std::cerr << "无法创建顶点缓冲区。\n";
         pool->drain();
         return 1;
     }
@@ -163,6 +169,7 @@ int main()
     sampler_descriptor->setMagFilter(MTL::SamplerMinMagFilterLinear);
     sampler_descriptor->setSAddressMode(MTL::SamplerAddressModeClampToEdge);
     sampler_descriptor->setTAddressMode(MTL::SamplerAddressModeClampToEdge);
+    sampler_descriptor->setSupportArgumentBuffers(true);
 
     MTL::SamplerState* sampler_state = device->newSamplerState(sampler_descriptor);
     if (sampler_state == nullptr)
@@ -195,10 +202,27 @@ int main()
     MTL::CommandBuffer* command_buffer = command_queue->commandBuffer();
     MTL::RenderCommandEncoder* encoder = command_buffer->renderCommandEncoder(pass_descriptor);
     encoder->setRenderPipelineState(pipeline_state);
-    encoder->setVertexBuffer(vertex_buffer, 0, 0);
-    encoder->setFragmentTexture(sample_texture, 0);
-    encoder->setFragmentSamplerState(sampler_state, 0);
-    encoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(6));
+
+    // MSC 生成的片段着色器通过顶层参数缓冲读取纹理和采样器，而不是直接读取传统槽位。
+    IRDescriptorTableEntry fragment_arguments[2] = {};
+    IRDescriptorTableSetTexture(&fragment_arguments[0], sample_texture, 0.0f, 0);
+    IRDescriptorTableSetSampler(&fragment_arguments[1], sampler_state, 0.0f);
+
+    MTL::Buffer* fragment_argument_buffer =
+        device->newBuffer(fragment_arguments, sizeof(fragment_arguments), MTL::ResourceStorageModeShared);
+    if (fragment_argument_buffer == nullptr)
+    {
+        std::cerr << "无法创建片段参数缓冲区。\n";
+        pool->drain();
+        return 1;
+    }
+
+    encoder->setFragmentBuffer(fragment_argument_buffer, 0, kIRArgumentBufferBindPoint);
+    IRRuntimeDrawPrimitives(
+        encoder,
+        MTL::PrimitiveTypeTriangle,
+        static_cast<std::uint64_t>(0),
+        static_cast<std::uint64_t>(6));
     encoder->endEncoding();
     command_buffer->commit();
     command_buffer->waitUntilCompleted();
@@ -223,6 +247,8 @@ int main()
     std::cout << "设备: " << device->name()->utf8String() << "\n";
     std::cout << "顶点 metallib: build/quad_vertex.metallib\n";
     std::cout << "片段 metallib: build/quad_fragment.metallib\n";
+    DumpArguments("vertex", reflection != nullptr ? reflection->vertexArguments() : nullptr);
+    DumpArguments("fragment", reflection != nullptr ? reflection->fragmentArguments() : nullptr);
 
     pool->drain();
     return 0;
