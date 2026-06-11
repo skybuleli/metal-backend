@@ -19,11 +19,28 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 1 — 着色器管道概念验证
-- 当前进度：24/125 任务完成
-- 下一任务：P1.9 bench_compile.sh 基准测试脚本
+- 当前进度：17/220 任务完成
+- 下一任务：P2.1 — D1: C++ Metal 三角形 Demo
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 | 仓库重建与 P1.9 补提交 | ✅ 完成
+
+- **Agent**: MiMoCode
+- **结果**: ✅ 重建独立仓库 + 恢复丢失文件 + 更新进度
+- **变更**:
+  - 在 `~/metal-backend/` 初始化独立 git 仓库（替代 `~/` 级别的父仓库）
+  - 从父仓库旧提交 `84c1359` 恢复 `tools/bench_compile.sh`（24KB）和 `docs/evidence/bench-20260612-040600.json`
+  - 更新 `PROGRESS.md`：P1.9 → ✅，完成度 17/220 (7.7%)
+  - 重新生成 `NEXT_TASK.md`：下一任务 → P2.1
+- **验证**:
+  - `git status` 工作区干净
+  - `git log --oneline` 包含全部 22 个提交
+- **说明**:
+  - 之前 force push 覆盖了远程历史，已从父仓库 `metal-backend/main` 分支恢复
+  - 旧历史 20 个提交 + bench_compile.sh 补提交 + 进度更新 = 3 个新提交
+- **归档**: `docs/session-logs/phase-1.md`
 
 ### 2026-06-12 凌晨 | P1.9 基准脚本交接规格准备 | ✅ 完成
 
