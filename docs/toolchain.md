@@ -101,12 +101,14 @@ slangc input.glsl -target dxil -target spirv \     # 多目标输出
 | deko3d_metal_runtime | `~/autommes/deko3d_metal_runtime/` | ObjC Metal 三角形示例（triangle.m、build_shaders.sh） |
 | deko3d_slang_poc/shaders | `~/autommes/deko3d_slang_poc/shaders/` | 7 个 GLSL/Slang 着色器（triangle、complex_v1~v4、test.slang） |
 | deko3d_slang_poc/output | `~/autommes/deko3d_slang_poc/output/` | roundtrip 产物（roundtrip_vert.glsl、.msl、triangle_vert_maxwell.bin） |
+| deko3d_slang_poc/test_output | `~/autommes/deko3d_slang_poc/test_output/` | 1333 个 `.slang` 近真实语料 + 1298 个 `.msl` 产物；P1.8b 扫描 `real_*`、`kirby_*`、`large_*`、`final_*`、`smp_*`、`v3_*`、`v4_*`、`batch*`、`deko3d*` |
 
 ### 数据格式说明
 
 - **msl_dump 的 MSL**：是 SPIR-V→MSL 反编译结果，包含 `spvFMul`、`spvFMulVectorMatrix` 等 SPIR-V helper 函数模板，非手写 MSL
 - **deko3d GLSL**：标准 GLSL 4.50 + `GL_ARB_separate_shader_objects`，可作为 Path C 输入；Path A 推荐用 Slang 原生语法（详见 shader-debug.md）
 - **metallib_cache**：已是编译好的二进制，用于参考对比而非重编译
+- **test_output 的 Slang**：质量不一，适合做语料侦察和回归输入。P1.8b 发现 29 个 Path A 可通过样本，以及未初始化变量、TEXCOORD 重叠、tessellation/domain 语义误判等 13 个待修问题。正式策略见 `docs/shader-corpus.md`。
 
 ## 参考仓库
 

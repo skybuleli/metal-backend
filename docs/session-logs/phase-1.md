@@ -190,3 +190,22 @@
   - 规整 Slang compute 覆盖 RWStructuredBuffer、groupshared、barrier、atomic、RWByteAddressBuffer、RWTexture2D，均可通过 DXIL→MSC
   - GLSL compute std430 触发 E36107，应作为 Path C 对照语料，不作为 Path A 主输入
 - **Commit**: `feat(tools): P1.8 真实计算着色器 Path A 测试 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.8b 扩展真实/近真实着色器语料回归测试 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P1.8b 完成，`tools/test_shader_corpus_path_a.sh` 通过
+- **变更**:
+  - 新增 `tools/test_shader_corpus_path_a.sh`：先跑确定性 VS/FS/CS 控制样本，再扫描本地 `deko3d_slang_poc/test_output` 语料
+  - 新增 `docs/shader-corpus.md`：记录正式语料、灰区来源和后续 P6 回归测试建议
+  - 新增 `docs/evidence/P1.8b-shader-corpus-path-a.log`：保存完整语料验证输出
+  - 更新 `docs/toolchain.md`：记录 `test_output` 语料规模和 P1.8b 发现
+- **验证**:
+  - `bash tools/test_shader_corpus_path_a.sh | tee docs/evidence/P1.8b-shader-corpus-path-a.log` → 29 Path A 通过 / 0 控制样本失败 / 13 语料发现问题 / 1 跳过或预期问题 / 总计 43
+- **关键发现**:
+  - P1.8 的 7 个 compute 样本不足以代表真实语料，P1.8b 将 VS/FS/CS 总覆盖扩大到 43 个执行条目
+  - `real_*`、`kirby_*`、`large_*`、`final_*` 等近真实样本能暴露未初始化变量诊断
+  - deko3d v1/v2 产物暴露 TEXCOORD overlap、tessellation/domain 语义被误判为 vertex 等后续修复方向
+  - RyuSAK 不进入正式证据；bnsh-decoder 只在有合法 `.bnsh` 输入时采用

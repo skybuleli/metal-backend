@@ -1,0 +1,299 @@
+============================================
+ P1.8b — 扩展真实/近真实着色器语料回归测试
+ 时间: 2026-06-12 03:39:43
+ 语料目录: /Users/liliang/autommes/deko3d_slang_poc/test_output
+============================================
+
+══ 第一部分: 确定性控制样本 ══
+
+[0;36m[1] control_vertex_fullscreen (VS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_vertex.slang
+   源文件大小:      476 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3212 bytes)
+   [MSC→metallib]    ... [0;32mOK[0m (    3212 →     6044 bytes)
+
+[0;36m[2] control_fragment_texture (FS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_fragment.slang
+   源文件大小:      364 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3684 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3684 →     5248 bytes)
+
+[0;36m[3] control_compute_rwbuffer (CS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_compute_rwbuffer.slang
+   源文件大小:      224 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2956 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2956 →     4612 bytes)
+
+[0;36m[4] control_compute_groupshared (CS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_compute_groupshared.slang
+   源文件大小:      366 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3328 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3328 →     5200 bytes)
+
+[0;36m[5] control_compute_atomic (CS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_compute_atomic.slang
+   源文件大小:      265 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2996 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2996 →     4692 bytes)
+
+[0;36m[6] control_compute_byteaddress (CS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_compute_byteaddress.slang
+   源文件大小:      226 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2760 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2760 →     4564 bytes)
+
+[0;36m[7] control_compute_rwtexture (CS, control)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/control_compute_rwtexture.slang
+   源文件大小:      269 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2860 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2860 →     4740 bytes)
+
+[0;36m[8] expected_glsl_compute_std430 (CS, expected)[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/expected_glsl_std430.comp.glsl
+   预期原因: GLSL std430/storage buffer 是 Path C 对照语料；Path A 主线应使用 Slang 原生资源声明
+   [slangc→DXIL]     ... [1;33m预期问题[0m
+   [1;33mwarning[E00030]: the stage 'compute' was specified more than once for entry point 'main' error[E36107]: unavailable features in entry point  --> /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.6cqRM1nQ0K/expected_glsl_std430.comp.glsl:7:6   | 7 | void main() { [0m
+
+══ 第二部分: 本地真实/近真实 Slang 语料扫描 ══
+
+[0;36m[9] probe_real_01002b30_5B520D20 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/real_01002b30_5B520D20.slang
+   源文件大小:     2396 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2812 bytes)
+   [MSC→metallib]    ... [0;32mOK[0m (    2812 →     5508 bytes)
+
+[0;36m[10] probe_real_01002b30_8DFD5BF2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/real_01002b30_8DFD5BF2.slang
+   源文件大小:   105622 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable     --> /Users/liliang/autommes/deko3d_slang_poc/test_output/real_01002b30_8DFD5BF2.slang:4242:25      | 4242 | temp_14.w = temp_12.x;      |                     ^ use of uninitialized variable 'temp_12' [0m
+
+[0;36m[11] probe_kirby_01004d30_00BF85E5 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/kirby_01004d30_00BF85E5.slang
+   源文件大小:    63706 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable     --> /Users/liliang/autommes/deko3d_slang_poc/test_output/kirby_01004d30_00BF85E5.slang:1000:25      | 1000 | temp_70.x = temp_66.x * temp_13.x;      |                     ^ use of uninitialized variable 'temp_66' [0m
+
+[0;36m[12] probe_kirby_01004d30_0128D94F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/kirby_01004d30_0128D94F.slang
+   源文件大小:    60956 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable    --> /Users/liliang/autommes/deko3d_slang_poc/test_output/kirby_01004d30_0128D94F.slang:841:58     | 841 | temp_24.x = (float)((uint)(imm_3.y) + (uint)(temp_23.x));     |                                                      ^ use of uninitialized variable 'temp_23' [0m
+
+[0;36m[13] probe_large_01004d30_02C2863D (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/large_01004d30_02C2863D.slang
+   源文件大小:   105695 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2796 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable     --> /Users/liliang/autommes/deko3d_slang_poc/test_output/large_01004d30_02C2863D.slang:4261:25      | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2796 →     5980 bytes)
+
+[0;36m[14] probe_large_01004d30_04F0D25F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/large_01004d30_04F0D25F.slang
+   源文件大小:   105033 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable     --> /Users/liliang/autommes/deko3d_slang_poc/test_output/large_01004d30_04F0D25F.slang:4229:23      | 4229 | temp_6.x = temp_2.x * input.attr_0.x;      |                   ^ use of uninitialized variable 'temp_2' [0m
+
+[0;36m[15] probe_final_01004d30_02C2863D (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/final_01004d30_02C2863D.slang
+   源文件大小:     2486 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2796 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/final_01004d30_02C2863D.slang:80:25    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2796 →     5980 bytes)
+
+[0;36m[16] probe_final_01004d30_04F0D25F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/final_01004d30_04F0D25F.slang
+   源文件大小:     1806 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/final_01004d30_04F0D25F.slang:48:23    | 48 | temp_6.x = temp_2.x * input.attr_0.x;    |                   ^ use of uninitialized variable 'temp_2' [0m
+
+[0;36m[17] probe_smp_01004d30_02C2863D (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/smp_01004d30_02C2863D.slang
+   源文件大小:     2486 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2796 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/smp_01004d30_02C2863D.slang:80:25    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2796 →     5980 bytes)
+
+[0;36m[18] probe_smp_01004d30_04F0D25F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/smp_01004d30_04F0D25F.slang
+   源文件大小:     1806 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/smp_01004d30_04F0D25F.slang:48:23    | 48 | temp_6.x = temp_2.x * input.attr_0.x;    |                   ^ use of uninitialized variable 'temp_2' [0m
+
+[0;36m[19] probe_v3_01004d30_02C2863D (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/v3_01004d30_02C2863D.slang
+   源文件大小:     2486 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2796 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/v3_01004d30_02C2863D.slang:80:25    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2796 →     5980 bytes)
+
+[0;36m[20] probe_v3_01004d30_04F0D25F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/v3_01004d30_04F0D25F.slang
+   源文件大小:     1806 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/v3_01004d30_04F0D25F.slang:48:23    | 48 | temp_6.x = temp_2.x * input.attr_0.x;    |                   ^ use of uninitialized variable 'temp_2' [0m
+
+[0;36m[21] probe_v4_01004d30_02C2863D (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/v4_01004d30_02C2863D.slang
+   源文件大小:     2486 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2796 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/v4_01004d30_02C2863D.slang:80:25    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2796 →     5980 bytes)
+
+[0;36m[22] probe_v4_01004d30_04F0D25F (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/v4_01004d30_04F0D25F.slang
+   源文件大小:     1806 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mwarning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/v4_01004d30_04F0D25F.slang:48:23    | 48 | temp_6.x = temp_2.x * input.attr_0.x;    |                   ^ use of uninitialized variable 'temp_2' [0m
+
+[0;36m[23] corpus_deko3d_basic_deferred_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_deferred_fsh.glsl.slang
+   源文件大小:      981 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3520 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3520 →     5648 bytes)
+
+[0;36m[24] corpus_deko3d_basic_deferred_fsh_glsl_v2 (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_deferred_fsh.glsl_v2.slang
+   源文件大小:      983 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3540 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3540 →     5652 bytes)
+
+[0;36m[25] corpus_deko3d_basic_lighting_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_lighting_fsh.glsl.slang
+   源文件大小:     2446 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4368 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4368 →     6364 bytes)
+
+[0;36m[26] corpus_deko3d_basic_lighting_fsh_glsl_v2 (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_lighting_fsh.glsl_v2.slang
+   源文件大小:     2448 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4392 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4392 →     6368 bytes)
+
+[0;36m[27] corpus_deko3d_basic_vsh_glsl (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_vsh.glsl.slang
+   源文件大小:      652 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mdxc 1.10: : error : error: validation errors error: Semantic 'TEXCOORD' overlap at 0. Validation failed.  [0m
+
+[0;36m[28] corpus_deko3d_basic_vsh_glsl_v2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_basic_vsh.glsl_v2.slang
+   源文件大小:      654 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3160 bytes)
+   [MSC→metallib]    ... [0;32mOK[0m (    3160 →     6128 bytes)
+
+[0;36m[29] corpus_deko3d_color_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_color_fsh.glsl.slang
+   源文件大小:      365 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2832 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2832 →     4904 bytes)
+
+[0;36m[30] corpus_deko3d_color_fsh_glsl_v2 (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_color_fsh.glsl_v2.slang
+   源文件大小:      366 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2844 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2844 →     4904 bytes)
+
+[0;36m[31] corpus_deko3d_composition_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_fsh.glsl.slang
+   源文件大小:     2948 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4944 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4944 →     6516 bytes)
+
+[0;36m[32] corpus_deko3d_composition_fsh_glsl_v2 (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_fsh.glsl_v2.slang
+   源文件大小:     2949 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4952 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4952 →     6516 bytes)
+
+[0;36m[33] corpus_deko3d_composition_vsh_glsl (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_vsh.glsl.slang
+   源文件大小:     1078 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2692 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_vsh.glsl.slang:23:31    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2692 →     5636 bytes)
+
+[0;36m[34] corpus_deko3d_composition_vsh_glsl_v2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_vsh.glsl_v2.slang
+   源文件大小:     1078 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2692 bytes)
+   [1;33mslangc 提示: warning[E41016]: use of uninitialized variable   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_composition_vsh.glsl_v2.slang:23:31    | [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2692 →     5636 bytes)
+
+[0;36m[35] corpus_deko3d_console_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_console_fsh.glsl.slang
+   源文件大小:      740 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4096 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4096 →     5560 bytes)
+
+[0;36m[36] corpus_deko3d_console_fsh_glsl_v2 (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_console_fsh.glsl_v2.slang
+   源文件大小:      743 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4128 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4128 →     5568 bytes)
+
+[0;36m[37] corpus_deko3d_console_vsh_glsl (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_console_vsh.glsl.slang
+   源文件大小:     3322 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mdxc 1.10: : error : error: validation errors error: Semantic 'TEXCOORD' overlap at 0. Validation failed.  [0m
+
+[0;36m[38] corpus_deko3d_console_vsh_glsl_v2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_console_vsh.glsl_v2.slang
+   源文件大小:     3324 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    5240 bytes)
+   [MSC→metallib]    ... [0;32mOK[0m (    5240 →     7624 bytes)
+
+[0;36m[39] corpus_deko3d_tess_simple_tesh_glsl (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_tess_simple_tesh.glsl.slang
+   源文件大小:      840 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33merror[E30015]: undefined identifier   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_tess_simple_tesh.glsl.slang:22:14    | 22 | temp_0 = input.sv_0.xxxx * input.attr_0;    |          ^^^^^ undefined identifier 'input'. [0m
+
+[0;36m[40] corpus_deko3d_tess_simple_tesh_glsl_v2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_tess_simple_tesh.glsl_v2.slang
+   源文件大小:      956 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33merror[E30702]: system value semantic 'SV_DomainLocation' cannot be used as input in 'vertex' shader stage  --> /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_tess_simple_tesh.glsl_v2.slang:7:26   | 7 | DomainOutput main(float3 tessCoord : SV_DomainLocation,   |                          ^^^^^^^^^ [0m
+
+[0;36m[41] corpus_deko3d_texture_fsh_glsl (FS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_texture_fsh.glsl.slang
+   源文件大小:      553 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3676 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'pixel' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3676 →     5248 bytes)
+
+[0;36m[42] corpus_deko3d_transform_normal_vsh_glsl (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_transform_normal_vsh.glsl.slang
+   源文件大小:     2067 bytes
+   [slangc→DXIL]     ... [0;31m问题[0m (slangc)
+   [1;33mdxc 1.10: : error : error: validation errors error: Semantic 'TEXCOORD' overlap at 0. Validation failed.  [0m
+
+[0;36m[43] corpus_deko3d_transform_normal_vsh_glsl_v2 (VS, corpus)[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/deko3d_transform_normal_vsh.glsl_v2.slang
+   源文件大小:     2070 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    5180 bytes)
+   [MSC→metallib]    ... [0;32mOK[0m (    5180 →     8312 bytes)
+
+============================================
+ 结果: [0;32m29 Path A 通过[0m / [0;31m0 控制样本失败[0m / [1;33m13 语料发现问题[0m / 1 跳过或预期问题 / 总计 43
+ 阶段通过数: VS=12 / FS=12 / CS=5
+ 本地语料尝试: 35，记录问题: 13
+
+ [0;32m扩展语料回归完成[0m：Path A 基础能力通过，真实/近真实失败模式已记录为后续修复输入
+============================================

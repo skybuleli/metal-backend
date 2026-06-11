@@ -19,11 +19,27 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 1 — 着色器管道概念验证
-- 当前进度：23/124 任务完成
+- 当前进度：24/125 任务完成
 - 下一任务：P1.9 bench_compile.sh 基准测试脚本
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 凌晨 | P1.8b 扩展真实/近真实着色器语料回归测试 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P1.8b 完成，`tools/test_shader_corpus_path_a.sh` 通过
+- **变更**:
+  - 新增 `tools/test_shader_corpus_path_a.sh`，覆盖确定性 VS/FS/CS 控制样本与本地 `deko3d_slang_poc/test_output` 语料扫描
+  - 新增 `docs/shader-corpus.md`，记录正式语料、灰区来源和后续回归测试建议
+  - 新增 `docs/evidence/P1.8b-shader-corpus-path-a.log` 作为任务证据
+  - 更新 `docs/toolchain.md`，记录 `test_output` 语料规模和 P1.8b 发现
+- **验证**:
+  - `bash tools/test_shader_corpus_path_a.sh` → 29 Path A 通过 / 0 控制样本失败 / 13 语料发现问题 / 1 跳过或预期问题
+- **关键发现**:
+  - `real_*`、`kirby_*`、`large_*`、`final_*` 等近真实样本会暴露未初始化变量、TEXCOORD overlap、tessellation/domain 语义误判
+  - RyuSAK 不进入正式证据；bnsh-decoder 只在有合法 `.bnsh` 输入时采用
+- **归档**: `docs/session-logs/phase-1.md`
 
 ### 2026-06-12 凌晨 | P1.8 真实/近真实计算着色器 Path A 测试 | ✅ 完成
 
