@@ -72,6 +72,34 @@ slangc input.glsl -target dxil -target spirv \     # 多目标输出
 - 路径 B/C 需完整 Xcode，非阻塞
 - Ryubing：dotnet 10.0.101，`dotnet build -c Release` 22.5s
 
+## 测试数据源（本地缓存）
+
+> **用途**：P1.6~P1.9 真实着色器测试 + P4~P8 游戏调试阶段引用。
+
+### Ryujinx 着色器缓存（真实游戏）
+
+| 目录 | 路径 | 数量 | 格式 | 用途 |
+|------|------|------|------|------|
+| msl_dump | `~/Library/Application Support/Ryujinx/msl_dump/` | 100 个 (50 对 VS/FS) | MSL 文本 | SPIR-V→MSL roundtrip 产物，含 spvFMul 等 helper |
+| metallib_cache | `~/Library/Application Support/Ryujinx/metallib_cache/` | 345 个 | metallib 二进制 | SHA256 命名，已编译的 Metal 着色器 |
+| shader_dump | `~/Library/Application Support/Ryujinx/shader_dump/` | 4 个 | metal + spv | 原始着色器源（.metal/.spv/.spv.dis） |
+
+**msl_dump 文件命名规则**：`shader_{ID}_{Stage}.msl`，ID 1~100，Stage 为 Vertex 或 Fragment。
+
+### deko3d 示例着色器（已知结构）
+
+| 目录 | 路径 | 内容 |
+|------|------|------|
+| deko3d_metal_runtime | `~/autommes/deko3d_metal_runtime/` | ObjC Metal 三角形示例（triangle.m、build_shaders.sh） |
+| deko3d_slang_poc/shaders | `~/autommes/deko3d_slang_poc/shaders/` | 7 个 GLSL/Slang 着色器（triangle、complex_v1~v4、test.slang） |
+| deko3d_slang_poc/output | `~/autommes/deko3d_slang_poc/output/` | roundtrip 产物（roundtrip_vert.glsl、.msl、triangle_vert_maxwell.bin） |
+
+### 数据格式说明
+
+- **msl_dump 的 MSL**：是 SPIR-V→MSL 反编译结果，包含 `spvFMul`、`spvFMulVectorMatrix` 等 SPIR-V helper 函数模板，非手写 MSL
+- **deko3d GLSL**：标准 GLSL 4.50 + `GL_ARB_separate_shader_objects`，可直接作为 Path A 输入
+- **metallib_cache**：已是编译好的二进制，用于参考对比而非重编译
+
 ## 参考仓库
 
 | 仓库 | 本地路径 | 用途 |
