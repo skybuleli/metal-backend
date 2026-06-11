@@ -205,9 +205,200 @@ run_path_a "deko3d_roundtrip_vs" \
     "$HOME/autommes/deko3d_slang_poc/output/roundtrip_vert.glsl" || true
 
 # ═══════════════════════════════════════════════
+# 第二部分: 内嵌多样化测试着色器（覆盖 GLSL 特性）
+# ═══════════════════════════════════════════════
+echo "══ 第二部分: 内嵌多样化测试着色器 → Path A ══"
+echo ""
+
+# 测试 1: 矩阵运算 (mat4 * mat4, mat4 * vec4)
+cat > "$TMPDIR/vs_mat_ops.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 0) out vec3 vOut;
+
+void main() {
+    mat4 m = mat4(1.0);
+    mat4 n = mat4(2.0);
+    mat4 r = m * n;
+    vec4 v = r * vec4(aPos, 1.0);
+    gl_Position = v;
+    vOut = aPos;
+}
+GLSL
+run_path_a "feat_mat_ops" "$TMPDIR/vs_mat_ops.glsl" || true
+
+# 测试 2: 条件分支 (if/else + ternary)
+cat > "$TMPDIR/vs_branch.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in float aFlag;
+layout(location = 0) out float vVal;
+
+void main() {
+    float val;
+    if (aFlag > 0.5) {
+        val = aPos.x * 2.0;
+    } else {
+        val = aPos.y;
+    }
+    val = (val > 1.0) ? 1.0 : val;
+    gl_Position = vec4(aPos.x, aPos.y * val, aPos.z, 1.0);
+    vVal = val;
+}
+GLSL
+run_path_a "feat_branch_ternary" "$TMPDIR/vs_branch.glsl" || true
+
+# 测试 3: 循环 (for + while)
+cat > "$TMPDIR/vs_loop.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 0) out float vSum;
+
+void main() {
+    float sum = 0.0;
+    for (int i = 0; i < 4; i++) {
+        sum += aPos.x * float(i);
+    }
+    int j = 0;
+    while (j < 3) {
+        sum += aPos.y * float(j);
+        j++;
+    }
+    gl_Position = vec4(aPos.x + sum, aPos.y, aPos.z, 1.0);
+    vSum = sum;
+}
+GLSL
+run_path_a "feat_loop_for_while" "$TMPDIR/vs_loop.glsl" || true
+
+# 测试 4: 数学函数 (sin/cos/pow/sqrt/abs/min/max/clamp/mix)
+cat > "$TMPDIR/vs_math.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 0) out vec3 vOut;
+
+void main() {
+    float a = sin(aPos.x);
+    float b = cos(aPos.y);
+    float c = pow(abs(aPos.z), 2.0);
+    float d = sqrt(a * a + b * b + c);
+    float e = clamp(d, 0.0, 1.0);
+    float f = mix(a, b, 0.5);
+    float g = min(max(e, f), 1.0);
+    gl_Position = vec4(a, b, g, 1.0);
+    vOut = vec3(c, d, e);
+}
+GLSL
+run_path_a "feat_math_functions" "$TMPDIR/vs_math.glsl" || true
+
+# 测试 5: 多输出 (多个 varying + gl_PointSize) —— 已知限制: gl_PointSize 在 DXIL VS 无 SV_PointSize 语义
+cat > "$TMPDIR/vs_multi_out.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec2 aUV;
+layout(location = 2) in vec3 aNormal;
+layout(location = 0) out vec2 vUV;
+layout(location = 1) out vec3 vNormal;
+layout(location = 2) out float vDepth;
+
+void main() {
+    gl_Position = vec4(aPos, 1.0);
+    gl_PointSize = 4.0;
+    vUV = aUV;
+    vNormal = normalize(aNormal);
+    vDepth = aPos.z;
+}
+GLSL
+run_path_a "feat_multi_output" "$TMPDIR/vs_multi_out.glsl" \
+    "known_fail:gl_PointSize 在 DXIL SM 6.0 VS 中无 SV_PointSize 语义" || true
+
+# 测试 5b: 多输出（无 gl_PointSize，验证多 varying 本身可用）
+cat > "$TMPDIR/vs_multi_out_no_ps.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in vec2 aUV;
+layout(location = 2) in vec3 aNormal;
+layout(location = 0) out vec2 vUV;
+layout(location = 1) out vec3 vNormal;
+layout(location = 2) out float vDepth;
+
+void main() {
+    gl_Position = vec4(aPos, 1.0);
+    vUV = aUV;
+    vNormal = normalize(aNormal);
+    vDepth = aPos.z;
+}
+GLSL
+run_path_a "feat_multi_output_no_pointsize" "$TMPDIR/vs_multi_out_no_ps.glsl" || true
+
+# 测试 6: 整数和位运算
+cat > "$TMPDIR/vs_int_ops.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 1) in int aIndex;
+layout(location = 0) out float vResult;
+
+void main() {
+    int idx = aIndex & 0xFF;
+    int shifted = idx << 2;
+    int combined = shifted | 0x10;
+    float f = float(combined) / 256.0;
+    gl_Position = vec4(aPos.x + f, aPos.y, aPos.z, 1.0);
+    vResult = f;
+}
+GLSL
+run_path_a "feat_int_bitwise" "$TMPDIR/vs_int_ops.glsl" || true
+
+# 测试 7: 数组和 swizzle
+cat > "$TMPDIR/vs_array.glsl" << 'GLSL'
+#version 460
+layout(location = 0) in vec3 aPos;
+layout(location = 0) out vec4 vColor;
+
+void main() {
+    float weights[4] = float[4](0.25, 0.25, 0.25, 0.25);
+    float sum = 0.0;
+    for (int i = 0; i < 4; i++) {
+        sum += weights[i] * aPos.x;
+    }
+    gl_Position = vec4(aPos, 1.0);
+    vColor = vec4(sum, aPos.yz, 1.0);
+}
+GLSL
+run_path_a "feat_array_swizzle" "$TMPDIR/vs_array.glsl" || true
+
+# ═══════════════════════════════════════════════
+# 第三部分: SPV 逆向 → GLSL → Path A
+# ═══════════════════════════════════════════════
+echo "══ 第三部分: SPV 逆向 → GLSL → Path A ══"
+echo ""
+
+SPV_DUMP="$HOME/Library/Application Support/Ryujinx/shader_dump"
+if [ -f "$SPV_DUMP/vertex_0003.spv" ]; then
+    SPV_GLSL="$TMPDIR/vertex_0003_roundtrip.glsl"
+    echo -e "${CYAN}[SPV] vertex_0003.spv → spirv-cross → GLSL${NC}"
+    echo -n "   [spirv-cross→GLSL] ... "
+    if spirv-cross "$SPV_DUMP/vertex_0003.spv" --output "$SPV_GLSL" --version 460 2>"$TMPDIR/spv_cross.err"; then
+        if [ -f "$SPV_GLSL" ]; then
+            local_lines=$(wc -l < "$SPV_GLSL")
+            echo -e "${GREEN}OK${NC} ($local_lines 行)"
+            run_path_a "spv_reverse_vertex_0003" "$SPV_GLSL" || true
+        else
+            echo -e "${RED}FAIL${NC}"
+        fi
+    else
+        err_msg=$(head -3 "$TMPDIR/spv_cross.err" 2>/dev/null | tr '\n' ' ' || echo "未知")
+        echo -e "${YELLOW}SKIP${NC} (spirv-cross 失败: $err_msg)"
+    fi
+    echo ""
+else
+    echo -e "${YELLOW}跳过${NC} — vertex_0003.spv 不存在"
+    echo ""
+fi
+
+# ═══════════════════════════════════════════════
 # 第二部分: Ryujinx msl_dump MSL 文件（仅检测）
 # ═══════════════════════════════════════════════
-echo "══ 第二部分: Ryujinx msl_dump MSL（仅检测） ══"
+echo "══ 第四部分: Ryujinx msl_dump MSL（仅检测） ══"
 echo ""
 
 MSL_DUMP="$HOME/Library/Application Support/Ryujinx/msl_dump"

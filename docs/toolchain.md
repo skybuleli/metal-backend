@@ -65,6 +65,7 @@ slangc input.glsl -target dxil -target spirv \     # 多目标输出
 | dxmt 仓库混淆 | 多个同名仓库 | 用 `3Shain/dxmt` |
 | GLSL UBO/push_constant | slangc DXIL 报 E36107 | 改用 Slang 原生语法，详见 shader-debug.md |
 | glslangValidator 后缀 | `.glsl` 无法识别阶段 | 用 `.vert.glsl` / `.frag.glsl` |
+| gl_PointSize 在 DXIL SM 6.0 VS | SV_PointSize 语义无效 | 改用其他机制传递点大小，详见 shader-debug.md |
 | mktemp 沙箱限制 | Operation not permitted | 回退到 `$SCRIPT_DIR/.tmp_test` |
 
 ## 环境约束（已验证）

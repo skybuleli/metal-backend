@@ -12,18 +12,29 @@
 | texture() 采样 (FS) | ✅ (Path A) | ✅ | Path B 的 slang -target metal ❌ |
 | layout(std140) UBO | ❌ E36107 | ✅ | 改用 Slang `ConstantBuffer<T>` 语法 |
 | push_constant | ❌ E36107 | ✅ | 改用 Slang `[[vk::push_constant]]` 或 constant buffer |
+| gl_PointSize (VS) | ❌ SV_PointSize 无效 | ✅ | DXIL SM 6.0 VS 无此语义，需用其他机制 |
 | #version 450/460 | ✅ | ✅ | — |
 | GL_ARB_separate_shader_objects | ✅ | ✅ | — |
 | layout(binding=N) uniform | ✅ | ✅ | 仅 `std140` 块语法不兼容 |
-| mat4 * vec4 矩阵乘法 | ✅ | ✅ | — |
+| mat4 * mat4 / mat4 * vec4 | ✅ | ✅ | — |
+| if/else + ternary | ✅ | ✅ | — |
+| for / while 循环 | ✅ | ✅ | — |
+| sin/cos/pow/sqrt/abs | ✅ | ✅ | — |
+| clamp/mix/min/max | ✅ | ✅ | — |
+| 多 varying 输出 | ✅ | ✅ | — |
+| 整数位运算 (&/\|/<</>>) | ✅ | ✅ | — |
+| 局部数组 + swizzle | ✅ | ✅ | — |
+| normalize() | ✅ | ✅ | — |
 | spvFMul 等 SPIR-V helper | — | ✅ (MSL 输出) | 仅 SPIR-V roundtrip 产物 |
 | mul() 函数 (HLSL) | ✅ (Slang 原生) | ❌ | GLSL 用 `*`，Slang 用 `mul()` |
+| SPV→GLSL roundtrip | ✅ | — | spirv-cross --version 460 → Path A |
 
 ### 已知失败模式与绕过方案
 
 | 错误 | 阶段 | 根因 | 绕过 | 未来影响 |
 |------|------|------|------|----------|
 | `E36107: unavailable features` | slangc DXIL | GLSL UBO/push_constant 在 DXIL SM 6.0 无对应 | 改用 Slang 原生语法 | P4 CommandMapper 生成着色器时必须用 Slang 语法 |
+| `SV_PointSize is invalid` | slangc DXIL (dxc) | DXIL SM 6.0 VS 无 gl_PointSize 语义 | 移除 gl_PointSize 或用其他方式传递点大小 | Switch 游戏常用点精灵，P4/P8 需处理 |
 | `E36107` (fragment texture) | slangc -target metal | Slang metal 目标 FS 不支持 texture() | Path A 不受影响 | 仅 Path B 不可用，非阻塞 |
 | `unrecognized source file` | glslangValidator | `.glsl` 后缀无法识别着色器阶段 | 用 `.vert.glsl` / `.frag.glsl` 复合后缀 | 所有脚本均应用复合后缀 |
 | MSL 有效但无法编译 metallib | xcrun metal | 需完整 Xcode.app，CLT-only 无此工具 | 用 Path A (MSC) 代替 | P4+ 需安装 Xcode 或使用 MSC |
