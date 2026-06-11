@@ -123,3 +123,22 @@
   - Slang MSL 输出有效但无法编译为 metallib（需完整 Xcode）
   - Path B 部分可用：MSL 生成 OK，编译 metallib 不可用
 - **Commit**: `feat(tools): P1.5 Path B 尝试脚本 [done]`
+
+---
+
+## 2026-06-12 凌晨 | P1.6 真实顶点着色器 Path A 测试 | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ P1.6 完成，test_real_vs_path_a.sh 3 PASS + 2 预期失败 + 5 MSL 跳过
+- **数据源**:
+  - deko3d_metal_runtime/shaders/triangle_vs.glsl → Path A PASS (269→3176→6216 bytes)
+  - deko3d_slang_poc/shaders/triangle.vert.glsl → Path A PASS (321→3176→6216 bytes)
+  - deko3d_slang_poc/output/roundtrip_vert.glsl → Path A PASS (319→3176→6216 bytes)
+  - complex.vert.glsl (UBO) → 预期失败（GLSL std140 UBO 与 slangc DXIL SM 6.0 不兼容）
+  - complex_v4.vert.glsl (push_constant) → 预期失败（push_constant 是 Vulkan 特有语法）
+  - Ryujinx msl_dump 5 个 MSL 抽样 → 有效但需 xcrun metal
+- **关键发现**:
+  - 简单 GLSL 着色器 Path A 完全可用
+  - GLSL UBO/push_constant 在 slangc DXIL 下不兼容，需 Slang 原生语法
+  - Ryujinx msl_dump 是完整游戏着色器 (600~1000 行)，MSL 格式有效
+- **Commit**: `feat(tools): P1.6 真实顶点着色器 Path A 测试 [done]`
