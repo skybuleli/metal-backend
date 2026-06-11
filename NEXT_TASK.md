@@ -1,51 +1,35 @@
-# 下一任务 — P1.1 编写 test_slang_dxil.sh
+# 下一任务 — P1.1 编写 test_slang_dxil.sh (Path A 端到端)
 
-> 生成时间：2026-06-11 20:36 CST  
-> 所属阶段：Phase 1 — 着色器管道概念验证  
-> 当前进度：15/220 (6.8%) — Phase 0 ✅ 完成
+> 生成时间：2026-06-11 23:54:02  
+> 所属阶段：未知
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
 | 任务 ID | P1.1 |
-| 任务名称 | 编写 test_slang_dxil.sh — Path A 端到端验证脚本 |
-| 优先级 | 🔴 高（Phase 1 入口任务） |
-| 预计耗时 | 30 分钟 |
-| 前置依赖 | P0.2 (slangc), P0.11 (tools-verify.sh) |
+| 任务名称 | 编写 test_slang_dxil.sh (Path A 端到端) |
+| 优先级 | 🔴 高 |
+| 前置依赖 | 参见 PROGRESS.md |
 
-## 任务描述
+## 执行步骤
 
-编写自动化测试脚本，验证 Path A 着色器编译管道的端到端可用性。
-
-### 脚本要求
-
-1. **输入**：内嵌 GLSL 测试着色器（VS + PS）
-2. **步骤**：
-   - `slangc` 编译 GLSL → DXIL（必须加 `-profile sm_6_0`）
-   - `metal-shaderconverter` 转换 DXIL → metallib
-   - 验证每步输出文件大小 > 0
-   - 验证 metallib > DXIL（健康检查）
-3. **输出**：明确的 PASS/FAIL 状态
-4. **风格**：与 `tools/tools-verify.sh` 一致
-
-## 验收标准
-
-- [ ] 脚本可执行
-- [ ] DXIL 文件生成且大小 > 0
-- [ ] metallib 生成且大小 > DXIL
-- [ ] VS + PS 均通过
-- [ ] 清晰的 PASS/FAIL 输出
-
-## 参考
-
-- [tools/tools-verify.sh](tools/tools-verify.sh) — 参考风格
-- [docs/toolchain.md](docs/toolchain.md) — Path A 命令速查
-- [docs/shader-debug.md](docs/shader-debug.md) — 常见错误排查
+1. 阅读相关技术规格（`.blueprint/architecture.md`）
+2. 在 PROGRESS.md 中将任务标记为 🔄
+3. 执行任务
+4. 验证出口标准
+5. 在 PROGRESS.md 中将任务标记为 ✅
+6. 提交代码（约定式提交格式）
+7. 运行本脚本重新生成此文件
 
 ## 完成后
 
-1. PROGRESS.md 中标记 P1.1 为 ✅
-2. 运行 `python3 tools/gen_next_task.py` 生成下一任务
-3. 追加 SESSION_LOG.md
-4. 提交：`feat(tools): P1.1 编写 Path A 端到端验证脚本 [done]`
+- 更新 PROGRESS.md：P1.1 → ✅
+- 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
+- 记录 SESSION_LOG.md
+
+## 参考
+
+- [AGENTS.md](AGENTS.md) — Agent 行为规范
+- [PROGRESS.md](PROGRESS.md) — 总体进度
+- [.blueprint/architecture.md](.blueprint/architecture.md) — 技术规格

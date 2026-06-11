@@ -1,39 +1,75 @@
 # macOS
-    .DS_Store
-    *.app
-    *.dSYM
-    *.xcuserdata
-    *.xcworkspace
-    DerivedData/
+.DS_Store
+.AppleDouble
+*.app
+*.dSYM
+*.xcuserdata
+*.xcworkspace
+DerivedData/
 
-    # Build outputs
-    build/
-    out/
-    *.o
-    *.dylib
-    *.metallib
-    *.air
-    *.diag
+# 构建产物
+build/
+out/
+*.o
+*.obj
+*.dylib
+*.so
+*.a
+*.metallib
+*.air
+*.diag
+*.dxil
+*.spv
+*.spvasm
 
-    # IDE
-    .idea/
-    *.swp
-    *.swo
-    *.user
-    .vs/
+# IDE
+.idea/
+.vs/
+.vscode/settings.local.json
+*.swp
+*.swo
+*~
+*.user
+*.suo
+*.cache
 
-    # Dependencies
-    node_modules/
-    packages/
+# Dependencies
+node_modules/
+packages/
 
-    # Env
-    .env
-    *.log
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
 
-    # Shader cache
-    shader_cache/
-    !tests/fixtures/shader_cache/
+# .NET
+bin/
+obj/
 
-    # OS noise
-    Thumbs.db
-    
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Rust
+target/
+
+# Env
+.env
+.env.local
+
+# 临时文件
+*.log
+*.tmp
+*.bak
+workfiles/
+
+# Shader cache
+shader_cache/
+!tests/fixtures/shader_cache/
+
+# OS noise
+Thumbs.db
