@@ -1,0 +1,30 @@
+$ make build
+slangc shaders/quad.slang -target dxil -entry vertexMain -stage vertex -profile sm_6_0 -o build/quad_vertex.dxil
+slangc shaders/quad.slang -target dxil -entry fragmentMain -stage fragment -profile ps_6_0 -o build/quad_fragment.dxil
+warning[E00030]: the stage 'pixel' was specified more than once for entry point 'fragmentMain'
+metal-shaderconverter build/quad_vertex.dxil -o build/quad_vertex.metallib
+metal-shaderconverter build/quad_fragment.dxil -o build/quad_fragment.metallib
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" src/main.cpp -o build/d2_textured_quad -framework Foundation -framework Metal -framework CoreGraphics
+
+$ make run
+slangc shaders/quad.slang -target dxil -entry vertexMain -stage vertex -profile sm_6_0 -o build/quad_vertex.dxil
+slangc shaders/quad.slang -target dxil -entry fragmentMain -stage fragment -profile ps_6_0 -o build/quad_fragment.dxil
+warning[E00030]: the stage 'pixel' was specified more than once for entry point 'fragmentMain'
+metal-shaderconverter build/quad_vertex.dxil -o build/quad_vertex.metallib
+metal-shaderconverter build/quad_fragment.dxil -o build/quad_fragment.metallib
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" src/main.cpp -o build/d2_textured_quad -framework Foundation -framework Metal -framework CoreGraphics
+./build/d2_textured_quad
+D2 离屏渲染完成: "out/textured_quad.ppm"
+设备: Apple M1
+顶点 metallib: build/quad_vertex.metallib
+片段 metallib: build/quad_fragment.metallib
+
+$ file out/textured_quad.ppm
+out/textured_quad.ppm: Netpbm image data, size = 256 x 256, rawbits, pixmap
+
+$ wc -c out/textured_quad.ppm
+  196623 out/textured_quad.ppm
+
+$ file build/quad_vertex.metallib build/quad_fragment.metallib
+build/quad_vertex.metallib:   MetalLib executable (MacOS), version 1.2.7
+build/quad_fragment.metallib: MetalLib executable (MacOS), version 1.2.7

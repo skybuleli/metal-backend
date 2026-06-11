@@ -25,6 +25,26 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.3 D2 Textured Quad 接入 Path A 与纹理采样 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ `D2` 已通过 `Slang → DXIL → MSC → metallib` 渲染离屏纹理 quad
+- **变更**:
+  - 新增 `src/demos/d2/shaders/quad.slang`：顶点和片段入口，覆盖 quad 顶点与纹理采样
+  - 新增 `src/demos/d2/src/main.cpp`：从 `metallib` 加载着色器，创建测试纹理并离屏渲染到 `textured_quad.ppm`
+  - 新增 `src/demos/d2/Makefile`：构建 DXIL、metallib 和可执行文件
+  - 更新 `src/demos/d2/README.md`：记录 D2 的构建、运行和产物
+  - 更新 `src/demos/Makefile`：统一入口增加 `d2` 和 `run-d2`，`build-demos` 同时构建 D1、D2
+  - 新增 `docs/evidence/P2.3-build.txt` 作为 Path A 构建与运行证据
+- **验证**:
+  - `make -C src/demos d2`
+  - `make -C src/demos run-d2`
+  - `file src/demos/d2/build/quad_vertex.metallib src/demos/d2/build/quad_fragment.metallib`
+  - `file src/demos/d2/out/textured_quad.ppm`
+  - `make build-demos`
+- **说明**:
+  - 当前 `slangc` 仍会对 `fragmentMain` 输出一条 `stage 'pixel' was specified more than once` 警告，但不阻塞 DXIL 与 metallib 生成；P2.4 再结合实际图像输出决定是否需要进一步消警
+
 ### 2026-06-12 | P2.2 D1 运行验证与 PNG 证据产物 | ✅ 完成
 
 - **Agent**: Codex

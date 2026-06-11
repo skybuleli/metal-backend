@@ -14,20 +14,27 @@ help:
 build-demos:
 	@echo "Phase 2 Demo 统一入口"
 	@$(MAKE) -C d1 build
-	@echo "D1 已构建；其余 D2-D8 构建目标尚未逐个实现。"
-	@echo "可用下一步: make -C src/demos run-d1"
+	@$(MAKE) -C d2 build
+	@echo "D1、D2 已构建；其余 D3-D8 构建目标尚未逐个实现。"
+	@echo "可用下一步: make -C src/demos run-d2"
 
 d1:
 	@$(MAKE) -C d1 build
 
-d2 d3 d4 d5 d6 d7 d8:
+d2:
+	@$(MAKE) -C d2 build
+
+d3 d4 d5 d6 d7 d8:
 	@echo "[$@] 目录已就位，具体构建逻辑待对应 P2 任务实现。"
 	@echo "[$@] 预期证据格式见 docs/p2-demo-evidence.md"
 
 run-d1:
 	@$(MAKE) -C d1 run
 
-run-d2 run-d3 run-d4 run-d5 run-d6 run-d7 run-d8:
+run-d2:
+	@$(MAKE) -C d2 run
+
+run-d3 run-d4 run-d5 run-d6 run-d7 run-d8:
 	@demo_name=$${@#run-}; \
 	echo "[$$demo_name] 当前尚未实现运行入口。"; \
 	echo "[$$demo_name] 完成后应产出截图/帧缓冲证据和构建日志。"
