@@ -1,0 +1,14 @@
+$ make build
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" src/main.cpp -o build/d1_triangle -framework Foundation -framework Metal -framework CoreGraphics
+
+$ make run
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" src/main.cpp -o build/d1_triangle -framework Foundation -framework Metal -framework CoreGraphics
+./build/d1_triangle
+D1 离屏渲染完成: "out/triangle.ppm"
+设备: Apple M1
+
+$ file out/triangle.ppm
+out/triangle.ppm: Netpbm image data, size = 256 x 256, rawbits, pixmap
+
+$ wc -c out/triangle.ppm
+  196623 out/triangle.ppm

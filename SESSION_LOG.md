@@ -25,6 +25,24 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.1 D1 Hello Triangle 离屏渲染落地 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ `D1` 已实现并可在 Apple M1 上离屏渲染彩色三角形
+- **变更**:
+  - 新增 `src/demos/d1/src/main.cpp`：使用 `metal-cpp`、手写 MSL、`RenderPipelineState` 和 `drawPrimitives` 渲染到离屏纹理
+  - 新增 `src/demos/d1/Makefile`：支持 `build` / `run`，默认从 `~/GraphicsExperiments/third_party/metal-cpp` 读取 `metal-cpp`
+  - 更新 `src/demos/d1/README.md`：说明离屏产物、构建方式和 `METAL_CPP_DIR` 覆盖方式
+  - 更新 `src/demos/Makefile`：`build-demos` 与 `d1` / `run-d1` 统一接入 D1
+  - 新增 `docs/evidence/P2.1-build.txt` 作为构建与运行证据
+- **验证**:
+  - `make -C src/demos d1`
+  - `make -C src/demos run-d1`
+  - `file src/demos/d1/out/triangle.ppm`
+  - `wc -c src/demos/d1/out/triangle.ppm`
+- **说明**:
+  - 当前 D1 采用离屏渲染输出 `triangle.ppm`，先验证最小 Metal 管线；P2.2 再补正式运行证据和帧缓冲说明
+
 ### 2026-06-12 | P2.0 Demo 规格、构建入口与证据格式收口 | ✅ 完成
 
 - **Agent**: Codex

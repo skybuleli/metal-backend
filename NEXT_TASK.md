@@ -1,14 +1,14 @@
-# 下一任务 — P2.1 D1 Hello Triangle：metal-cpp + 手写 MSL + 彩色三角形
+# 下一任务 — P2.2 D1 运行验证：M1 截图或帧缓冲证据 + 构建日志
 
-> 生成时间：2026-06-12 05:14:34
+> 生成时间：2026-06-12 05:26:17
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.1 |
-| 任务名称 | D1 Hello Triangle：metal-cpp + 手写 MSL + 彩色三角形 |
+| 任务 ID | P2.2 |
+| 任务名称 | D1 运行验证：M1 截图或帧缓冲证据 + 构建日志 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.1 → ✅
+- 更新 PROGRESS.md：P2.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
