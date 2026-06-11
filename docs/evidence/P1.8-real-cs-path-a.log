@@ -1,0 +1,96 @@
+============================================
+ P1.8 — 真实/近真实计算着色器 Path A 测试
+ 时间: 2026-06-12 03:23:54
+============================================
+
+══ 第一部分: Ryujinx 本地缓存 compute 侦察 ══
+
+[0;36m[1] ryujinx_compute_cache_scan[0m
+   [1;33m未发现真实 Ryujinx compute MSL / compute shader dump[0m
+   [1;33m说明: 当前本地缓存仅有 Vertex/Fragment；P1.8 使用 deko3d 近真实 compute 与规整 Slang 样本继续验证 Path A[0m
+
+══ 第二部分: deko3d 近真实 compute 样本 ══
+
+[0;36m[2] deko3d_raw_sinewave_cs[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/real_deko3d_sinewave.glsl.slang
+   类型: slang
+   源文件大小:     1660 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    4156 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' warning[E38040]: entry point parameter treated as uniform   --> /Users/liliang/autommes/deko3d_slang_poc/test_output/real_deko3d_sinewave.glsl.slang:18:7 [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    4156 →     5360 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[3] deko3d_sinewave_msl_kernel[0m
+   来源: /Users/liliang/autommes/deko3d_slang_poc/test_output/real_deko3d_sinewave.glsl.msl
+   大小:     2584 bytes (     139 行)
+   [0;32mMSL kernel 有效[0m (含 metal_stdlib + kernel)
+   [1;33m跳过[0m — MSL→metallib 需 xcrun metal (完整 Xcode)
+
+[0;36m[4] deko3d_sinewave_normalized_cs[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_sinewave_normalized.slang
+   类型: slang
+   源文件大小:      630 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3644 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3644 →     5188 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+══ 第三部分: 内嵌 compute 特性覆盖 → Path A ══
+
+[0;36m[5] feat_min_rwbuffer[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_min_rwbuffer.slang
+   类型: slang
+   源文件大小:      224 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2956 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2956 →     4612 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[6] feat_groupshared_barrier[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_groupshared_barrier.slang
+   类型: slang
+   源文件大小:      366 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    3328 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    3328 →     5200 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[7] feat_atomic_add[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_atomic.slang
+   类型: slang
+   源文件大小:      265 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2996 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2996 →     4692 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[8] feat_byteaddress_store[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_byteaddress.slang
+   类型: slang
+   源文件大小:      226 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2760 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2760 →     4564 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[9] feat_rwtexture_store[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_rwtexture.slang
+   类型: slang
+   源文件大小:      269 bytes
+   [slangc→DXIL]     ... [0;32mOK[0m (    2860 bytes)
+   [1;33mslangc 提示: warning[E00030]: the stage 'compute' was specified more than once for entry point 'main' [0m
+   [MSC→metallib]    ... [0;32mOK[0m (    2860 →     4740 bytes)
+   [0;32mPath A 端到端 PASS[0m
+
+[0;36m[10] glsl_compute_std430_control[0m
+   来源: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_glsl_control.comp.glsl
+   [slangc→DXIL]     ... [1;33m预期问题[0m (slangc 失败)
+   [1;33m原因: GLSL compute 的 std430/storage buffer 属于 Path C 对照语料；Path A 主线应由 CommandMapper 输出 Slang 原生语法[0m
+   [1;33mwarning[E00030]: the stage 'compute' was specified more than once for entry point 'main' error[E36107]: unavailable features in entry point  --> /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.U4YziCDB9P/cs_glsl_control.comp.glsl:7:6 [0m
+
+============================================
+ 结果: [0;32m7 Path A 通过[0m / [0;31m0 失败[0m / [1;33m3 侦察或预期问题[0m / 总计 10
+
+ [0;32m计算阶段管线不崩！[0m规整 Slang compute 样本均通过 Path A 编译
+ [1;33m注: 当前本地 Ryujinx 缓存未发现 compute；GLSL std430 compute 仅作为 Path C 对照语料[0m
+============================================

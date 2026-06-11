@@ -14,6 +14,12 @@
 | texture() 采样 (VS) | ✅ | ✅ | — |
 | texture() 采样 (FS) | ✅ (Path A) | ✅ | Path B 的 slang -target metal ❌ |
 | FS 使用 `ps_6_0` profile | ✅ | — | P1.7 固定片段阶段 profile |
+| CS 使用 `cs_6_0` profile | ✅ | — | P1.8 固定计算阶段 profile |
+| RWStructuredBuffer / RWByteAddressBuffer | ✅ (Slang 原生) | — | Path A compute 主语法 |
+| groupshared + barrier | ✅ (Slang 原生) | — | P1.8 覆盖 |
+| atomic add | ✅ (Slang 原生) | — | P1.8 覆盖 |
+| RWTexture2D store | ✅ (Slang 原生) | — | P1.8 覆盖 |
+| GLSL compute std430 | ❌ E36107 | ✅ | 作为 Path C 对照语料 |
 | layout(std140) UBO | ❌ E36107 | ✅ | 改用 Slang `ConstantBuffer<T>` 语法 |
 | push_constant | ❌ E36107 | ✅ | 改用 Slang `[[vk::push_constant]]` 或 constant buffer |
 | gl_PointSize (VS) | ❌ SV_PointSize 无效 | ✅ | DXIL SM 6.0 VS 无此语义，需用其他机制 |
@@ -41,6 +47,8 @@
 | `SV_PointSize is invalid` | slangc DXIL (dxc) | DXIL SM 6.0 VS 无 gl_PointSize 语义 | 移除 gl_PointSize 或用其他方式传递点大小 | Switch 游戏常用点精灵，P4/P8 需处理 |
 | `E36107` (fragment texture) | slangc -target metal | Slang metal 目标 FS 不支持 texture() | Path A 不受影响 | 仅 Path B 不可用，非阻塞 |
 | slangc 返回 0 但无 DXIL | slangc DXIL (FS) | 部分简单片段样本使用 `sm_6_0` 时未产物 | 片段阶段固定 `-profile ps_6_0` | P1.7 已在脚本中固化 |
+| `E36107` (GLSL compute std430) | slangc DXIL (CS) | GLSL storage buffer/std430 与 Path A 主线不对齐 | CommandMapper 输出 Slang 原生 `RWStructuredBuffer` | P1.8 已作为 Path C 对照语料 |
+| entry point parameter treated as uniform | slangc DXIL (CS) | deko3d raw 样本存在无 system-value semantic 的参数 | 后续 CommandMapper 需显式标注系统语义或改为常量缓冲 | P1.8 raw sinewave 仍可通过 Path A |
 | `unrecognized source file` | glslangValidator | `.glsl` 后缀无法识别着色器阶段 | 用 `.vert.glsl` / `.frag.glsl` 复合后缀 | 所有脚本均应用复合后缀 |
 | MSL 有效但无法编译 metallib | xcrun metal | 需完整 Xcode.app，CLT-only 无此工具 | 用 Path A (MSC) 代替 | P4+ 需安装 Xcode 或使用 MSC |
 | mktemp Operation not permitted | 沙箱环境 | macOS 沙箱限制 /tmp 写入 | 回退到 `$SCRIPT_DIR/.tmp_test` | 所有脚本均已内置回退逻辑 |
@@ -112,6 +120,8 @@ spirv-val output.spv
 - 典型：2840B DXIL → 5804B metallib
 - deko3d 简单 VS：3176B DXIL → 6216B metallib（≈1.96×）
 - deko3d 简单 FS：2816B DXIL → 4884B metallib（≈1.73×，P1.7）
+- deko3d raw CS：4156B DXIL → 5360B metallib（≈1.29×，P1.8）
+- compute 最小 RWBuffer：2956B DXIL → 4612B metallib（≈1.56×，P1.8）
 - Ryujinx 真实 VS（msl_dump）：23~42KB MSL 文本（600~1000 行）
 
 ## 调试命令速查

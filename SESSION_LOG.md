@@ -19,11 +19,28 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 1 — 着色器管道概念验证
-- 当前进度：22/124 任务完成
-- 下一任务：P1.8 真实游戏计算着色器 Path A 测试
+- 当前进度：23/124 任务完成
+- 下一任务：P1.9 bench_compile.sh 基准测试脚本
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 凌晨 | P1.8 真实/近真实计算着色器 Path A 测试 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P1.8 完成，`tools/test_real_cs_path_a.sh` 通过
+- **变更**:
+  - 新增 `tools/test_real_cs_path_a.sh`，覆盖 Ryujinx compute 缓存侦察、deko3d sinewave compute、Slang compute 特性和 GLSL compute 对照样本
+  - 新增 `docs/evidence/P1.8-real-cs-path-a.log` 作为任务证据
+  - 更新 `docs/toolchain.md` 和 `docs/shader-debug.md`，记录 compute 阶段固定使用 `cs_6_0`
+- **验证**:
+  - `bash tools/test_real_cs_path_a.sh` → 7 Path A 通过 / 0 失败 / 3 侦察或预期问题
+- **关键发现**:
+  - 当前 Ryujinx 本地缓存未发现真实 compute MSL / compute shader dump
+  - deko3d raw sinewave compute 可通过 Path A，但有 `entry point parameter treated as uniform` 警告
+  - Slang 原生 compute 的 RWBuffer、groupshared/barrier、atomic、ByteAddressBuffer、RWTexture2D 均通过 DXIL→MSC
+  - GLSL compute std430 触发 E36107，应作为 Path C 对照语料
+- **归档**: `docs/session-logs/phase-1.md`
 
 ### 2026-06-12 凌晨 | P1.7 真实片段着色器 Path A 测试 | ✅ 完成
 
