@@ -88,13 +88,17 @@
 ### 五条着色器路径
 
 ```
-Maxwell SASS → Ryujinx 解码器 → GLSL
-  ├── 路径 A（主⭐）：  → Slang -target dxil → DXIL → MSC → metallib
-  ├── 路径 B（备选）：  → Slang -target metal → MSL → xcrun metal → metallib
-  ├── 路径 C（SPIR-V桥）：→ glslangValidator → SPIR-V → spirv-opt → SPIRV-Cross → MSL
-  ├── 路径 D（优化）：    → Slang -target spirv → SPIR-V → spirv-opt → Slang -target dxil → DXIL → MSC
-  └── 路径 E（交叉验证）：→ shader-compiler-rs → GLSL' → 任意路径
+Maxwell SASS → Ryujinx 解码器 → 结构化 IR
+    ├── CommandMapper → Slang 原生语法 (HLSL 风格)
+    │     ├── 路径 A（主⭐）：→ Slang -target dxil → DXIL → MSC → metallib
+    │     ├── 路径 B（备选）：→ Slang -target metal → MSL → xcrun metal → metallib
+    │     └── 路径 D（优化）：→ Slang -target spirv → SPIR-V → spirv-opt → Slang -target dxil → MSC
+    ├── CodeGen/Glsl → GLSL
+    │     └── 路径 C（SPIR-V桥）：→ glslangValidator → SPIR-V → spirv-opt → SPIRV-Cross → MSL
+    └── 路径 E（交叉验证）：→ shader-compiler-rs → GLSL' → 任意路径
 ```
+
+> **P1 实验结论**: Path A/B/D 的输入改为 Slang 原生语法（非 GLSL），因为 GLSL 的 std140/push_constant 与 DXIL SM 6.0 不兼容。详见 `docs/shader-debug.md`。
 
 ### 三层 Maxwell 参考体系
 

@@ -7,7 +7,7 @@
 | 工具 | 路径 | 版本 | 用途 | 验证任务 |
 |------|------|------|------|----------|
 | **devkitPro** | `/opt/devkitpro/` | 最新 | Switch 开发工具链（含 deko3d） | P0.1 |
-| **slangc** | `slangc`（PATH） | 最新 | GLSL→DXIL/SPIR-V/Metal 编译器 | P0.2 |
+| **slangc** | `slangc`（PATH） | 最新 | Slang/HLSL/GLSL→DXIL/SPIR-V/Metal 编译器 | P0.2 |
 | **metal-shaderconverter** | `/usr/local/bin/metal-shaderconverter` | 4.0 | DXIL→metallib 转换（Path A 核心） | P0.3 |
 | **libmetalirconverter** | `/usr/local/lib/libmetalirconverter.dylib` | 4.0 | MSC 运行时库（P/Invoke 调用） | P0.3 |
 | **spirv-as** | `/opt/homebrew/bin/spirv-as` | 最新 | SPIR-V 汇编器 | P0.4 |
@@ -101,7 +101,7 @@ slangc input.glsl -target dxil -target spirv \     # 多目标输出
 ### 数据格式说明
 
 - **msl_dump 的 MSL**：是 SPIR-V→MSL 反编译结果，包含 `spvFMul`、`spvFMulVectorMatrix` 等 SPIR-V helper 函数模板，非手写 MSL
-- **deko3d GLSL**：标准 GLSL 4.50 + `GL_ARB_separate_shader_objects`，可直接作为 Path A 输入
+- **deko3d GLSL**：标准 GLSL 4.50 + `GL_ARB_separate_shader_objects`，可作为 Path C 输入；Path A 推荐用 Slang 原生语法（详见 shader-debug.md）
 - **metallib_cache**：已是编译好的二进制，用于参考对比而非重编译
 
 ## 参考仓库

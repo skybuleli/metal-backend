@@ -103,7 +103,7 @@
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
-| P4.2.2 | Slang API P/Invoke: GLSL→DXIL | ⬜ | — | — |
+| P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
 | P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ⬜ | — | — |
 | P4.2.5 | 回退逻辑: Path A→Path C→Path B | ⬜ | — | — |
