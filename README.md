@@ -19,14 +19,14 @@ cat NEXT_TASK.md             # 查看下一步做什么
 ## 项目结构
 ```
 ├── AGENTS.md          ← 🤖 AI Agent 入口（先读这个）
-├── PROGRESS.md        ← 🔴 项目状态机（220 个任务）
+├── PROGRESS.md        ← 🔴 项目状态机（132 个任务）
 ├── NEXT_TASK.md       ← 🔴 自动生成的当前任务
 ├── SESSION_LOG.md     ← 📝 会话审计记录
 ├── blueprint/        ← 📋 技术规格
-├── libmetal_bridge/   ← 🔧 C++ Metal 运行时
-├── ryubing/           ← 🕹️ 复刻的模拟器
-├── demos/             ← 🎨 D1–D8 渐进式渲染 Demo
-├── tests/             ← 🧪 测试金字塔
+├── src/libmetal_bridge/   ← 🔧 C++ Metal 运行时
+├── src/ryubing/           ← 🕹️ 复刻的模拟器
+├── src/demos/             ← 🎨 D1–D8 渐进式渲染 Demo
+├── src/tests/             ← 🧪 测试金字塔
 ├── tools/             ← 🛠️ 工具脚本
 └── .github/           ← 🔄 CI/CD 模板
 ```
@@ -35,7 +35,7 @@ cat NEXT_TASK.md             # 查看下一步做什么
 ```
 NEXT_TASK.md → 在 PROGRESS.md 中认领 → 执行 → 验证 → 提交 → gen_next_task.py → 重复
 ```
-详见 [`AGENTS.md`](AGENTS.md) 获取完整 Agent 协议。详见 `blueprint/agent-ops.md` 获取系统设计细节。
+详见 [`AGENTS.md`](AGENTS.md) 获取完整 Agent 协议。详见 `blueprint/agent-ops.md` 获取系统设计细节。Phase 2 的 Demo 证据规范见 `docs/p2-demo-evidence.md`。
 
 ## 技术栈
 | 组件 | 语言 | 框架 |

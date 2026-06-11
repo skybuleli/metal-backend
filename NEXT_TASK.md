@@ -1,14 +1,14 @@
-# 下一任务 — P2.0 收口 P2 规格：同步 D1-D8 验收标准、构建入口和证据格式
+# 下一任务 — P2.1 D1 Hello Triangle：metal-cpp + 手写 MSL + 彩色三角形
 
-> 生成时间：2026-06-12 05:05:12
+> 生成时间：2026-06-12 05:14:34
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.0 |
-| 任务名称 | 收口 P2 规格：同步 D1-D8 验收标准、构建入口和证据格式 |
+| 任务 ID | P2.1 |
+| 任务名称 | D1 Hello Triangle：metal-cpp + 手写 MSL + 彩色三角形 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.0 → ✅
+- 更新 PROGRESS.md：P2.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

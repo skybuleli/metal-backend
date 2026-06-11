@@ -1,0 +1,16 @@
+$ make help
+可用目标:
+  make verify       # 验证工具链
+  make build-bridge # 构建 src/libmetal_bridge 占位工程
+  make build-demos  # 进入 src/demos 统一入口
+  make test         # 显示测试阶段入口状态
+  make clean        # 清理构建目录
+
+$ make build-demos
+Phase 2 Demo 统一入口
+当前仅完成 P2.0 规格收口；D1-D8 构建目标尚未逐个实现。
+可用下一步: make -C src/demos d1
+
+$ make -C src/demos d1
+[d1] 目录已就位，具体构建逻辑待对应 P2 任务实现。
+[d1] 预期证据格式见 docs/p2-demo-evidence.md

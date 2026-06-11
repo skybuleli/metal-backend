@@ -25,6 +25,24 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.0 Demo 规格、构建入口与证据格式收口 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ P2.0 完成，Phase 2 进入 D1 实现前的可执行状态
+- **变更**:
+  - 修复顶层 `Makefile`，使 `make help`、`make build-demos`、`make clean` 指向当前 `src/` 目录结构
+  - 重写 `src/demos/Makefile`，提供 `build-demos`、`d1`、`run-d1` 等稳定命名入口
+  - 新增 `docs/p2-demo-evidence.md`，统一 D1-D8 的构建日志、运行证据、性能 JSON 规范
+  - 更新 `README.md` 与 `src/demos/README.md`，同步目录结构、P2 证据规范和当前阶段约束
+  - 新增 `docs/evidence/P2.0-build-entry.txt` 作为构建入口验证证据
+- **验证**:
+  - `make help`
+  - `make build-demos`
+  - `make -C src/demos d1`
+  - `python3 tools/verify_progress.py`
+- **说明**:
+  - `P2.0` 只要求入口路径和证据口径稳定，不要求 D1 真实编译通过；D1 的实际构建和运行从 `P2.1`、`P2.2` 开始
+
 ### 2026-06-12 | P2 任务扩充与 Demo 验收标准收口 | ✅ 完成
 
 - **Agent**: Codex

@@ -37,7 +37,7 @@
 - **语言**: C++17 + metal-cpp
 - **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；必要时保留手写 MSL 作为隔离对照
 - **构建**: 顶层 Makefile 调用 `src/demos/Makefile`，每个 Demo 可有独立构建入口
-- **证据**: `docs/evidence/` 下保存构建日志、截图说明、帧缓冲摘要或性能 JSON
+- **证据**: `docs/evidence/` 下保存构建日志、截图说明、帧缓冲摘要或性能 JSON，字段规范见 `docs/p2-demo-evidence.md`
 
 ## 构建
 
@@ -46,6 +46,8 @@ make build-demos  # 编译所有 Demo
 make -C src/demos d1
 make -C src/demos run-d1
 ```
+
+> `P2.0` 结束时，以上命令只要求入口路径正确、目标命名稳定、输出提示清晰；真正的编译逻辑从 `P2.1` 起逐级实现。
 
 ## 依赖
 
