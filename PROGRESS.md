@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T06:11:59+08:00
+# 最后更新: 2026-06-12T06:50:37+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 31/132 任务 (23.5%)
+# 完成度: 32/132 任务 (24.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -65,7 +65,7 @@
 | P2.3 | D2 Textured Quad：Path A Slang→DXIL→MSC→metallib + 纹理采样 | ✅ | 2026-06-12T05:48:10+08:00 | docs/evidence/P2.3-build.txt |
 | P2.4 | D2 运行验证：纹理 quad 截图 + metallib 加载日志 | ✅ | 2026-06-12T06:01:00+08:00 | docs/evidence/P2.4-run.txt + docs/evidence/P2.4-d2-textured-quad.png + docs/evidence/P2.4-meta.json + docs/evidence/P2.4-fragment-reflection.json |
 | P2.5 | D3 Multi-Texture：多纹理混合 + 采样器 filter/wrap/mipmap 模式 | ✅ | 2026-06-12T06:10:29+08:00 | docs/evidence/P2.5-run.txt + docs/evidence/P2.5-d3-multi-texture.png + docs/evidence/P2.5-meta.json + docs/evidence/P2.5-fragment-reflection.json |
-| P2.6 | D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照 | ⬜ | — | — |
+| P2.6 | D4 Basic Lighting：Phong 光照（ambient + diffuse + specular）| ✅ | 2026-06-12T07:15:00+08:00 | docs/evidence/P2.6-run.txt + P2.6-d4-basic-lighting.png + P2.6-meta.json |
 | P2.7 | D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集 | ⬜ | — | — |
 | P2.8 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 | ⬜ | — | — |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ⬜ | — | — |
@@ -260,10 +260,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 132
-- 已完成: 31 (23.5%)
+- 已完成: 32 (24.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 101
+- 待开始: 100
 - 当前阶段: Phase 2 — 渐进式渲染 Demo
-- 下一任务: P2.6 — D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照
+- 下一任务: P2.7 — D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集

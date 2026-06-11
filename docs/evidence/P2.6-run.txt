@@ -1,0 +1,17 @@
+D4 离屏渲染完成: "out/basic_lighting.ppm"
+设备: Apple M1
+顶点 metallib: build/lighting_vertex.metallib
+片段 metallib: build/lighting_fragment.metallib
+光源位置: (2, 3, 2)
+相机位置: (2, 2, 2)
+vertex 反射参数数量: 5
+  - name=struct.top_level_global_ab, type=0, index=2, active=false
+  - name=struct.res_desc_heap_ab, type=0, index=0, active=false
+  - name=struct.smp_desc_heap_ab, type=0, index=1, active=false
+  - name=drawArguments, type=0, index=4, active=false
+  - name=uniforms, type=0, index=5, active=false
+fragment 反射参数数量: 4
+  - name=struct.top_level_global_ab, type=0, index=2, active=false
+  - name=struct.res_desc_heap_ab, type=0, index=0, active=false
+  - name=struct.smp_desc_heap_ab, type=0, index=1, active=false
+  - name=uniform_frag, type=0, index=5, active=false

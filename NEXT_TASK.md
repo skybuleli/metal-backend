@@ -1,14 +1,14 @@
-# 下一任务 — P2.6 D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照
+# 下一任务 — P2.7 D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集
 
-> 生成时间：2026-06-12 06:11:59
+> 生成时间：2026-06-12 06:50:37
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.6 |
-| 任务名称 | D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照 |
+| 任务 ID | P2.7 |
+| 任务名称 | D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.6 → ✅
+- 更新 PROGRESS.md：P2.7 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
