@@ -19,13 +19,32 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：31/132 任务完成
-- 下一任务：P2.6 — D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照
+- 当前进度：32/132 任务完成
+- 下一任务：P2.7 — D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
 
-### 2026-06-12 | P2.6 D4 代码审查：7b5cc21 未达标，已回退标记 ⬜ | 🔴 审查驳回
+### 2026-06-12 | P2.6 D4 重新实现（手写 MSL）+ 收尾 cleanup | ✅ 完成
+
+- **Agent**: Reasonix
+- **结果**: ✅ D4 已正确实现并固化证据
+- **实现变更**:
+  - 手写 MSL 内嵌 main.cpp（替代 Slang→DXIL→MSC），规避 DXIL mul 限制
+  - Uniform Buffer（96 字节，含 MVP + 光源 + 相机）
+  - 3D 变换：model×view×proj 矩阵乘
+  - 深度测试：Depth32Float + CompareLess + WriteEnabled
+  - 背面剔除：CullModeBack + WindingCounterClockwise
+  - 3D 立方体：36 顶点，position/normal 分开绑定
+  - Phong 光照：ambient + diffuse + specular
+- **收尾 cleanup**:
+  - 删除 `shaders/lighting.slang`（旧版死代码）
+  - 删除旧版 MSC 反射 JSON
+  - 重写 README.md 反映真实实现
+  - 接入 `src/demos/Makefile` 统一构建
+- **证据**: `docs/evidence/P2.6-run.txt` + P2.6-d4-basic-lighting.png + P2.6-meta.json
+- **验证**: `make build-demos` 全部通过（D1-D4），`verify_progress.py` ✅ 32/132
+
 
 - **Agent**: Reasonix（Code Review Agent）
 - **结果**: 🔴 **此提交未实现 D4 任务要求，已回退 PROGRESS.md 状态并修正虚假证据**
