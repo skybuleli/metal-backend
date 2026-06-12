@@ -1,0 +1,8 @@
+{
+  "task": "P2.7",
+  "demo": "D5",
+  "scene": "法线贴图平面 + 程序化 Cubemap Skybox + 4x MSAA resolve",
+  "shader_path": "hand-written MSL (compiled from source)",
+  "artifacts": ["docs/evidence/P2.7-d5-advanced-texturing.ppm", "docs/evidence/P2.7-d5-advanced-texturing.png", "docs/evidence/P2.7-run.txt"],
+  "notes": "D5 第一版聚焦法线贴图、Skybox/Cubemap 与 4x MSAA 子集。RTT 留待后续更复杂后处理链路再引入。"
+}

@@ -1,0 +1,6 @@
+设备: Apple M1
+MSL 着色器编译通过
+纹理已创建: albedo=128x128, normal=128x128, cubemap=64x64x6
+MSAA 已启用: sampleCount=4
+D5 绘制完成: 法线贴图平面 + Skybox + 4x MSAA resolve
+D5 离屏渲染完成: "out/advanced_texturing.ppm"

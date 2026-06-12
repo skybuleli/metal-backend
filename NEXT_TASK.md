@@ -1,14 +1,14 @@
-# 下一任务 — P2.7 D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集
+# 下一任务 — P2.8 D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理
 
-> 生成时间：2026-06-12 16:07:06
+> 生成时间：2026-06-12 16:34:39
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.7 |
-| 任务名称 | D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集 |
+| 任务 ID | P2.8 |
+| 任务名称 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.7 → ✅
+- 更新 PROGRESS.md：P2.8 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

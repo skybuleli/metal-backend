@@ -25,6 +25,28 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.7 D5 高级贴图子集 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已交付 `法线贴图 + Skybox/Cubemap + 4x MSAA` 的 D5 第一版
+- **变更**:
+  - 新增 `src/demos/d5/Makefile` 与 `src/demos/d5/src/main.cpp`
+  - 新增 `src/demos/d5/README.md`，明确本阶段聚焦的高级贴图子集
+  - 更新 `src/demos/Makefile`，接入 `d5` 的构建与运行入口
+  - 更新 `src/demos/README.md`，把 `P2.7` 交付物明确为法线贴图、Skybox/Cubemap 与 MSAA
+- **实现要点**:
+  - 前景为带切线空间法线贴图的倾斜平面
+  - 背景为程序化 cubemap skybox
+  - 前景片段混入环境反射，证明 cubemap 读取链路可用于材质阶段
+  - 颜色附件启用 `4x MSAA`，最终 resolve 到单样本纹理导出
+- **验证**:
+  - `make -C src/demos/d5 evidence`
+  - 日志确认 `MSAA 已启用: sampleCount=4`
+  - 已导出 `docs/evidence/P2.7-d5-advanced-texturing.png`
+- **说明**:
+  - `RTT` 没有在本任务第一版强行加入，避免把任务做成两套半成品
+  - 若后续 `D6` 的 HDR/Bloom 需要后处理链路，再引入 RTT 会更自然
+
 ### 2026-06-12 | P2.6b D4 实时旋转窗口版 | ✅ 完成
 
 - **Agent**: Codex
