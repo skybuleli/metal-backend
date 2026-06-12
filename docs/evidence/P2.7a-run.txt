@@ -1,0 +1,7 @@
+设备: Apple M1
+MSL 着色器编译通过
+纹理已创建: albedo=160x160, normal=160x160, cubemap=96x96x6
+D5 增强绘制完成: 左侧平面关闭法线扰动, 右侧平面开启法线贴图
+天空盒已切换为连续天空/地平线 Cubemap
+MSAA 对比已导出: 左=1x, 右=4x, 差异像素=1381, 平均通道差=0.0510367
+D5 离屏渲染完成: "out/advanced_texturing_showcase.ppm" + "out/advanced_texturing_msaa_compare.ppm"

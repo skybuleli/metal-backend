@@ -1,0 +1,8 @@
+{
+  "task": "P2.7a",
+  "demo": "D5",
+  "scene": "双面板法线贴图对照 + 连续天空盒 Cubemap + 1x/4x MSAA 放大对比",
+  "shader_path": "hand-written MSL (compiled from source)",
+  "artifacts": ["docs/evidence/P2.7a-d5-showcase.ppm", "docs/evidence/P2.7a-d5-showcase.png", "docs/evidence/P2.7a-d5-msaa-compare.ppm", "docs/evidence/P2.7a-d5-msaa-compare.png", "docs/evidence/P2.7a-run.txt"],
+  "notes": "P2.7a 直接把法线贴图开关差异放进同一画面，并对斜边区域做 1x 与 4x MSAA 放大并排证据。"
+}

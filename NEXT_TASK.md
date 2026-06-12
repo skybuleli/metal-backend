@@ -1,6 +1,6 @@
 # 下一任务 — P2.8 D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理
 
-> 生成时间：2026-06-12 16:34:39
+> 生成时间：2026-06-12 22:02:05
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情

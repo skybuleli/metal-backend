@@ -19,8 +19,8 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：32/132 任务完成
-- 下一任务：P2.7 — D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集
+- 当前进度：36/135 任务完成
+- 下一任务：P2.8 — D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
@@ -238,6 +238,27 @@
   - `make -C src/demos run-d1`
   - `file src/demos/d1/out/triangle.ppm`
   - `wc -c src/demos/d1/out/triangle.ppm`
+
+### 2026-06-12 | P2.7a D5 展示增强与 MSAA 对比证据 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 将 D5 从“功能已通”推进到“画面会说话”的展示版
+- **变更**:
+  - 重写 `src/demos/d5/src/main.cpp`，把单平面场景升级为“双面板对照 + 连续天空盒 Cubemap + 1x/4x MSAA 放大对比”
+  - 更新 `src/demos/d5/Makefile`，新增 `P2.7a` 证据路径、双 PPM 校验和 PNG 导出
+  - 更新 `src/demos/d5/README.md` 与 `src/demos/README.md`，补充 P2.7a 的展示目标和证据说明
+- **实现要点**:
+  - 左侧面板关闭法线扰动，右侧面板开启强法线贴图，保证同一镜头内可直接比较
+  - 程序化 cubemap 不再只是纯色面，而是连续天空、地平线、远景轮廓和太阳高光
+  - MSAA 对比图改为斜边区域放大后的 `1x vs 4x` 并排证据，避免整图差异不够直观
+- **验证**:
+  - `make -C src/demos/d5 evidence`
+  - 日志确认 `差异像素=1381`，并生成 `P2.7a-d5-showcase.png` 与 `P2.7a-d5-msaa-compare.png`
+- **证据**:
+  - `docs/evidence/P2.7a-run.txt`
+  - `docs/evidence/P2.7a-d5-showcase.png`
+  - `docs/evidence/P2.7a-d5-msaa-compare.png`
+  - `docs/evidence/P2.7a-meta.json`
 - **说明**:
   - 当前 D1 采用离屏渲染输出 `triangle.ppm`，先验证最小 Metal 管线；P2.2 再补正式运行证据和帧缓冲说明
 
