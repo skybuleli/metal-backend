@@ -1,14 +1,14 @@
-# 下一任务 — P2.12 Demo 构建与回归入口：make build-demos + 截图/JSON 证据规范
+# 下一任务 — P3.1 Fork Ryubing + feature/native-metal-backend 分支
 
-> 生成时间：2026-06-13 02:43:51
-> 所属阶段：Phase 2 — 渐进式渲染 Demo
+> 生成时间：2026-06-13 02:46:46
+> 所属阶段：Phase 3 — Ryubing Fork 与 GAL 集成
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.12 |
-| 任务名称 | Demo 构建与回归入口：make build-demos + 截图/JSON 证据规范 |
+| 任务 ID | P3.1 |
+| 任务名称 | Fork Ryubing + feature/native-metal-backend 分支 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.12 → ✅
+- 更新 PROGRESS.md：P3.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

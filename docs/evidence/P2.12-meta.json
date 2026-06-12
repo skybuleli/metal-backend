@@ -1,0 +1,35 @@
+{
+  "task": "P2.12",
+  "demo": "all (D1-D8 + preview)",
+  "scene": "make build-demos 统一构建入口 — 全部 Demo 可执行文件 + metallib 产物",
+  "shader_path": {
+    "D1": "handwritten-msl",
+    "D2": "path-a-metallib",
+    "D3": "path-a-metallib",
+    "D4": "handwritten-msl",
+    "D5": "handwritten-msl",
+    "D6": "path-a-metallib",
+    "D7": "path-a-metallib",
+    "D8": {"compute": "path-a-metallib", "render": "handwritten-msl"}
+  },
+  "artifacts": [
+    "src/demos/d1/build/d1_triangle",
+    "src/demos/d2/build/d2_textured_quad",
+    "src/demos/d3/build/d3_multi_texture",
+    "src/demos/d4/build/d4_basic_lighting",
+    "src/demos/d4/build/d4_basic_lighting_window",
+    "src/demos/d5/build/d5_advanced_texturing",
+    "src/demos/d6/build/d6_advanced_lighting",
+    "src/demos/d7/build/d7_gpu_driven",
+    "src/demos/d8/build/d8_complex_showcase",
+    "src/demos/preview/build/demos_preview"
+  ],
+  "build_targets": {
+    "build-demos": "D1-D8 离屏 + D4 窗口 + preview",
+    "d8": "D8 离屏渲染",
+    "run-d8": "运行 D8 离屏渲染并输出证据",
+    "evidence": "D8 证据收集 (PPM/PNG/JSON)",
+    "evidence-d8": "D8 独立证据收集"
+  },
+  "notes": "make build-demos 已涵盖 D1-D8 全部 Demo，D8 含离屏+窗口双目标。新增 evidence/evidence-d8 顶层目标用于统一证据收集。"
+}
