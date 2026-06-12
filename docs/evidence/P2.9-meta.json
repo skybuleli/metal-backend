@@ -1,0 +1,8 @@
+{
+  "task": "P2.9",
+  "demo": "D7",
+  "scene": "Path A compute 更新粒子 + GPU 生成 indirect draw 参数 + instanced quad 渲染",
+  "shader_path": "compute: Path A (Slang -> DXIL -> MSC -> metallib), render: hand-written MSL",
+  "artifacts": ["docs/evidence/P2.9-d7-gpu-driven.ppm", "docs/evidence/P2.9-d7-gpu-driven.png", "docs/evidence/P2.9-run.txt", "docs/evidence/P2.9-perf.json", "docs/evidence/P2.9-compute-reflection.json"],
+  "notes": "CPU 每帧只提交一次 compute dispatch 和一次 indirect draw。粒子数量与 indirect instanceCount 由 GPU 侧缓冲驱动。"
+}

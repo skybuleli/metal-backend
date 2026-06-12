@@ -1,0 +1,15 @@
+{
+  "task": "P2.9",
+  "demo": "D7",
+  "device": "Apple M1",
+  "particle_count": 4096,
+  "sample_frames": 180,
+  "sample_seconds": 0.0606,
+  "avg_fps": 2968.0604,
+  "avg_frame_ms": 0.3369,
+  "cpu_submits_per_frame": 2,
+  "indirect_draws_per_frame": 1,
+  "min_instance_count": 3112,
+  "max_instance_count": 4095,
+  "final_instance_count": 3672
+}

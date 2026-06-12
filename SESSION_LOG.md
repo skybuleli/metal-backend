@@ -19,11 +19,36 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：40/138 任务完成
-- 下一任务：P2.9 — D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
+- 当前进度：41/138 任务完成
+- 下一任务：P2.10 — D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 | P2.9 D7 GPU-Driven 粒子与间接绘制链路 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已交付 `Path A compute 粒子更新 + GPU 写 indirect 参数 + instanced quad 渲染` 的 D7 离屏 Demo
+- **变更**:
+  - 新增 `src/demos/d7/shaders/particle_update.slang`，用 Path A compute 更新粒子与 indirect draw 参数
+  - 新增 `src/demos/d7/src/main.cpp`，实现 `compute dispatch -> indirect instanced render -> 性能统计 -> PPM/JSON 导出`
+  - 新增 `src/demos/d7/Makefile` 与 `src/demos/d7/README.md`
+  - 更新 `src/demos/Makefile` 与 `src/demos/README.md`，把 D7 接入 `build-demos` 和 `run-d7`
+- **验证**:
+  - `make -C src/demos/d7 evidence`
+  - `make -C src/demos build-demos`
+  - `python3 tools/verify_progress.py` → `41/138` 任务完成
+- **关键结果**:
+  - 运行日志确认 CPU 每帧仅提交 `1 次 compute dispatch + 1 次 indirect draw`
+  - `docs/evidence/P2.9-perf.json` 记录平均 `2968.0604 fps`、平均 `0.3369 ms`
+  - indirect `instanceCount` 范围为 `[3112, 4095]`，证明 draw 参数由 GPU 侧缓冲动态驱动
+  - compute 反射文件显示顶层参数缓冲布局为 `UAV + UAV + CBV`
+- **证据**:
+  - `docs/evidence/P2.9-run.txt`
+  - `docs/evidence/P2.9-d7-gpu-driven.png`
+  - `docs/evidence/P2.9-perf.json`
+  - `docs/evidence/P2.9-compute-reflection.json`
+  - `docs/evidence/P2.9-meta.json`
 
 ### 2026-06-12 | P2.8a/P2.8b/P2.8c D6 Path A 桥接、双路径对照与语义回归 | ✅ 完成
 

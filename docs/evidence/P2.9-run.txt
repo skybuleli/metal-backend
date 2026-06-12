@@ -1,0 +1,6 @@
+设备: Apple M1
+Path A compute metallib 加载通过
+D7 粒子数: 4096
+CPU 每帧提交: compute dispatch 1 次 + indirect draw 1 次
+D7 GPU-Driven 完成: out/gpu_driven.ppm
+平均 FPS: 2968.06, 平均帧时间: 0.34 ms, indirect instanceCount 范围: [3112, 4095]

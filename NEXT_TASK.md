@@ -1,14 +1,14 @@
-# 下一任务 — P2.9 D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
+# 下一任务 — P2.10 D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机
 
-> 生成时间：2026-06-12 23:21:59
+> 生成时间：2026-06-12 23:44:51
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.9 |
-| 任务名称 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw |
+| 任务 ID | P2.10 |
+| 任务名称 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.9 → ✅
+- 更新 PROGRESS.md：P2.10 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

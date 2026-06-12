@@ -20,9 +20,10 @@ build-demos:
 	@$(MAKE) -C d4 build-window
 	@$(MAKE) -C d5 build
 	@$(MAKE) -C d6 build
+	@$(MAKE) -C d7 build
 	@$(MAKE) -C preview build
-	@echo "D1、D2、D3、D4（含实时窗口版）、D5、D6 与预览窗口已构建；其余 D7-D8 构建目标尚未逐个实现。"
-	@echo "可用下一步: make -C src/demos run-d6"
+	@echo "D1、D2、D3、D4（含实时窗口版）、D5、D6、D7 与预览窗口已构建；D8 构建目标尚未实现。"
+	@echo "可用下一步: make -C src/demos run-d7"
 
 d1:
 	@$(MAKE) -C d1 build
@@ -48,7 +49,10 @@ preview:
 preview-evidence:
 	@$(MAKE) -C preview evidence
 
-d7 d8:
+d7:
+	@$(MAKE) -C d7 build
+
+d8:
 	@echo "[$@] 目录已就位，具体构建逻辑待对应 P2 任务实现。"
 	@echo "[$@] 预期证据格式见 docs/p2-demo-evidence.md"
 
@@ -73,13 +77,15 @@ run-d5:
 run-d6:
 	@$(MAKE) -C d6 run
 
+run-d7:
+	@$(MAKE) -C d7 run
+
 run-preview:
 	@$(MAKE) -C preview run
 
-run-d7 run-d8:
-	@demo_name=$${@#run-}; \
-	echo "[$$demo_name] 当前尚未实现运行入口。"; \
-	echo "[$$demo_name] 完成后应产出截图/帧缓冲证据和构建日志。"
+run-d8:
+	@echo "[d8] 当前尚未实现运行入口。"
+	@echo "[d8] 完成后应产出截图/帧缓冲证据和构建日志。"
 
 clean:
 	@for demo in $(DEMOS); do \

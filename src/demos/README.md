@@ -45,7 +45,7 @@
 ## 技术栈
 
 - **语言**: C++17 + metal-cpp
-- **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；D6 起允许“场景 pass 走 Path A、后处理保留手写 MSL”的混合模式，并保留手写 MSL 作为隔离对照
+- **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；D6 起允许“场景 pass 走 Path A、后处理保留手写 MSL”的混合模式；D7 采用“compute 走 Path A、render 保留手写 MSL”的混合路径
 - **构建**: 顶层 Makefile 调用 `src/demos/Makefile`，每个 Demo 可有独立构建入口
 - **证据**: `docs/evidence/` 下保存构建日志、截图说明、帧缓冲摘要或性能 JSON，字段规范见 `docs/p2-demo-evidence.md`
 
