@@ -1,15 +1,15 @@
-# 下一任务 — P2.9 D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
+# 当前任务 — P2.8b D6 双路径对照：Path A 与手写 MSL 输出一致性验证 + 差异证据
 
-> 生成时间：2026-06-12 22:20:06
+> 生成时间：2026-06-12 22:53:56
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.9 |
-| 任务名称 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw |
-| 当前状态 | ⬜ |
+| 任务 ID | P2.8b |
+| 任务名称 | D6 双路径对照：Path A 与手写 MSL 输出一致性验证 + 差异证据 |
+| 当前状态 | 🔄 |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.9 → ✅
+- 更新 PROGRESS.md：P2.8b → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

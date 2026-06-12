@@ -1,0 +1,8 @@
+{
+  "task": "P2.8a",
+  "demo": "D6",
+  "scene": "方向光阴影 + HDR 主场景 + Bloom 提取/模糊 + Tone Mapping 合成",
+  "shader_path": "Path A for shadow/scene (Slang -> DXIL -> MSC -> metallib), hand-written MSL for post-process",
+  "artifacts": ["docs/evidence/P2.8a-d6-patha-advanced-lighting.ppm", "docs/evidence/P2.8a-d6-patha-advanced-lighting.png", "docs/evidence/P2.8a-run.txt", "docs/evidence/P2.8a-shadow-vertex-reflection.json", "docs/evidence/P2.8a-scene-vertex-reflection.json", "docs/evidence/P2.8a-scene-fragment-reflection.json"],
+  "notes": "D6 的 shadow pass 与 HDR scene pass 已切换到 Path A。Bloom 和 tone mapping 仍保留手写 MSL，作为 P2.8b 双路径对照的稳定基线。"
+}

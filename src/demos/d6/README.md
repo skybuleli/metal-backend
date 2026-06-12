@@ -1,6 +1,6 @@
 # D6 — Advanced Lighting
 
-> `P2.8` 目标：在 D5 的基础上补齐 `Shadow Map + HDR 渲染 + Tone Mapping + Bloom 后处理`，并把多 pass 链路固化为可重复验证的离屏证据。
+> `P2.8 / P2.8a` 目标：在 D5 的基础上补齐 `Shadow Map + HDR 渲染 + Tone Mapping + Bloom 后处理`，并把核心场景 pass 逐步切到 Path A。
 
 ## 当前实现
 
@@ -9,7 +9,8 @@
 - **Tone Mapping**：最终合成时对 HDR 颜色做曝光与 gamma 映射
 - **Bloom**：从 HDR 场景提取高亮区域，执行横向与纵向两次 blur，再与主图合成
 - **多物体场景**：地面 + 多个立方体 + 发光立方体，方便同时观察阴影与高亮溢出
-- **手写 MSL**：继续使用运行时编译的内嵌 MSL，避免把重点转移到 Path A 兼容性
+- **混合着色器路径**：Shadow pass 与 HDR scene pass 默认走 `Slang -> DXIL -> MSC -> metallib`，Bloom 与 Tone Mapping 继续保留手写 MSL
+- **对照模式**：可用 `--legacy-msl` 切回原始手写 MSL 场景 pass，为后续双路径比对保留基线
 
 ## 构建
 
@@ -21,6 +22,7 @@ make -C src/demos/d6 build
 
 ```bash
 make -C src/demos/d6 run
+make -C src/demos/d6 run ARGS=--legacy-msl
 ```
 
 ## 生成验证证据
@@ -38,6 +40,9 @@ make -C src/demos/d6 evidence
 
 | 文件 | 说明 |
 |------|------|
-| `docs/evidence/P2.8-run.txt` | 运行日志，包含 shadow / HDR / bloom / composite 四段 pass |
-| `docs/evidence/P2.8-d6-advanced-lighting.png` | 最终合成截图 |
-| `docs/evidence/P2.8-meta.json` | 元数据 |
+| `docs/evidence/P2.8-run.txt` | 手写 MSL 基线版本的运行日志 |
+| `docs/evidence/P2.8-d6-advanced-lighting.png` | 手写 MSL 基线截图 |
+| `docs/evidence/P2.8-meta.json` | 手写 MSL 基线元数据 |
+| `docs/evidence/P2.8a-run.txt` | Path A 场景 pass 运行日志 |
+| `docs/evidence/P2.8a-d6-patha-advanced-lighting.png` | Path A 场景 pass 截图 |
+| `docs/evidence/P2.8a-meta.json` | Path A 元数据与反射文件索引 |

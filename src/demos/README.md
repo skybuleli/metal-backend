@@ -35,6 +35,7 @@
 | P2.7 | D5 | 法线贴图 + Skybox/Cubemap + MSAA 子集 Demo 和截图 |
 | P2.7a | D5 展示增强 | 更直观的天空盒与法线贴图主图 + 1x/4x MSAA 对比证据 |
 | P2.8 | D6 | Shadow depth + HDR scene + bloom blur + tone map 合成证据 |
+| P2.8a | D6 | Shadow/HDR scene pass 切换到 Path A，保留后处理手写 MSL |
 | P2.9 | D7 | GPU 驱动 Demo 和性能记录 |
 | P2.10-P2.11 | D8 | 综合场景、FPS/帧时间 JSON、瓶颈报告或通过证据 |
 | P2.12 | 全部 | `make build-demos`、回归入口和证据格式 |
@@ -42,7 +43,7 @@
 ## 技术栈
 
 - **语言**: C++17 + metal-cpp
-- **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；必要时保留手写 MSL 作为隔离对照
+- **着色器**: D1 可使用手写 MSL；D2 起优先验证 Path A metallib；D6 起允许“场景 pass 走 Path A、后处理保留手写 MSL”的混合模式，并保留手写 MSL 作为隔离对照
 - **构建**: 顶层 Makefile 调用 `src/demos/Makefile`，每个 Demo 可有独立构建入口
 - **证据**: `docs/evidence/` 下保存构建日志、截图说明、帧缓冲摘要或性能 JSON，字段规范见 `docs/p2-demo-evidence.md`
 

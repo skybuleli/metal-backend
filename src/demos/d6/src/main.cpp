@@ -1,8 +1,11 @@
 #define NS_PRIVATE_IMPLEMENTATION
 #define MTL_PRIVATE_IMPLEMENTATION
+#define IR_RUNTIME_METALCPP
+#define IR_PRIVATE_IMPLEMENTATION
 
 #include <Foundation/Foundation.hpp>
 #include <Metal/Metal.hpp>
+#include <metal_irconverter_runtime/metal_irconverter_runtime.h>
 
 #include <algorithm>
 #include <array>
@@ -22,6 +25,9 @@ constexpr std::uint32_t kHeight = 768;
 constexpr std::uint32_t kShadowSize = 1024;
 constexpr std::uint32_t kBloomWidth = 384;
 constexpr std::uint32_t kBloomHeight = 384;
+constexpr const char* kPathAShadowVertexMetallib = "build/d6_shadow_vertex.metallib";
+constexpr const char* kPathASceneVertexMetallib = "build/d6_scene_vertex.metallib";
+constexpr const char* kPathASceneFragmentMetallib = "build/d6_scene_fragment.metallib";
 
 struct Pixel
 {
@@ -85,6 +91,12 @@ struct DrawItem
     Float3 scale;
     Float3 baseColor;
     Float3 emissiveColor;
+};
+
+enum class SceneShaderPath
+{
+    PathA,
+    LegacyMsl,
 };
 
 constexpr Vertex kCubeVertices[] = {
@@ -614,18 +626,55 @@ MTL::Texture* MakeDepthTexture(MTL::Device* device,
     return device->newTexture(descriptor);
 }
 
-MTL::RenderPipelineState* BuildShadowPipeline(MTL::Device* device, MTL::Library* library)
+MTL::Library* LoadMetallib(MTL::Device* device, const char* path)
+{
+    NS::Error* error = nullptr;
+    NS::String* library_path = NS::String::string(path, NS::UTF8StringEncoding);
+    MTL::Library* library = device->newLibrary(library_path, &error);
+    if (library == nullptr)
+    {
+        std::cerr << "无法加载 metallib " << path << ": " << ErrorToString(error) << "\n";
+    }
+    return library;
+}
+
+MTL::VertexDescriptor* CreateVertexDescriptor()
+{
+    MTL::VertexDescriptor* vertex_descriptor = MTL::VertexDescriptor::alloc()->init();
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 0)->setFormat(MTL::VertexFormatFloat3);
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 0)->setOffset(0);
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 0)->setBufferIndex(0);
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 1)->setFormat(MTL::VertexFormatFloat3);
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 1)->setOffset(sizeof(float) * 3);
+    vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 1)->setBufferIndex(0);
+    vertex_descriptor->layouts()->object(0)->setStride(sizeof(Vertex));
+    return vertex_descriptor;
+}
+
+IRBufferView MakeConstantBufferView(MTL::Buffer* buffer)
+{
+    return {
+        .buffer = buffer,
+        .bufferOffset = 0,
+        .bufferSize = static_cast<std::uint64_t>(buffer->length()),
+        .textureBufferView = nullptr,
+        .textureViewOffsetInElements = 0,
+        .typedBuffer = false,
+    };
+}
+
+MTL::Buffer* MakeArgumentBuffer(MTL::Device* device, const IRDescriptorTableEntry* entries, std::size_t count)
+{
+    return device->newBuffer(entries,
+                             static_cast<NS::UInteger>(sizeof(IRDescriptorTableEntry) * count),
+                             MTL::ResourceStorageModeShared);
+}
+
+MTL::RenderPipelineState* BuildLegacyShadowPipeline(MTL::Device* device, MTL::Library* library)
 {
     NS::Error* error = nullptr;
     MTL::Function* vertex_fn = library->newFunction(MTLSTR("shadowVertex"));
-    MTL::VertexDescriptor* vertex_descriptor = MTL::VertexDescriptor::alloc()->init();
-    vertex_descriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
-    vertex_descriptor->attributes()->object(0)->setOffset(0);
-    vertex_descriptor->attributes()->object(0)->setBufferIndex(0);
-    vertex_descriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat3);
-    vertex_descriptor->attributes()->object(1)->setOffset(sizeof(float) * 3);
-    vertex_descriptor->attributes()->object(1)->setBufferIndex(0);
-    vertex_descriptor->layouts()->object(0)->setStride(sizeof(Vertex));
+    MTL::VertexDescriptor* vertex_descriptor = CreateVertexDescriptor();
 
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
@@ -640,19 +689,12 @@ MTL::RenderPipelineState* BuildShadowPipeline(MTL::Device* device, MTL::Library*
     return pipeline;
 }
 
-MTL::RenderPipelineState* BuildScenePipeline(MTL::Device* device, MTL::Library* library)
+MTL::RenderPipelineState* BuildLegacyScenePipeline(MTL::Device* device, MTL::Library* library)
 {
     NS::Error* error = nullptr;
     MTL::Function* vertex_fn = library->newFunction(MTLSTR("sceneVertex"));
     MTL::Function* fragment_fn = library->newFunction(MTLSTR("sceneFragment"));
-    MTL::VertexDescriptor* vertex_descriptor = MTL::VertexDescriptor::alloc()->init();
-    vertex_descriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
-    vertex_descriptor->attributes()->object(0)->setOffset(0);
-    vertex_descriptor->attributes()->object(0)->setBufferIndex(0);
-    vertex_descriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat3);
-    vertex_descriptor->attributes()->object(1)->setOffset(sizeof(float) * 3);
-    vertex_descriptor->attributes()->object(1)->setBufferIndex(0);
-    vertex_descriptor->layouts()->object(0)->setStride(sizeof(Vertex));
+    MTL::VertexDescriptor* vertex_descriptor = CreateVertexDescriptor();
 
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
@@ -665,6 +707,62 @@ MTL::RenderPipelineState* BuildScenePipeline(MTL::Device* device, MTL::Library* 
     if (pipeline == nullptr)
     {
         std::cerr << "无法创建 HDR 场景管线: " << ErrorToString(error) << "\n";
+    }
+    return pipeline;
+}
+
+MTL::RenderPipelineState* BuildPathAShadowPipeline(MTL::Device* device, MTL::Library* vertex_library)
+{
+    NS::Error* error = nullptr;
+    MTL::Function* vertex_fn = vertex_library->newFunction(MTLSTR("shadowVertex"));
+    if (vertex_fn == nullptr)
+    {
+        std::cerr << "无法从 Path A shadow metallib 中取出 shadowVertex。\n";
+        return nullptr;
+    }
+
+    MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+    descriptor->setVertexFunction(vertex_fn);
+    descriptor->setVertexDescriptor(CreateVertexDescriptor());
+    descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float);
+
+    MTL::RenderPipelineState* pipeline = device->newRenderPipelineState(descriptor, &error);
+    if (pipeline == nullptr)
+    {
+        std::cerr << "无法创建 Path A Shadow 管线: " << ErrorToString(error) << "\n";
+    }
+    return pipeline;
+}
+
+MTL::RenderPipelineState* BuildPathAScenePipeline(MTL::Device* device,
+                                                  MTL::Library* vertex_library,
+                                                  MTL::Library* fragment_library)
+{
+    NS::Error* error = nullptr;
+    MTL::Function* vertex_fn = vertex_library->newFunction(MTLSTR("sceneVertex"));
+    MTL::Function* fragment_fn = fragment_library->newFunction(MTLSTR("sceneFragment"));
+    if (vertex_fn == nullptr || fragment_fn == nullptr)
+    {
+        std::cerr << "无法从 Path A scene metallib 中取出入口函数。\n";
+        return nullptr;
+    }
+
+    MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
+    descriptor->setVertexFunction(vertex_fn);
+    descriptor->setFragmentFunction(fragment_fn);
+    descriptor->setVertexDescriptor(CreateVertexDescriptor());
+    descriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormatRGBA16Float);
+    descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float);
+
+    MTL::RenderPipelineReflection* reflection = nullptr;
+    MTL::RenderPipelineState* pipeline = device->newRenderPipelineState(
+        descriptor,
+        MTL::PipelineOptionArgumentInfo,
+        &reflection,
+        &error);
+    if (pipeline == nullptr)
+    {
+        std::cerr << "无法创建 Path A HDR 场景管线: " << ErrorToString(error) << "\n";
     }
     return pipeline;
 }
@@ -722,11 +820,62 @@ void EncodeDrawItems(MTL::RenderCommandEncoder* encoder,
     }
 }
 
+void EncodeShadowDrawItemsPathA(MTL::RenderCommandEncoder* encoder,
+                                MTL::Buffer* cube_buffer,
+                                MTL::Buffer* plane_buffer,
+                                const std::array<MTL::Buffer*, kSceneItems.size()>& vertex_argument_buffers)
+{
+    for (std::size_t index = 0; index < kSceneItems.size(); ++index)
+    {
+        MTL::Buffer* vertex_buffer = kSceneItems[index].geometry == GeometryType::Plane ? plane_buffer : cube_buffer;
+        const NS::UInteger vertex_count = kSceneItems[index].geometry == GeometryType::Plane ? 6 : 36;
+        encoder->setVertexBuffer(vertex_buffer, 0, 0);
+        encoder->setVertexBuffer(vertex_argument_buffers[index], 0, kIRArgumentBufferBindPoint);
+        IRRuntimeDrawPrimitives(encoder,
+                                MTL::PrimitiveTypeTriangle,
+                                static_cast<std::uint64_t>(0),
+                                static_cast<std::uint64_t>(vertex_count));
+    }
+}
+
+void EncodeSceneDrawItemsPathA(MTL::RenderCommandEncoder* encoder,
+                               MTL::Buffer* cube_buffer,
+                               MTL::Buffer* plane_buffer,
+                               const std::array<MTL::Buffer*, kSceneItems.size()>& vertex_argument_buffers,
+                               const std::array<MTL::Buffer*, kSceneItems.size()>& fragment_argument_buffers)
+{
+    for (std::size_t index = 0; index < kSceneItems.size(); ++index)
+    {
+        MTL::Buffer* vertex_buffer = kSceneItems[index].geometry == GeometryType::Plane ? plane_buffer : cube_buffer;
+        const NS::UInteger vertex_count = kSceneItems[index].geometry == GeometryType::Plane ? 6 : 36;
+        encoder->setVertexBuffer(vertex_buffer, 0, 0);
+        encoder->setVertexBuffer(vertex_argument_buffers[index], 0, kIRArgumentBufferBindPoint);
+        encoder->setFragmentBuffer(fragment_argument_buffers[index], 0, kIRArgumentBufferBindPoint);
+        IRRuntimeDrawPrimitives(encoder,
+                                MTL::PrimitiveTypeTriangle,
+                                static_cast<std::uint64_t>(0),
+                                static_cast<std::uint64_t>(vertex_count));
+    }
+}
+
+SceneShaderPath ParseSceneShaderPath(int argc, char** argv)
+{
+    for (int index = 1; index < argc; ++index)
+    {
+        if (std::strcmp(argv[index], "--legacy-msl") == 0)
+        {
+            return SceneShaderPath::LegacyMsl;
+        }
+    }
+    return SceneShaderPath::PathA;
+}
+
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
     NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+    const SceneShaderPath scene_shader_path = ParseSceneShaderPath(argc, argv);
 
     MTL::Device* device = MTL::CreateSystemDefaultDevice();
     if (device == nullptr)
@@ -747,14 +896,30 @@ int main()
 
     NS::Error* error = nullptr;
     NS::String* source = NS::String::string(kShaderSource, NS::UTF8StringEncoding);
-    MTL::Library* library = device->newLibrary(source, nullptr, &error);
-    if (library == nullptr)
+    MTL::Library* msl_library = device->newLibrary(source, nullptr, &error);
+    if (msl_library == nullptr)
     {
         std::cerr << "MSL 编译失败: " << ErrorToString(error) << "\n";
         pool->drain();
         return 1;
     }
-    std::cout << "MSL 着色器编译通过\n";
+    std::cout << "MSL 后处理着色器编译通过\n";
+
+    MTL::Library* patha_shadow_vertex_library = nullptr;
+    MTL::Library* patha_scene_vertex_library = nullptr;
+    MTL::Library* patha_scene_fragment_library = nullptr;
+    if (scene_shader_path == SceneShaderPath::PathA)
+    {
+        patha_shadow_vertex_library = LoadMetallib(device, kPathAShadowVertexMetallib);
+        patha_scene_vertex_library = LoadMetallib(device, kPathASceneVertexMetallib);
+        patha_scene_fragment_library = LoadMetallib(device, kPathASceneFragmentMetallib);
+        if (patha_shadow_vertex_library == nullptr || patha_scene_vertex_library == nullptr || patha_scene_fragment_library == nullptr)
+        {
+            pool->drain();
+            return 1;
+        }
+        std::cout << "已加载 Path A metallib: shadow/scene pass\n";
+    }
 
     const SceneUniforms scene_uniforms = BuildSceneUniforms();
     MTL::Buffer* scene_buffer = MakeSharedBuffer(device, &scene_uniforms, sizeof(scene_uniforms));
@@ -775,12 +940,16 @@ int main()
         return 1;
     }
 
-    MTL::RenderPipelineState* shadow_pipeline = BuildShadowPipeline(device, library);
-    MTL::RenderPipelineState* scene_pipeline = BuildScenePipeline(device, library);
-    MTL::RenderPipelineState* bright_pipeline = BuildFullscreenPipeline(device, library, "brightExtractFragment", MTL::PixelFormatRGBA16Float);
-    MTL::RenderPipelineState* blur_h_pipeline = BuildFullscreenPipeline(device, library, "blurHorizontalFragment", MTL::PixelFormatRGBA16Float);
-    MTL::RenderPipelineState* blur_v_pipeline = BuildFullscreenPipeline(device, library, "blurVerticalFragment", MTL::PixelFormatRGBA16Float);
-    MTL::RenderPipelineState* composite_pipeline = BuildFullscreenPipeline(device, library, "compositeFragment", MTL::PixelFormatBGRA8Unorm);
+    MTL::RenderPipelineState* shadow_pipeline = scene_shader_path == SceneShaderPath::PathA
+        ? BuildPathAShadowPipeline(device, patha_shadow_vertex_library)
+        : BuildLegacyShadowPipeline(device, msl_library);
+    MTL::RenderPipelineState* scene_pipeline = scene_shader_path == SceneShaderPath::PathA
+        ? BuildPathAScenePipeline(device, patha_scene_vertex_library, patha_scene_fragment_library)
+        : BuildLegacyScenePipeline(device, msl_library);
+    MTL::RenderPipelineState* bright_pipeline = BuildFullscreenPipeline(device, msl_library, "brightExtractFragment", MTL::PixelFormatRGBA16Float);
+    MTL::RenderPipelineState* blur_h_pipeline = BuildFullscreenPipeline(device, msl_library, "blurHorizontalFragment", MTL::PixelFormatRGBA16Float);
+    MTL::RenderPipelineState* blur_v_pipeline = BuildFullscreenPipeline(device, msl_library, "blurVerticalFragment", MTL::PixelFormatRGBA16Float);
+    MTL::RenderPipelineState* composite_pipeline = BuildFullscreenPipeline(device, msl_library, "compositeFragment", MTL::PixelFormatBGRA8Unorm);
     if (shadow_pipeline == nullptr || scene_pipeline == nullptr || bright_pipeline == nullptr ||
         blur_h_pipeline == nullptr || blur_v_pipeline == nullptr || composite_pipeline == nullptr)
     {
@@ -806,6 +975,7 @@ int main()
     shadow_sampler_descriptor->setSAddressMode(MTL::SamplerAddressModeClampToEdge);
     shadow_sampler_descriptor->setTAddressMode(MTL::SamplerAddressModeClampToEdge);
     shadow_sampler_descriptor->setCompareFunction(MTL::CompareFunctionLessEqual);
+    shadow_sampler_descriptor->setSupportArgumentBuffers(true);
     MTL::SamplerState* shadow_sampler = device->newSamplerState(shadow_sampler_descriptor);
 
     if (linear_sampler == nullptr || shadow_sampler == nullptr)
@@ -830,6 +1000,28 @@ int main()
         return 1;
     }
 
+    std::array<MTL::Buffer*, kSceneItems.size()> patha_vertex_argument_buffers = {};
+    std::array<MTL::Buffer*, kSceneItems.size()> patha_fragment_argument_buffers = {};
+    if (scene_shader_path == SceneShaderPath::PathA)
+    {
+        const IRBufferView scene_buffer_view = MakeConstantBufferView(scene_buffer);
+        for (std::size_t index = 0; index < kSceneItems.size(); ++index)
+        {
+            const IRBufferView object_buffer_view = MakeConstantBufferView(object_buffers[index]);
+
+            IRDescriptorTableEntry vertex_arguments[1] = {};
+            IRDescriptorTableSetBufferView(&vertex_arguments[0], &object_buffer_view);
+            patha_vertex_argument_buffers[index] = MakeArgumentBuffer(device, vertex_arguments, 1);
+
+            IRDescriptorTableEntry fragment_arguments[4] = {};
+            IRDescriptorTableSetTexture(&fragment_arguments[0], shadow_texture, 0.0f, 0);
+            IRDescriptorTableSetBufferView(&fragment_arguments[1], &scene_buffer_view);
+            IRDescriptorTableSetBufferView(&fragment_arguments[2], &object_buffer_view);
+            IRDescriptorTableSetSampler(&fragment_arguments[3], shadow_sampler, 0.0f);
+            patha_fragment_argument_buffers[index] = MakeArgumentBuffer(device, fragment_arguments, 4);
+        }
+    }
+
     MTL::CommandBuffer* command_buffer = command_queue->commandBuffer();
 
     MTL::RenderPassDescriptor* shadow_pass = MTL::RenderPassDescriptor::alloc()->init();
@@ -842,9 +1034,18 @@ int main()
     shadow_encoder->setDepthStencilState(shadow_depth_state);
     shadow_encoder->setCullMode(MTL::CullModeBack);
     shadow_encoder->setFrontFacingWinding(MTL::WindingCounterClockwise);
-    EncodeDrawItems(shadow_encoder, cube_buffer, plane_buffer, object_buffers, false, nullptr);
+    if (scene_shader_path == SceneShaderPath::PathA)
+    {
+        EncodeShadowDrawItemsPathA(shadow_encoder, cube_buffer, plane_buffer, patha_vertex_argument_buffers);
+    }
+    else
+    {
+        EncodeDrawItems(shadow_encoder, cube_buffer, plane_buffer, object_buffers, false, nullptr);
+    }
     shadow_encoder->endEncoding();
-    std::cout << "Pass 1/4 完成: Shadow Map 1024x1024 depth\n";
+    std::cout << "Pass 1/4 完成: Shadow Map 1024x1024 depth"
+              << (scene_shader_path == SceneShaderPath::PathA ? " (Path A)" : " (legacy MSL)")
+              << "\n";
 
     MTL::RenderPassDescriptor* hdr_pass = MTL::RenderPassDescriptor::alloc()->init();
     hdr_pass->colorAttachments()->object(0)->setTexture(hdr_texture);
@@ -860,11 +1061,20 @@ int main()
     hdr_encoder->setDepthStencilState(scene_depth_state);
     hdr_encoder->setCullMode(MTL::CullModeNone);
     hdr_encoder->setFrontFacingWinding(MTL::WindingCounterClockwise);
-    hdr_encoder->setFragmentTexture(shadow_texture, 0);
-    hdr_encoder->setFragmentSamplerState(shadow_sampler, 0);
-    EncodeDrawItems(hdr_encoder, cube_buffer, plane_buffer, object_buffers, true, scene_buffer);
+    if (scene_shader_path == SceneShaderPath::PathA)
+    {
+        EncodeSceneDrawItemsPathA(hdr_encoder, cube_buffer, plane_buffer, patha_vertex_argument_buffers, patha_fragment_argument_buffers);
+    }
+    else
+    {
+        hdr_encoder->setFragmentTexture(shadow_texture, 0);
+        hdr_encoder->setFragmentSamplerState(shadow_sampler, 0);
+        EncodeDrawItems(hdr_encoder, cube_buffer, plane_buffer, object_buffers, true, scene_buffer);
+    }
     hdr_encoder->endEncoding();
-    std::cout << "Pass 2/4 完成: HDR 场景 + 阴影采样\n";
+    std::cout << "Pass 2/4 完成: HDR 场景 + 阴影采样"
+              << (scene_shader_path == SceneShaderPath::PathA ? " (Path A)" : " (legacy MSL)")
+              << "\n";
 
     auto encode_fullscreen_pass =
         [&](MTL::Texture* target,
