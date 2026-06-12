@@ -1,15 +1,15 @@
-# 当前任务 — P2.8c D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化
+# 下一任务 — P2.9 D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
 
-> 生成时间：2026-06-12 23:18:57
+> 生成时间：2026-06-12 23:21:59
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P2.8c |
-| 任务名称 | D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化 |
-| 当前状态 | 🔄 |
+| 任务 ID | P2.9 |
+| 任务名称 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw |
+| 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P2.8c → ✅
+- 更新 PROGRESS.md：P2.9 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

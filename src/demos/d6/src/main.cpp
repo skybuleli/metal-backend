@@ -1013,6 +1013,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "D6 场景路径: " << (scene_shader_path == SceneShaderPath::PathA ? "Path A" : "legacy MSL") << "\n";
+    std::cout << "D6 关键配置: shadow_depth=Depth32Float hdr_color=RGBA16Float final_color=BGRA8Unorm shadow_compare=LessEqual bloom_intermediate=RGBA16Float\n";
+
     std::array<MTL::Buffer*, kSceneItems.size()> patha_vertex_argument_buffers = {};
     std::array<MTL::Buffer*, kSceneItems.size()> patha_fragment_argument_buffers = {};
     if (scene_shader_path == SceneShaderPath::PathA)

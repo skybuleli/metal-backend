@@ -1,0 +1,6 @@
+P2.8c 高风险语义回归
+- [OK] uniform_matrix_cbv: shadow/scene 顶点路径均保留 ConstantBuffer，sceneVertex 输出 64 字节矩阵相关插值数据
+- [OK] depth_compare_sampler: sceneFragment 反射顺序为 depth SRV + scene/object CBV + sampler，覆盖 depth compare 绑定形态
+- [OK] hdr_attachment_config: 运行日志显式输出 HDR 与最终输出附件格式
+- [OK] shadow_compare_function: 运行日志显式输出阴影比较函数 LessEqual
+- [OK] path_parity: Path A 与 legacy MSL 的像素差维持在极小范围内

@@ -19,11 +19,35 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：37/135 任务完成
+- 当前进度：40/138 任务完成
 - 下一任务：P2.9 — D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 | P2.8a/P2.8b/P2.8c D6 Path A 桥接、双路径对照与语义回归 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已将 D6 的 `shadow + HDR scene` 主场景 pass 切到 `Slang -> DXIL -> MSC -> metallib`，并补齐双路径对照与高风险语义回归证据
+- **变更**:
+  - 新增 `src/demos/d6/shaders/advanced_lighting.slang`，把 `shadowVertex / sceneVertex / sceneFragment` 切到 Path A
+  - 更新 `src/demos/d6/src/main.cpp`，加入 Path A/legacy 双模式、MSC 顶层参数缓冲绑定、D6 关键配置日志
+  - 更新 `src/demos/d6/Makefile`，新增 `evidence-compare` 与 `evidence-semantics`
+  - 更新 `src/demos/d6/README.md` 与 `src/demos/README.md`，补充 D6 的混合路径与证据入口
+- **验证**:
+  - `make -C src/demos/d6 evidence`
+  - `make -C src/demos/d6 evidence-compare`
+  - `make -C src/demos/d6 evidence-semantics`
+  - `python3 tools/verify_progress.py` → `40/138` 任务完成
+- **关键结果**:
+  - `P2.8b` 双路径对照仅有 `10 / 589824` 个像素不一致，`RMSE = 0.035754`
+  - `P2.8c` 五项高风险检查全部通过：`uniform/matrix CBV`、`depth compare + sampler`、`HDR attachment`、`shadow compare`、`path parity`
+- **证据**:
+  - `docs/evidence/P2.8a-meta.json`
+  - `docs/evidence/P2.8b-compare.txt`
+  - `docs/evidence/P2.8b-d6-diff-heatmap.png`
+  - `docs/evidence/P2.8c-semantics.txt`
+  - `docs/evidence/P2.8c-meta.json`
 
 ### 2026-06-12 | P2.8 D6 高级光照与后处理链路 | ✅ 完成
 

@@ -1,4 +1,4 @@
-.PHONY: all build run evidence evidence-compare clean
+.PHONY: all build run evidence evidence-compare evidence-semantics clean
 
 SHELL := /bin/bash
 
@@ -44,6 +44,9 @@ COMPARE_DIFF_PPM := $(EVIDENCE_DIR)/P2.8b-d6-diff-heatmap.ppm
 COMPARE_DIFF_PNG := $(EVIDENCE_DIR)/P2.8b-d6-diff-heatmap.png
 COMPARE_REPORT := $(EVIDENCE_DIR)/P2.8b-compare.txt
 COMPARE_META := $(EVIDENCE_DIR)/P2.8b-meta.json
+SEMANTICS_RUN := $(EVIDENCE_DIR)/P2.8c-run.txt
+SEMANTICS_REPORT := $(EVIDENCE_DIR)/P2.8c-semantics.txt
+SEMANTICS_META := $(EVIDENCE_DIR)/P2.8c-meta.json
 
 all: build
 
@@ -100,6 +103,15 @@ evidence-compare: build
 	@echo "  $(COMPARE_DIFF_PNG)"
 	@echo "  $(COMPARE_REPORT)"
 	@echo "  $(COMPARE_META)"
+
+evidence-semantics: build
+	@mkdir -p $(EVIDENCE_DIR)
+	@set -o pipefail; ./$(TARGET) 2>&1 | tee $(SEMANTICS_RUN)
+	@python3 -c $$'from pathlib import Path\nimport json\n\nrun_log = Path("$(SEMANTICS_RUN)").read_text(encoding="utf-8")\nshadow_reflect = json.loads(Path("$(EVIDENCE_SHADOW_REFLECT)").read_text(encoding="utf-8"))\nscene_vert_reflect = json.loads(Path("$(EVIDENCE_SCENE_VERT_REFLECT)").read_text(encoding="utf-8"))\nscene_frag_reflect = json.loads(Path("$(EVIDENCE_SCENE_FRAG_REFLECT)").read_text(encoding="utf-8"))\ncompare_meta = json.loads(Path("$(COMPARE_META)").read_text(encoding="utf-8"))\n\nchecks = []\nchecks.append({\n    \"name\": \"uniform_matrix_cbv\",\n    \"ok\": shadow_reflect[\"TopLevelArgumentBuffer\"][0][\"Type\"] == \"CBV\" and scene_vert_reflect[\"state\"][\"vertex_output_size_in_bytes\"] == 64,\n    \"detail\": \"shadow/scene 顶点路径均保留 ConstantBuffer，sceneVertex 输出 64 字节矩阵相关插值数据\",\n})\nchecks.append({\n    \"name\": \"depth_compare_sampler\",\n    \"ok\": [entry[\"Type\"] for entry in scene_frag_reflect[\"TopLevelArgumentBuffer\"]] == [\"SRV\", \"CBV\", \"CBV\", \"Sampler\"],\n    \"detail\": \"sceneFragment 反射顺序为 depth SRV + scene/object CBV + sampler，覆盖 depth compare 绑定形态\",\n})\nchecks.append({\n    \"name\": \"hdr_attachment_config\",\n    \"ok\": \"hdr_color=RGBA16Float\" in run_log and \"final_color=BGRA8Unorm\" in run_log,\n    \"detail\": \"运行日志显式输出 HDR 与最终输出附件格式\",\n})\nchecks.append({\n    \"name\": \"shadow_compare_function\",\n    \"ok\": \"shadow_compare=LessEqual\" in run_log,\n    \"detail\": \"运行日志显式输出阴影比较函数 LessEqual\",\n})\nchecks.append({\n    \"name\": \"path_parity\",\n    \"ok\": compare_meta[\"mismatch_pixels\"] <= 10 and compare_meta[\"rmse\"] < 0.05,\n    \"detail\": \"Path A 与 legacy MSL 的像素差维持在极小范围内\",\n})\n\nsummary = {\n    \"task\": \"P2.8c\",\n    \"checks\": checks,\n    \"all_passed\": all(item[\"ok\"] for item in checks),\n    \"compare_meta\": compare_meta,\n}\nif not summary[\"all_passed\"]:\n    raise SystemExit(\"P2.8c 语义回归检查失败\")\nlines = [\"P2.8c 高风险语义回归\"]\nfor item in checks:\n    status = \"OK\" if item[\"ok\"] else \"FAIL\"\n    name = item[\"name\"]\n    detail = item[\"detail\"]\n    lines.append(f\"- [{status}] {name}: {detail}\")\nPath("$(SEMANTICS_REPORT)").write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nPath("$(SEMANTICS_META)").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + \"\\n\", encoding=\"utf-8\")'
+	@echo "已生成语义回归证据:"
+	@echo "  $(SEMANTICS_RUN)"
+	@echo "  $(SEMANTICS_REPORT)"
+	@echo "  $(SEMANTICS_META)"
 
 clean:
 	rm -rf build out

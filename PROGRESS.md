@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T23:18:57+08:00
+# 最后更新: 2026-06-12T23:21:59+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 39/138 任务 (28.3%)
+# 完成度: 40/138 任务 (29.0%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -73,7 +73,7 @@
 | P2.8 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 | ✅ | 2026-06-12T22:18:25+08:00 | docs/evidence/P2.8-run.txt + docs/evidence/P2.8-d6-advanced-lighting.png + docs/evidence/P2.8-meta.json |
 | P2.8a | D6 主路径桥接：Shadow/Lighting Pass 切换到 Slang→DXIL→MSC→metallib，后处理保留手写 MSL | ✅ | 2026-06-12T22:52:12+08:00 | docs/evidence/P2.8a-run.txt + docs/evidence/P2.8a-d6-patha-advanced-lighting.png + docs/evidence/P2.8a-meta.json + docs/evidence/P2.8a-scene-fragment-reflection.json |
 | P2.8b | D6 双路径对照：Path A 与手写 MSL 输出一致性验证 + 差异证据 | ✅ | 2026-06-12T23:07:24+08:00 | docs/evidence/P2.8b-d6-patha.png + docs/evidence/P2.8b-d6-legacy-msl.png + docs/evidence/P2.8b-d6-diff-heatmap.png + docs/evidence/P2.8b-compare.txt + docs/evidence/P2.8b-meta.json |
-| P2.8c | D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化 | 🔄 | — | — |
+| P2.8c | D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化 | ✅ | 2026-06-12T23:11:18+08:00 | docs/evidence/P2.8c-run.txt + docs/evidence/P2.8c-semantics.txt + docs/evidence/P2.8c-meta.json |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ⬜ | — | — |
 | P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ⬜ | — | — |
 | P2.11 | D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈 | ⬜ | — | — |
@@ -266,10 +266,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 138
-- 已完成: 39 (28.3%)
-- 进行中: 1
+- 已完成: 40 (29.0%)
+- 进行中: 0
 - 阻塞: 0
 - 跳过: 0
 - 待开始: 98
 - 当前阶段: Phase 2 — 渐进式渲染 Demo
-- 下一任务: P2.8c — D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化
+- 下一任务: P2.9 — D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw

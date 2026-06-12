@@ -37,6 +37,7 @@
 | P2.8 | D6 | Shadow depth + HDR scene + bloom blur + tone map 合成证据 |
 | P2.8a | D6 | Shadow/HDR scene pass 切换到 Path A，保留后处理手写 MSL |
 | P2.8b | D6 | Path A 与手写 MSL 的双路径对照图、热力图与差异统计 |
+| P2.8c | D6 | uniform/matrix/depth compare/HDR attachment/sampler compare 语义回归清单 |
 | P2.9 | D7 | GPU 驱动 Demo 和性能记录 |
 | P2.10-P2.11 | D8 | 综合场景、FPS/帧时间 JSON、瓶颈报告或通过证据 |
 | P2.12 | 全部 | `make build-demos`、回归入口和证据格式 |

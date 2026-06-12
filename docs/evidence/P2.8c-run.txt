@@ -1,0 +1,10 @@
+设备: Apple M1
+MSL 后处理着色器编译通过
+已加载 Path A metallib: shadow/scene pass
+D6 场景路径: Path A
+D6 关键配置: shadow_depth=Depth32Float hdr_color=RGBA16Float final_color=BGRA8Unorm shadow_compare=LessEqual bloom_intermediate=RGBA16Float
+Pass 1/4 完成: Shadow Map 1024x1024 depth (Path A)
+Pass 2/4 完成: HDR 场景 + 阴影采样 (Path A)
+Pass 3/4 完成: 高亮提取 + Bloom 横纵向 blur
+Pass 4/4 完成: Tone Mapping + Bloom 合成
+D6 离屏渲染完成: "out/advanced_lighting.ppm"

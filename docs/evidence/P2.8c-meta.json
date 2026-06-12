@@ -1,0 +1,49 @@
+{
+  "task": "P2.8c",
+  "checks": [
+    {
+      "name": "uniform_matrix_cbv",
+      "ok": true,
+      "detail": "shadow/scene 顶点路径均保留 ConstantBuffer，sceneVertex 输出 64 字节矩阵相关插值数据"
+    },
+    {
+      "name": "depth_compare_sampler",
+      "ok": true,
+      "detail": "sceneFragment 反射顺序为 depth SRV + scene/object CBV + sampler，覆盖 depth compare 绑定形态"
+    },
+    {
+      "name": "hdr_attachment_config",
+      "ok": true,
+      "detail": "运行日志显式输出 HDR 与最终输出附件格式"
+    },
+    {
+      "name": "shadow_compare_function",
+      "ok": true,
+      "detail": "运行日志显式输出阴影比较函数 LessEqual"
+    },
+    {
+      "name": "path_parity",
+      "ok": true,
+      "detail": "Path A 与 legacy MSL 的像素差维持在极小范围内"
+    }
+  ],
+  "all_passed": true,
+  "compare_meta": {
+    "task": "P2.8b",
+    "width": 768,
+    "height": 768,
+    "mismatch_pixels": 10,
+    "mismatch_ratio": 1.6954210069444445e-05,
+    "mean_abs_diff": [
+      7.290310329861111e-05,
+      3.729926215277778e-05,
+      4.238552517361111e-05
+    ],
+    "max_abs_diff": [
+      37,
+      21,
+      21
+    ],
+    "rmse": 0.035753984942046825
+  }
+}
