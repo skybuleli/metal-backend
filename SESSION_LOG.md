@@ -19,8 +19,8 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：41/138 任务完成
-- 下一任务：P2.10 — D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机
+- 当前进度：42/138 任务完成
+- 下一任务：P2.11 — D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
@@ -470,3 +470,22 @@
 - **后续建议**:
   - 任务级证据继续写入 `PROGRESS.md` 的证据列
   - 跨任务技术结论沉淀到 `docs/*.md`，不要只留在会话日志中
+
+### 2026-06-13 | P2.10 D8 Complex Showcase | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ D8 综合演示完整交付：7 个 PBR 材质球 (Cook-Torrance GGX) + Shadow Map + 程序化天空盒 + Bloom/Tone Mapping 后处理 + Compute 粒子漩涡 + HUD 覆盖层 + 自由轨道摄像机，M1 上 812 FPS
+- **变更**:
+  - 完全重写 `src/demos/d8/src/main.cpp` (1704 行)：包含所有内嵌 MSL 着色器、球体顶点生成、矩阵数学、多 Pass 渲染管线
+  - 新增 `src/demos/d8/shaders/particle_update.slang`：Path A (Slang→DXIL→MSC) 计算着色器
+  - 更新 `src/demos/d8/Makefile`：集成 Slang+MSC 编译步骤 + evidence 目标
+  - 证据生成：`docs/evidence/P2.10-d8-complex-showcase.png` (453KB) + run.txt + meta.json + perf.json
+- **关键决策**:
+  - 使用 `metal_irconverter_runtime` IR 参数缓冲区绑定方式（而非直接 buffer set），修复计算着色器间接绘制参数写入
+  - 渲染着色器全为 inline MSL（简化部署）；计算着色器走 Path A
+  - PBR 模型：GGX 分布 + Smith 遮蔽 + Schlick Fresnel；漫反射使用 Disney 风格 kD 因子
+  - HUD 着色器简化为仅位置 + 固定半透明色
+  - 7 个材质球覆盖：Gold(0.15r,1.0m)、Chrome(0.05r,1.0m)、Copper(0.25r,1.0m)、Plastic(0.40r,0.0m)、Ceramic(0.60r,0.0m)、Blue Metal(0.20r,0.95m)、Green Metal(0.12r,0.70m)
+- **验证结果**: 691200 非背景像素 / 269572 明亮像素；顶部区域 B > R (113 > 66) 确认天空盒蓝色调；粒子 instanceCount [3112, 4095]
+- **任务号**: P2.10 | **提交**: 99f546d
+
