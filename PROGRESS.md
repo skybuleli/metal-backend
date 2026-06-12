@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T23:44:51+08:00
+# 最后更新: 2026-06-13T01:35:55+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 41/138 任务 (29.7%)
+# 完成度: 41/137 任务 (29.9%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -54,7 +54,7 @@
 
 # ===================================================================
 ## Phase 2: 渐进式渲染 Demo
-### 阶段状态: ⬜ PENDING
+### 阶段状态: 🔄 IN PROGRESS (17/19 完成，D8 已验证 812fps)
 ### 出口: D8 复杂 Demo 在 M1 上 ≥60fps，且 D1-D8 均有构建、运行和证据产物
 # ===================================================================
 | ID | 任务 | 状态 | 完成时间 | 证据 |
@@ -75,7 +75,7 @@
 | P2.8b | D6 双路径对照：Path A 与手写 MSL 输出一致性验证 + 差异证据 | ✅ | 2026-06-12T23:07:24+08:00 | docs/evidence/P2.8b-d6-patha.png + docs/evidence/P2.8b-d6-legacy-msl.png + docs/evidence/P2.8b-d6-diff-heatmap.png + docs/evidence/P2.8b-compare.txt + docs/evidence/P2.8b-meta.json |
 | P2.8c | D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化 | ✅ | 2026-06-12T23:11:18+08:00 | docs/evidence/P2.8c-run.txt + docs/evidence/P2.8c-semantics.txt + docs/evidence/P2.8c-meta.json |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ✅ | 2026-06-12T23:42:42+08:00 | docs/evidence/P2.9-run.txt + docs/evidence/P2.9-d7-gpu-driven.png + docs/evidence/P2.9-meta.json + docs/evidence/P2.9-perf.json + docs/evidence/P2.9-compute-reflection.json |
-| P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ⬜ | — | — |
+| P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ✅ | 2026-06-13T01:35:00+08:00 | docs/evidence/P2.10-d8-complex-showcase.png + docs/evidence/P2.10-run.txt + docs/evidence/P2.10-meta.json + docs/evidence/P2.10-perf.json：7 个 PBR 球体 (GGX) + shadow map + 程序化天空盒 + bloom + 粒子漩涡 + HUD + 自由轨道摄像机，M1 上 812 FPS
 | P2.11 | D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈 | ⬜ | — | — |
 | P2.12 | Demo 构建与回归入口：make build-demos + 截图/JSON 证据规范 | ⬜ | — | — |
 
@@ -265,11 +265,11 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 138
-- 已完成: 41 (29.7%)
+- 总任务数: 137
+- 已完成: 41 (29.9%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 97
+- 待开始: 96
 - 当前阶段: Phase 2 — 渐进式渲染 Demo
-- 下一任务: P2.10 — D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机
+- 下一任务: P2.11 — D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈

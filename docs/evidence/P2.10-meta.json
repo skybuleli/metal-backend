@@ -1,0 +1,8 @@
+{
+  "task": "P2.10",
+  "demo": "D8",
+  "scene": "PBR spheres (GGX) + shadow map + procedural skybox + bloom + tone mapping + particles + HUD + free camera",
+  "shader_path": {"compute": "path-a-metallib", "render": "handwritten-msl"},
+  "artifacts": ["docs/evidence/P2.10-d8-complex-showcase.ppm", "docs/evidence/P2.10-d8-complex-showcase.png", "docs/evidence/P2.10-run.txt", "docs/evidence/P2.10-perf.json"],
+  "notes": "7 PBR 材质球 (Gold/Chrome/Copper/Plastic/Ceramic/Blue Metal/Green Metal) + Cook-Torrance GGX + 自由轨道摄像机 + 粒子漩涡 + HUD 覆盖层"
+}

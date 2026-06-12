@@ -1,0 +1,16 @@
+设备: Apple M1
+Path A compute metallib 加载通过
+场景着色器 (PBR+Skybox+PP) 编译通过
+粒子着色器编译通过
+HUD 着色器编译通过
+10 条管线全部创建成功
+D8 粒子数: 4096
+场景物品: 7 个 PBR 球体 + 地面 + 天空盒
+渲染通道: Shadow → Scene(PBR+Skybox) → Bloom(3pass) → Composite → Particles → HUD
+采样帧数: 180
+
+D8 Complex Showcase 完成: out/complex_showcase.ppm
+平均 FPS: 812.48, 平均帧时间: 1.23 ms, 粒子 instanceCount 范围: [3112, 4095]
+渲染通道: Shadow → Scene(PBR+Skybox) → Bloom(3pass) → Composite → Particles → HUD
+PBR 模型: Cook-Torrance GGX, 7 个球体 (Gold/Chrome/Copper/Plastic/Ceramic/Blue Metal/Green Metal)
+摄像机: 自由轨道 (自动旋转 + 高度振荡)
