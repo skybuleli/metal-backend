@@ -160,13 +160,14 @@ Mat4 Mat4RotateX(float angle)
 struct alignas(16) UniformData
 {
     float mvpMatrix[16];   // 64 bytes, 列主序
-    float lightPos[3];     // 12 bytes @ offset 64
-    float _pad0;           // 4 bytes padding → offset 80
-    float cameraPos[3];    // 12 bytes @ offset 80
-    float _pad1;           // 4 bytes padding → offset 92
-    // sizeof = 96, 对齐 = 16
+    float modelMatrix[16]; // 64 bytes, 列主序
+    float lightPos[3];     // 12 bytes @ offset 128
+    float _pad0;           // 4 bytes padding → offset 140
+    float cameraPos[3];    // 12 bytes @ offset 144
+    float _pad1;           // 4 bytes padding → offset 156
+    // sizeof = 160, 对齐 = 16
 };
-static_assert(sizeof(UniformData) == 96, "UniformData 大小必须为 96 字节");
+static_assert(sizeof(UniformData) == 160, "UniformData 大小必须为 160 字节");
 
 // ============================================================================
 // 立方体顶点数据（36 顶点，6 面 × 2 三角 × 3 顶点）
@@ -238,6 +239,7 @@ using namespace metal;
 
 struct UniformData {
     float4x4 mvpMatrix;
+    float4x4 modelMatrix;
     packed_float3 lightPos;
     packed_float3 cameraPos;
 };
@@ -255,11 +257,16 @@ vertex VertexOut vertexMain(uint vertexId [[vertex_id]],
 {
     packed_float3 pos = positions[vertexId];
     packed_float3 norm = normals[vertexId];
+    float4 worldPos4 = uniforms.modelMatrix * float4(pos, 1.0);
+    float3x3 normalMatrix = float3x3(
+        uniforms.modelMatrix[0].xyz,
+        uniforms.modelMatrix[1].xyz,
+        uniforms.modelMatrix[2].xyz);
 
     VertexOut out;
     out.position = uniforms.mvpMatrix * float4(pos, 1.0);
-    out.worldPos = pos;
-    out.worldNormal = norm;
+    out.worldPos = worldPos4.xyz;
+    out.worldNormal = normalize(normalMatrix * float3(norm));
     return out;
 }
 
@@ -373,6 +380,7 @@ int main()
     Mat4 proj  = Mat4Perspective(3.14159f * 0.45f, float(kWidth)/float(kHeight), 0.1f, 100.0f);
     Mat4 mvp  = Mat4Mul(Mat4Mul(proj, view), model);
     std::memcpy(uniformData.mvpMatrix, mvp.m, sizeof(mvp.m));
+    std::memcpy(uniformData.modelMatrix, model.m, sizeof(model.m));
 
     // 调试：打印 MVP 矩阵和测试顶点
     std::cout << "MVP 矩阵:\n";
