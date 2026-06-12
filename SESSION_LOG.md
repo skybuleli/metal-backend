@@ -25,6 +25,36 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.6a 轻量预览窗口落地 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 为 `D1-D4` 增加本地可视预览窗口，保留原有离屏证据链
+- **变更**:
+  - 新增 `src/demos/preview/`，实现基于 `NSWindow + CAMetalLayer` 的四宫格预览器
+  - 更新 `src/demos/Makefile`，增加 `preview` / `preview-evidence` / `run-preview` 入口
+  - 新增 `docs/evidence/P2.6a-window.txt`、`P2.6a-preview-grid.ppm/png`、`P2.6a-meta.json`
+  - 预览器从 `D1-D4` 各自的离屏 `PPM` 读取结果，统一拼接为本地窗口和组合导出图
+- **验证**:
+  - `make -C src/demos/preview evidence`
+  - 日志确认 `Present 已调用: 106 帧`
+  - 组合图已生成：`docs/evidence/P2.6a-preview-grid.png`
+- **说明**:
+  - 预览器刻意保持轻量，服务于 P2 阶段的人眼观察与调试
+  - 该实现不替代 P4 的完整 Presenter / 交换链路径
+
+### 2026-06-12 | P2 阶段补充轻量窗口预览任务规划 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已把 `P2.6a` 正式加入 Phase 2 规划，作为离屏证据链之外的本地体验增强任务
+- **变更**:
+  - 更新 `PROGRESS.md`，新增 `P2.6a Demo 预览窗口：NSWindow + CAMetalLayer，本地可视预览 D1-D4，保留离屏证据链`
+  - 更新 `src/demos/README.md`，明确 P2 从 `P2.6a` 起采用“离屏证据 + 本地窗口预览”双轨
+  - 更新 `docs/p2-demo-evidence.md`，补充窗口截图 / 启动日志等证据口径
+  - 刷新 `NEXT_TASK.md`，下一任务切换为 `P2.6a`
+- **动机**:
+  - 现有 P2 Demo 主要依赖离屏 PPM/PNG 证据，适合回归验证，但肉眼体验较弱
+  - 轻量窗口预览可改善调试和演示体验，同时不提前引入 P4 的完整 Presenter/交换链复杂度
+
 ### 2026-06-12 | P2.6 D4 重新实现（手写 MSL）+ 收尾 cleanup | ✅ 完成
 
 - **Agent**: Reasonix

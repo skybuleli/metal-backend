@@ -1,0 +1,8 @@
+{
+  "task": "P2.6a",
+  "demo": "PreviewWindow",
+  "scene": "NSWindow + CAMetalLayer local preview for D1-D4",
+  "shader_path": "handwritten-msl-preview",
+  "artifacts": ["docs/evidence/P2.6a-window.txt", "docs/evidence/P2.6a-preview-grid.ppm", "docs/evidence/P2.6a-preview-grid.png"],
+  "notes": "窗口预览用于本地体验与调试，离屏证据链仍由各 Demo 自身维护。"
+}

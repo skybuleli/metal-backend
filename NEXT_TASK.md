@@ -1,6 +1,6 @@
 # 下一任务 — P2.7 D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集
 
-> 生成时间：2026-06-12 15:42:48
+> 生成时间：2026-06-12 15:43:10
 > 所属阶段：Phase 2 — 渐进式渲染 Demo
 
 ## 任务详情

@@ -1,7 +1,7 @@
-.PHONY: all help build-demos d1 d2 d3 d4 d5 d6 d7 d8 \
-	run-d1 run-d2 run-d3 run-d4 run-d5 run-d6 run-d7 run-d8 clean
+.PHONY: all help build-demos preview preview-evidence d1 d2 d3 d4 d5 d6 d7 d8 \
+	run-d1 run-d2 run-d3 run-d4 run-preview run-d5 run-d6 run-d7 run-d8 clean
 
-DEMOS = d1 d2 d3 d4 d5 d6 d7 d8
+DEMOS = d1 d2 d3 d4 d5 d6 d7 d8 preview
 
 all: build-demos
 
@@ -17,8 +17,9 @@ build-demos:
 	@$(MAKE) -C d2 build
 	@$(MAKE) -C d3 build
 	@$(MAKE) -C d4 build
-	@echo "D1、D2、D3、D4 已构建；其余 D5-D8 构建目标尚未逐个实现。"
-	@echo "可用下一步: make -C src/demos run-d4"
+	@$(MAKE) -C preview build
+	@echo "D1、D2、D3、D4 与预览窗口已构建；其余 D5-D8 构建目标尚未逐个实现。"
+	@echo "可用下一步: make -C src/demos run-preview"
 
 d1:
 	@$(MAKE) -C d1 build
@@ -31,6 +32,12 @@ d3:
 
 d4:
 	@$(MAKE) -C d4 build
+
+preview:
+	@$(MAKE) -C preview build
+
+preview-evidence:
+	@$(MAKE) -C preview evidence
 
 d5 d6 d7 d8:
 	@echo "[$@] 目录已就位，具体构建逻辑待对应 P2 任务实现。"
@@ -47,6 +54,9 @@ run-d3:
 
 run-d4:
 	@$(MAKE) -C d4 run
+
+run-preview:
+	@$(MAKE) -C preview run
 
 run-d5 run-d6 run-d7 run-d8:
 	@demo_name=$${@#run-}; \
