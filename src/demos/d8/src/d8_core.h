@@ -1543,7 +1543,8 @@ inline void CleanupRenderContext(RenderContext& ctx)
 // 单帧渲染（渲染到 targetTexture）
 // ═══════════════════════════════════════════════════════════════════════
 inline void RenderFrame(RenderContext& ctx, MTL::Texture* targetTexture,
-                        float time, std::uint32_t frameIndex)
+                        float time, std::uint32_t frameIndex,
+                        MTL::CommandBuffer* externalCB = nullptr)
 {
     constexpr int kItemCount = static_cast<int>(std::size(kSceneItems));
     constexpr int kSphereIndexCount = kSphereSlices * kSphereStacks * 6;
@@ -1574,7 +1575,7 @@ inline void RenderFrame(RenderContext& ctx, MTL::Texture* targetTexture,
     ObjectUniforms groundObj = BuildObjectUniforms(groundItem, sceneUniforms);
     std::memcpy(ctx.groundBuffer->contents(), &groundObj, sizeof(groundObj));
 
-    MTL::CommandBuffer* commandBuffer = ctx.commandQueue->commandBuffer();
+    MTL::CommandBuffer* commandBuffer = externalCB != nullptr ? externalCB : ctx.commandQueue->commandBuffer();
     if (commandBuffer == nullptr) return;
 
     // ── Pass 0: Compute 粒子更新 ──
@@ -1729,8 +1730,11 @@ inline void RenderFrame(RenderContext& ctx, MTL::Texture* targetTexture,
         encoder->endEncoding();
     }
 
-    commandBuffer->commit();
-    commandBuffer->waitUntilCompleted();
+    if (externalCB == nullptr)
+    {
+        commandBuffer->commit();
+        commandBuffer->waitUntilCompleted();
+    }
 }
 
 } // namespace d8

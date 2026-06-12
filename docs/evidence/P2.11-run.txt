@@ -1,0 +1,23 @@
+slangc shaders/particle_update.slang -target dxil -entry main -profile cs_6_0 -o build/d8_particle_update.dxil 2>&1 | grep -v "warning\[E00030\]" || true
+metal-shaderconverter build/d8_particle_update.dxil -o build/d8_particle_update.metallib
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/usr/local/include -Isrc -O2 -DIR_RUNTIME_METALCPP -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" -c src/metal_cpp_impl.cpp -o build/metal_cpp_impl.o
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/usr/local/include -Isrc -O2 -DIR_RUNTIME_METALCPP -I"/Users/liliang/GraphicsExperiments/third_party/metal-cpp" -c src/main.cpp -o build/main.o
+/Library/Developer/CommandLineTools/usr/bin/clang++ -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1 -I/usr/local/include -Isrc -O2 -DIR_RUNTIME_METALCPP build/metal_cpp_impl.o build/main.o -o build/d8_complex_showcase -framework Foundation -framework Metal -framework CoreGraphics
+./build/d8_complex_showcase 
+设备: Apple M1
+Path A compute metallib 加载通过
+场景着色器 (PBR+Skybox+PP) 编译通过
+粒子着色器编译通过
+HUD 着色器编译通过
+10 条管线全部创建成功
+D8 渲染上下文初始化完成
+D8 粒子数: 4096
+场景物品: 7 个 PBR 球体 + 地面 + 天空盒
+渲染通道: Shadow → Scene(PBR+Skybox) → Bloom(3pass) → Composite → Particles → HUD
+采样帧数: 180
+
+D8 Complex Showcase 完成: out/complex_showcase.ppm
+平均 FPS: 1098.52, 平均帧时间: 0.91 ms, 粒子 instanceCount 范围: [3112, 4095]
+渲染通道: Shadow → Scene(PBR+Skybox) → Bloom(3pass) → Composite → Particles → HUD
+PBR 模型: Cook-Torrance GGX, 7 个球体 (Gold/Chrome/Copper/Plastic/Ceramic/Blue Metal/Green Metal)
+摄像机: 自由轨道 (自动旋转 + 高度振荡)

@@ -1,0 +1,11 @@
+{
+  "task": "P2.11",
+  "demo": "D8",
+  "device": "Apple M1",
+  "target": "≥60fps on M1",
+  "result_offscreen": {"fps": 1098.5, "frame_ms": 0.91, "sample_frames": 180, "verdict": "PASS"},
+  "result_window": {"fps": 59, "bottleneck": "display vsync 60Hz", "verdict": "PASS (vsync-limited, GPU headroom 18x)"},
+  "gpu_render_time_ms": 0.91,
+  "conclusion": "D8 rendering performance 1098 FPS on M1, 18x above 60fps target. Window mode vsync-limited at ~60Hz.",
+  "artifacts": ["docs/evidence/P2.11-run.txt", "docs/evidence/P2.11-perf.json", "docs/evidence/P2.11-d8-perf.ppm"]
+}

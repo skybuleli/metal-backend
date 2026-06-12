@@ -1,0 +1,16 @@
+{
+  "task": "P2.10",
+  "demo": "D8",
+  "device": "Apple M1",
+  "scene": "PBR spheres (GGX) + shadow map + procedural skybox + bloom + particles + HUD + free camera",
+  "particle_count": 4096,
+  "sample_frames": 180,
+  "sample_seconds": 0.1639,
+  "avg_fps": 1098.5241,
+  "avg_frame_ms": 0.9103,
+  "render_passes": ["shadow", "scene(PBR+skybox)", "bright_extract", "blur_h", "blur_v", "composite", "particles", "hud"],
+  "shader_path": {"compute": "path-a-metallib", "render": "handwritten-msl"},
+  "pbr_model": "Cook-Torrance GGX with Smith geometry and Schlick Fresnel",
+  "camera": "free orbit (auto-rotate + altitude oscillation)",
+  "final_instance_count": 3672
+}

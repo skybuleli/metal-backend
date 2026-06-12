@@ -108,19 +108,21 @@ bool RunWindow(double autoCloseSeconds)
                     const auto now = std::chrono::steady_clock::now();
                     const float time = std::chrono::duration<float>(now - startTime).count();
 
-                    // 使用 ObjC 侧 texture 包装为 metal-cpp MTL::Texture*
-                    // CAMetalDrawable.texture 是 id<MTLTexture>，与 MTL::Texture* 二进制兼容
+                    // ObjC 侧创建 command buffer，注册 present
+                    id<MTLCommandBuffer> objcCB = [objcQueue commandBuffer];
+                    [objcCB presentDrawable:drawable];
+
+                    // Cast 为 metal-cpp 指针传给 RenderFrame
                     MTL::Texture* targetTexture = reinterpret_cast<MTL::Texture*>(
                         (__bridge void*)drawable.texture);
+                    MTL::CommandBuffer* cb = reinterpret_cast<MTL::CommandBuffer*>(
+                        (__bridge void*)objcCB);
 
-                    // 渲染一帧（所有 pass 最终输出到 targetTexture）
-                    RenderFrame(ctx, targetTexture, time, presentedFrames);
+                    // 渲染一帧（所有 pass 编码到同一个 cb，不自动 commit）
+                    RenderFrame(ctx, targetTexture, time, presentedFrames, cb);
 
-                    // 提交并显示
-                    id<MTLCommandBuffer> commandBuffer = [objcQueue commandBuffer];
-                    [commandBuffer presentDrawable:drawable];
-                    [commandBuffer commit];
-                    [commandBuffer waitUntilCompleted];
+                    // 单次 commit（不 wait，nextDrawable 自然限流）
+                    [objcCB commit];
 
                     ++presentedFrames;
                 }
@@ -133,9 +135,6 @@ bool RunWindow(double autoCloseSeconds)
                     std::chrono::duration<double>(std::chrono::steady_clock::now() - startTime).count();
                 if (elapsed >= autoCloseSeconds) break;
             }
-
-            // ~60fps 限制
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
         }
 
         [window close];
