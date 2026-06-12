@@ -13,23 +13,27 @@
 - **深度测试**：Depth32Float 纹理 + CompareLess + WriteEnabled
 - **背面剔除**：CullModeBack + WindingCounterClockwise
 - **离屏渲染**：输出 `out/basic_lighting.ppm`（512 × 512）
+- **实时窗口版（P2.6b）**：`NSWindow + CAMetalLayer` 持续渲染自动旋转立方体，用于人眼确认 3D 运动与光照变化
 
 ## 构建
 
 ```bash
 make -C src/demos/d4 build
+make -C src/demos/d4 build-window
 ```
 
 ## 运行
 
 ```bash
 make -C src/demos/d4 run
+make -C src/demos/d4 run-window
 ```
 
 ## 生成验证证据
 
 ```bash
 make -C src/demos/d4 evidence
+make -C src/demos/d4 evidence-window
 ```
 
 ## 技术说明
@@ -42,6 +46,7 @@ D4 采用手写 MSL 而非 Path A（Slang→DXIL→MSC）管线，因为：
 ## 当前限制
 
 - 当前输出仍是单样本离屏渲染，因此立方体边缘会有可见锯齿。
+- 实时窗口版当前也是单样本渲染，因此旋转时边缘锯齿会更明显。
 - 抗锯齿（例如 MSAA）更适合放到 `P2.7 / D5` 的高级贴图与 RTT/MSAA 子集里统一处理。
 
 ## 证据产物
@@ -51,3 +56,6 @@ D4 采用手写 MSL 而非 Path A（Slang→DXIL→MSC）管线，因为：
 | `docs/evidence/P2.6-run.txt` | 运行日志 |
 | `docs/evidence/P2.6-d4-basic-lighting.png` | 渲染截图 |
 | `docs/evidence/P2.6-meta.json` | 元数据 |
+| `docs/evidence/P2.6b-window.txt` | 实时窗口运行日志 |
+| `docs/evidence/P2.6b-d4-rotating-window.png` | 实时窗口最终帧导出图 |
+| `docs/evidence/P2.6b-meta.json` | 实时窗口元数据 |

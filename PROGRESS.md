@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T15:43:10+08:00
+# 最后更新: 2026-06-12T16:07:06+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 33/133 任务 (24.8%)
+# 完成度: 34/134 任务 (25.4%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -67,6 +67,7 @@
 | P2.5 | D3 Multi-Texture：多纹理混合 + 采样器 filter/wrap/mipmap 模式 | ✅ | 2026-06-12T06:10:29+08:00 | docs/evidence/P2.5-run.txt + docs/evidence/P2.5-d3-multi-texture.png + docs/evidence/P2.5-meta.json + docs/evidence/P2.5-fragment-reflection.json |
 | P2.6 | D4 Basic Lighting：uniform buffer + 3D 变换 + 深度测试 + Phong 光照 | ✅ | 2026-06-12T07:30:00+08:00 | docs/evidence/P2.6-run.txt + docs/evidence/P2.6-d4-basic-lighting.png + docs/evidence/P2.6-meta.json |
 | P2.6a | Demo 预览窗口：NSWindow + CAMetalLayer，本地可视预览 D1-D4，保留离屏证据链 | ✅ | 2026-06-12T15:39:55+08:00 | docs/evidence/P2.6a-window.txt + docs/evidence/P2.6a-preview-grid.png + docs/evidence/P2.6a-meta.json |
+| P2.6b | D4 实时窗口版：自动旋转立方体，本地可视验证 3D 变换与光照链路 | ✅ | 2026-06-12T16:06:01+08:00 | docs/evidence/P2.6b-window.txt + docs/evidence/P2.6b-d4-rotating-window.png + docs/evidence/P2.6b-meta.json |
 | P2.7 | D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集 | ⬜ | — | — |
 | P2.8 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 | ⬜ | — | — |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ⬜ | — | — |
@@ -260,8 +261,8 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 133
-- 已完成: 33 (24.8%)
+- 总任务数: 134
+- 已完成: 34 (25.4%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0

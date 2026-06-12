@@ -1,4 +1,4 @@
-.PHONY: all build run evidence clean
+.PHONY: all build build-window run run-window evidence evidence-window clean
 
 SHELL := /bin/bash
 
@@ -6,11 +6,15 @@ CXX := $(shell xcrun --sdk macosx --find clang++)
 SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot $(SDKROOT) -I$(SDKROOT)/usr/include/c++/v1 -I/usr/local/include -O2
 FRAMEWORKS := -framework Foundation -framework Metal -framework CoreGraphics
+CXXFLAGS_WINDOW := -std=c++17 -Wall -Wextra -Wpedantic -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -fobjc-arc -isysroot $(SDKROOT) -I$(SDKROOT)/usr/include/c++/v1 -O2
+FRAMEWORKS_WINDOW := -framework Foundation -framework Metal -framework CoreGraphics -framework AppKit -framework QuartzCore
 
 METAL_CPP_DIR ?= $(HOME)/GraphicsExperiments/third_party/metal-cpp
 
 TARGET := build/d4_basic_lighting
 SOURCE := src/main.cpp
+WINDOW_TARGET := build/d4_basic_lighting_window
+WINDOW_SOURCE := src/window_main.mm
 EVIDENCE_DIR := $(abspath ../../../docs/evidence)
 
 PPM_OUT := out/basic_lighting.ppm
@@ -18,6 +22,11 @@ EVIDENCE_PPM := $(EVIDENCE_DIR)/P2.6-d4-basic-lighting.ppm
 EVIDENCE_PNG := $(EVIDENCE_DIR)/P2.6-d4-basic-lighting.png
 EVIDENCE_RUN := $(EVIDENCE_DIR)/P2.6-run.txt
 EVIDENCE_META := $(EVIDENCE_DIR)/P2.6-meta.json
+WINDOW_PPM_OUT := out/basic_lighting_window.ppm
+WINDOW_EVIDENCE_PPM := $(EVIDENCE_DIR)/P2.6b-d4-rotating-window.ppm
+WINDOW_EVIDENCE_PNG := $(EVIDENCE_DIR)/P2.6b-d4-rotating-window.png
+WINDOW_EVIDENCE_RUN := $(EVIDENCE_DIR)/P2.6b-window.txt
+WINDOW_EVIDENCE_META := $(EVIDENCE_DIR)/P2.6b-meta.json
 
 all: build
 
@@ -30,8 +39,15 @@ build:
 	fi
 	$(CXX) $(CXXFLAGS) -I"$(METAL_CPP_DIR)" $(SOURCE) -o $(TARGET) $(FRAMEWORKS)
 
+build-window:
+	@mkdir -p build out
+	$(CXX) $(CXXFLAGS_WINDOW) $(WINDOW_SOURCE) -o $(WINDOW_TARGET) $(FRAMEWORKS_WINDOW)
+
 run: build
 	./$(TARGET)
+
+run-window: build-window
+	./$(WINDOW_TARGET)
 
 evidence: build
 	@mkdir -p $(EVIDENCE_DIR)
@@ -45,6 +61,18 @@ evidence: build
 	@echo "  $(EVIDENCE_PNG)"
 	@echo "  $(EVIDENCE_RUN)"
 	@echo "  $(EVIDENCE_META)"
+
+evidence-window: build-window
+	@mkdir -p $(EVIDENCE_DIR)
+	@set -o pipefail; ./$(WINDOW_TARGET) --auto-close-seconds 3 --export-ppm $(WINDOW_PPM_OUT) 2>&1 | tee $(WINDOW_EVIDENCE_RUN)
+	cp $(WINDOW_PPM_OUT) $(WINDOW_EVIDENCE_PPM)
+	sips -s format png $(WINDOW_EVIDENCE_PPM) --out $(WINDOW_EVIDENCE_PNG) >/dev/null 2>&1
+	@printf '{\n  "task": "P2.6b",\n  "demo": "D4Window",\n  "scene": "实时旋转立方体窗口预览，验证 3D 变换、深度测试与 Phong 光照在本地窗口中持续生效",\n  "shader_path": "hand-written MSL (compiled from source)",\n  "artifacts": ["docs/evidence/P2.6b-window.txt", "docs/evidence/P2.6b-d4-rotating-window.ppm", "docs/evidence/P2.6b-d4-rotating-window.png"],\n  "notes": "窗口版与离屏版共用同一套立方体数据、矩阵计算和光照着色器；当前仍为单样本渲染，抗锯齿放到 P2.7 处理。"\n}\n' > $(WINDOW_EVIDENCE_META)
+	@echo "已生成窗口版验证证据:"
+	@echo "  $(WINDOW_EVIDENCE_PPM)"
+	@echo "  $(WINDOW_EVIDENCE_PNG)"
+	@echo "  $(WINDOW_EVIDENCE_RUN)"
+	@echo "  $(WINDOW_EVIDENCE_META)"
 
 clean:
 	rm -rf build out

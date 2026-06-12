@@ -25,6 +25,27 @@
 
 ## 最近滚动记录
 
+### 2026-06-12 | P2.6b D4 实时旋转窗口版 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 为 `D4` 增加可实时观看的自动旋转窗口版，补齐“它是 3D，但看起来不像 3D demo”的体验缺口
+- **变更**:
+  - 新增 `src/demos/d4/src/scene_common.hpp`，统一离屏版与窗口版共享的立方体数据、矩阵计算和手写 MSL
+  - 新增 `src/demos/d4/src/window_main.mm`，实现 `NSWindow + CAMetalLayer` 实时渲染循环
+  - 更新 `src/demos/d4/Makefile`，增加 `build-window` / `run-window` / `evidence-window`
+  - 更新 `src/demos/Makefile` 与 `src/demos/d4/README.md`，暴露新的窗口入口和证据文件
+- **验证**:
+  - `make -C src/demos/d4 evidence`
+  - `make -C src/demos/d4 evidence-window`
+  - 窗口日志确认 `Present 已调用: 178 帧`，平均 `57.6298 fps`
+- **证据**:
+  - `docs/evidence/P2.6b-window.txt`
+  - `docs/evidence/P2.6b-d4-rotating-window.png`
+  - `docs/evidence/P2.6b-meta.json`
+- **说明**:
+  - 窗口版仍为单样本渲染，因此旋转时锯齿会比较明显
+  - 抗锯齿计划继续放在 `P2.7 / D5` 的 MSAA 子集中处理
+
 ### 2026-06-12 | P2.6a 轻量预览窗口落地 | ✅ 完成
 
 - **Agent**: Codex

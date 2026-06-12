@@ -1,0 +1,8 @@
+{
+  "task": "P2.6b",
+  "demo": "D4Window",
+  "scene": "实时旋转立方体窗口预览，验证 3D 变换、深度测试与 Phong 光照在本地窗口中持续生效",
+  "shader_path": "hand-written MSL (compiled from source)",
+  "artifacts": ["docs/evidence/P2.6b-window.txt", "docs/evidence/P2.6b-d4-rotating-window.ppm", "docs/evidence/P2.6b-d4-rotating-window.png"],
+  "notes": "窗口版与离屏版共用同一套立方体数据、矩阵计算和光照着色器；当前仍为单样本渲染，抗锯齿放到 P2.7 处理。"
+}
