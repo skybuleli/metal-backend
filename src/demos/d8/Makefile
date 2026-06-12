@@ -1,11 +1,16 @@
-.PHONY: all build run evidence clean
+.PHONY: all build run window run-window evidence clean
 
 SHELL := /bin/bash
 
 CXX := $(shell xcrun --sdk macosx --find clang++)
 SDKROOT := $(shell xcrun --sdk macosx --show-sdk-path)
-CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot $(SDKROOT) -I$(SDKROOT)/usr/include/c++/v1 -I/usr/local/include -O2
+CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-c99-extensions -Wno-c++20-designator -stdlib=libc++ -isysroot $(SDKROOT) -I$(SDKROOT)/usr/include/c++/v1 -I/usr/local/include -Isrc -O2 -DIR_RUNTIME_METALCPP
 FRAMEWORKS := -framework Foundation -framework Metal -framework CoreGraphics
+WINDOW_FRAMEWORKS := -framework AppKit -framework QuartzCore
+WINDOW_TARGET := build/d8_window
+IMPL_OBJ := build/metal_cpp_impl.o
+MAIN_OBJ := build/main.o
+WINDOW_OBJ := build/window_main.o
 SLANGC ?= slangc
 MSC ?= metal-shaderconverter
 
@@ -38,7 +43,25 @@ build:
 	fi
 	$(SLANGC) $(SHADER) -target dxil -entry main -profile cs_6_0 -o $(COMPUTE_DXIL) 2>&1 | grep -v "warning\[E00030\]" || true
 	$(MSC) $(COMPUTE_DXIL) -o $(COMPUTE_METALLIB)
-	$(CXX) $(CXXFLAGS) -I"$(METAL_CPP_DIR)" $(SOURCE) -o $(TARGET) $(FRAMEWORKS)
+	$(CXX) $(CXXFLAGS) -I"$(METAL_CPP_DIR)" -c src/metal_cpp_impl.cpp -o $(IMPL_OBJ)
+	$(CXX) $(CXXFLAGS) -I"$(METAL_CPP_DIR)" -c src/main.cpp -o $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) $(IMPL_OBJ) $(MAIN_OBJ) -o $(TARGET) $(FRAMEWORKS)
+
+window:
+	@mkdir -p build
+	@if [ ! -f "$(METAL_CPP_DIR)/Metal/Metal.hpp" ]; then \
+		echo "未找到 metal-cpp: $(METAL_CPP_DIR)"; \
+		echo "请设置 METAL_CPP_DIR 指向 Metal.hpp 所在目录。"; \
+		exit 1; \
+	fi
+	$(SLANGC) $(SHADER) -target dxil -entry main -profile cs_6_0 -o $(COMPUTE_DXIL) 2>&1 | grep -v "warning\[E00030\]" || true
+	$(MSC) $(COMPUTE_DXIL) -o $(COMPUTE_METALLIB)
+	$(CXX) $(CXXFLAGS) -I"$(METAL_CPP_DIR)" -c src/metal_cpp_impl.cpp -o $(IMPL_OBJ)
+	$(CXX) $(CXXFLAGS) -fobjc-arc -I"$(METAL_CPP_DIR)" -c src/window_main.mm -o $(WINDOW_OBJ)
+	$(CXX) $(CXXFLAGS) $(IMPL_OBJ) $(WINDOW_OBJ) -o $(WINDOW_TARGET) $(FRAMEWORKS) $(WINDOW_FRAMEWORKS) -fobjc-arc
+
+run-window: window
+	./$(WINDOW_TARGET) $(ARGS)
 
 run: build
 	./$(TARGET) $(ARGS)
