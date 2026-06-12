@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-12T22:02:05+08:00
+# 最后更新: 2026-06-12T22:20:06+08:00
 # 当前阶段: Phase 2 — 渐进式渲染 Demo
-# 完成度: 36/135 任务 (26.7%)
+# 完成度: 37/135 任务 (27.4%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -70,7 +70,7 @@
 | P2.6b | D4 实时窗口版：自动旋转立方体，本地可视验证 3D 变换与光照链路 | ✅ | 2026-06-12T16:06:01+08:00 | docs/evidence/P2.6b-window.txt + docs/evidence/P2.6b-d4-rotating-window.png + docs/evidence/P2.6b-meta.json |
 | P2.7 | D5 Advanced Texturing：法线贴图 + Cubemap/Skybox + RTT 或 MSAA 子集 | ✅ | 2026-06-12T16:33:41+08:00 | docs/evidence/P2.7-run.txt + docs/evidence/P2.7-d5-advanced-texturing.png + docs/evidence/P2.7-meta.json |
 | P2.7a | D5 展示增强：更直观的天空盒与法线贴图，并补充 MSAA 对比证据 | ✅ | 2026-06-12T21:59:18+08:00 | docs/evidence/P2.7a-run.txt + docs/evidence/P2.7a-d5-showcase.png + docs/evidence/P2.7a-d5-msaa-compare.png + docs/evidence/P2.7a-meta.json |
-| P2.8 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 | ⬜ | — | — |
+| P2.8 | D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理 | ✅ | 2026-06-12T22:18:25+08:00 | docs/evidence/P2.8-run.txt + docs/evidence/P2.8-d6-advanced-lighting.png + docs/evidence/P2.8-meta.json |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ⬜ | — | — |
 | P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ⬜ | — | — |
 | P2.11 | D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈 | ⬜ | — | — |
@@ -263,10 +263,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 135
-- 已完成: 36 (26.7%)
+- 已完成: 37 (27.4%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 99
+- 待开始: 98
 - 当前阶段: Phase 2 — 渐进式渲染 Demo
-- 下一任务: P2.8 — D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理
+- 下一任务: P2.9 — D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw

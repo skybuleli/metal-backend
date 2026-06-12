@@ -34,7 +34,7 @@
 | P2.6b | D4 实时窗口版 | 自动旋转立方体，本地可视验证 3D 光照链路 |
 | P2.7 | D5 | 法线贴图 + Skybox/Cubemap + MSAA 子集 Demo 和截图 |
 | P2.7a | D5 展示增强 | 更直观的天空盒与法线贴图主图 + 1x/4x MSAA 对比证据 |
-| P2.8 | D6 | 阴影/HDR/Bloom Demo 和截图 |
+| P2.8 | D6 | Shadow depth + HDR scene + bloom blur + tone map 合成证据 |
 | P2.9 | D7 | GPU 驱动 Demo 和性能记录 |
 | P2.10-P2.11 | D8 | 综合场景、FPS/帧时间 JSON、瓶颈报告或通过证据 |
 | P2.12 | 全部 | `make build-demos`、回归入口和证据格式 |

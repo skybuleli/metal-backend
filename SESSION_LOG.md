@@ -19,11 +19,34 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 2 — 渐进式渲染 Demo
-- 当前进度：36/135 任务完成
-- 下一任务：P2.8 — D6 Advanced Lighting：Shadow Map + HDR/Tone Mapping + Bloom 后处理
+- 当前进度：37/135 任务完成
+- 下一任务：P2.9 — D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-12 | P2.8 D6 高级光照与后处理链路 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已交付 `Shadow Map + HDR + Tone Mapping + Bloom` 的 D6 离屏 Demo
+- **变更**:
+  - 新增 `src/demos/d6/src/main.cpp`，实现 `shadow depth -> HDR scene -> bright extract + blur -> composite` 四段渲染链路
+  - 新增 `src/demos/d6/Makefile` 与 `src/demos/d6/README.md`
+  - 更新 `src/demos/Makefile`，把 D6 接入 `build-demos`、`d6` 和 `run-d6`
+  - 更新 `src/demos/README.md`，补充 P2.8 的交付口径
+- **实现要点**:
+  - 场景包含地面、多个投影立方体和一个高亮发光立方体
+  - Shadow pass 输出 1024x1024 depth 纹理，HDR pass 在 `RGBA16Float` 上完成光照与阴影采样
+  - Bloom 采用高亮提取后的一次横向 blur 和一次纵向 blur，再与 HDR 主图做 tone map 合成
+  - 帧缓冲写出时补上了上下翻转修正，避免离屏证据倒置
+- **验证**:
+  - `make -C src/demos/d6 evidence`
+  - `make -C src/demos build-demos`
+  - 运行日志确认四段 pass 全部执行，证据校验结果为 `高亮像素 14907`
+- **证据**:
+  - `docs/evidence/P2.8-run.txt`
+  - `docs/evidence/P2.8-d6-advanced-lighting.png`
+  - `docs/evidence/P2.8-meta.json`
 
 ### 2026-06-12 | P2.7 D5 高级贴图子集 | ✅ 完成
 

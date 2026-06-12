@@ -1,0 +1,8 @@
+{
+  "task": "P2.8",
+  "demo": "D6",
+  "scene": "方向光阴影 + HDR 主场景 + Bloom 提取/模糊 + Tone Mapping 合成",
+  "shader_path": "hand-written MSL (compiled from source)",
+  "artifacts": ["docs/evidence/P2.8-d6-advanced-lighting.ppm", "docs/evidence/P2.8-d6-advanced-lighting.png", "docs/evidence/P2.8-run.txt"],
+  "notes": "D6 采用四段真实 pass：shadow depth、HDR scene、bright extract + blur、tone map composite。场景包含地面、多个投影体和发光立方体，用于同时验证阴影与 bloom。"
+}
