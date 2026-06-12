@@ -638,7 +638,20 @@ MTL::Library* LoadMetallib(MTL::Device* device, const char* path)
     return library;
 }
 
-MTL::VertexDescriptor* CreateVertexDescriptor()
+MTL::VertexDescriptor* CreateLegacyVertexDescriptor()
+{
+    MTL::VertexDescriptor* vertex_descriptor = MTL::VertexDescriptor::alloc()->init();
+    vertex_descriptor->attributes()->object(0)->setFormat(MTL::VertexFormatFloat3);
+    vertex_descriptor->attributes()->object(0)->setOffset(0);
+    vertex_descriptor->attributes()->object(0)->setBufferIndex(0);
+    vertex_descriptor->attributes()->object(1)->setFormat(MTL::VertexFormatFloat3);
+    vertex_descriptor->attributes()->object(1)->setOffset(sizeof(float) * 3);
+    vertex_descriptor->attributes()->object(1)->setBufferIndex(0);
+    vertex_descriptor->layouts()->object(0)->setStride(sizeof(Vertex));
+    return vertex_descriptor;
+}
+
+MTL::VertexDescriptor* CreatePathAVertexDescriptor()
 {
     MTL::VertexDescriptor* vertex_descriptor = MTL::VertexDescriptor::alloc()->init();
     vertex_descriptor->attributes()->object(kIRStageInAttributeStartIndex + 0)->setFormat(MTL::VertexFormatFloat3);
@@ -674,7 +687,7 @@ MTL::RenderPipelineState* BuildLegacyShadowPipeline(MTL::Device* device, MTL::Li
 {
     NS::Error* error = nullptr;
     MTL::Function* vertex_fn = library->newFunction(MTLSTR("shadowVertex"));
-    MTL::VertexDescriptor* vertex_descriptor = CreateVertexDescriptor();
+    MTL::VertexDescriptor* vertex_descriptor = CreateLegacyVertexDescriptor();
 
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
@@ -694,7 +707,7 @@ MTL::RenderPipelineState* BuildLegacyScenePipeline(MTL::Device* device, MTL::Lib
     NS::Error* error = nullptr;
     MTL::Function* vertex_fn = library->newFunction(MTLSTR("sceneVertex"));
     MTL::Function* fragment_fn = library->newFunction(MTLSTR("sceneFragment"));
-    MTL::VertexDescriptor* vertex_descriptor = CreateVertexDescriptor();
+    MTL::VertexDescriptor* vertex_descriptor = CreateLegacyVertexDescriptor();
 
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
@@ -723,7 +736,7 @@ MTL::RenderPipelineState* BuildPathAShadowPipeline(MTL::Device* device, MTL::Lib
 
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
-    descriptor->setVertexDescriptor(CreateVertexDescriptor());
+    descriptor->setVertexDescriptor(CreatePathAVertexDescriptor());
     descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float);
 
     MTL::RenderPipelineState* pipeline = device->newRenderPipelineState(descriptor, &error);
@@ -750,7 +763,7 @@ MTL::RenderPipelineState* BuildPathAScenePipeline(MTL::Device* device,
     MTL::RenderPipelineDescriptor* descriptor = MTL::RenderPipelineDescriptor::alloc()->init();
     descriptor->setVertexFunction(vertex_fn);
     descriptor->setFragmentFunction(fragment_fn);
-    descriptor->setVertexDescriptor(CreateVertexDescriptor());
+    descriptor->setVertexDescriptor(CreatePathAVertexDescriptor());
     descriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormatRGBA16Float);
     descriptor->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float);
 

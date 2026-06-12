@@ -29,6 +29,7 @@ make -C src/demos/d6 run ARGS=--legacy-msl
 
 ```bash
 make -C src/demos/d6 evidence
+make -C src/demos/d6 evidence-compare
 ```
 
 ## 当前取舍
@@ -46,3 +47,5 @@ make -C src/demos/d6 evidence
 | `docs/evidence/P2.8a-run.txt` | Path A 场景 pass 运行日志 |
 | `docs/evidence/P2.8a-d6-patha-advanced-lighting.png` | Path A 场景 pass 截图 |
 | `docs/evidence/P2.8a-meta.json` | Path A 元数据与反射文件索引 |
+| `docs/evidence/P2.8b-d6-diff-heatmap.png` | Path A 与 legacy MSL 的像素差热力图 |
+| `docs/evidence/P2.8b-compare.txt` | 双路径对照统计摘要 |
