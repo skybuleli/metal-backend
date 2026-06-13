@@ -489,3 +489,20 @@
 - **验证结果**: 691200 非背景像素 / 269572 明亮像素；顶部区域 B > R (113 > 66) 确认天空盒蓝色调；粒子 instanceCount [3112, 4095]
 - **任务号**: P2.10 | **提交**: 99f546d
 
+### 2026-06-13 中午 | P3.0 基于 kk 报告收口后续任务拆分与风险清单 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 基于 `deliverables_kk-extraction-report.md` 完成后续任务重排与扩充，主线保持 `P3.1` 不变，但为 Phase 3-6 新增关键前置任务
+- **变更**:
+  - 新增 `docs/kk-task-expansion.md`，沉淀 kk 报告对本项目的帮助、适用阶段、扩充理由与执行顺序
+  - 更新 `PROGRESS.md`，新增 `P3.1a / P3.1b / P4.1.0 / P4.2.0 / P5.0 / P6.2.0`
+  - 在 `PROGRESS.md` 中记录 `P3.0` 已完成，并刷新统计区
+  - 重新生成 `NEXT_TASK.md`，确认下一任务仍为 `P3.1`
+- **关键结论**:
+  - kk 报告最有价值的是 bridge 模块拆分、compiler 单例模式、workaround 位掩码系统、Metal 限制 checklist、状态映射表结构
+  - 当前**不需要**改变 Phase 3 主线入口，仍应先执行 `P3.1`
+  - `P3.1a` 和 `P3.1b` 应作为 `MetalNative.cs`/`MetalShaderCompiler.cs` 前的设计收口任务优先执行
+  - `P4.2.0` 与 `P6.2.0` 用于把已知 Metal/MSC 风险提前转成验证矩阵和回归样本
+- **验证**:
+  - `python3 tools/gen_next_task.py`
+  - `python3 tools/verify_progress.py` → 44/144 任务完成，验证通过
