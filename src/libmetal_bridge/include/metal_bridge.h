@@ -44,6 +44,7 @@ typedef enum metal_handle_type
     METAL_HANDLE_TYPE_PRESENTER = 14,
     METAL_HANDLE_TYPE_FENCE = 15,
     METAL_HANDLE_TYPE_SHARED_EVENT = 16,
+    METAL_HANDLE_TYPE_HEAP = 17,
 } metal_handle_type;
 
 // ── 所有内部结构体的公共头部：type tag + ABI 版本校验 ──
@@ -70,6 +71,7 @@ typedef struct metal_blit_encoder metal_blit_encoder;
 typedef struct metal_presenter metal_presenter;
 typedef struct metal_fence metal_fence;
 typedef struct metal_shared_event metal_shared_event;
+typedef struct metal_heap metal_heap;
 
 // ── 通用返回码：不暴露 ObjC/metal-cpp 细节到 P/Invoke 边界 ──
 typedef enum metal_result
@@ -475,6 +477,30 @@ METAL_BRIDGE_EXPORT metal_result metal_create_sampler(
     metal_device* device,
     const metal_sampler_descriptor* descriptor,
     metal_sampler** out_sampler);
+
+// ── 堆入口：P4.1.5 稀疏缓冲区 MTLHeap + MTLBuffer ──
+
+/// 创建 MTLHeap（用于稀疏资源）
+/// @param device   Metal 设备句柄
+/// @param size     堆总大小（字节）
+/// @param mode     存储模式（通常为 METAL_STORAGE_MODE_PRIVATE）
+/// @param out_heap 输出：metal_heap 句柄
+METAL_BRIDGE_EXPORT metal_result metal_create_heap(
+    metal_device* device,
+    uint64_t size,
+    metal_storage_mode mode,
+    metal_heap** out_heap);
+
+/// 从 MTLHeap 分配新的 MTLBuffer（指定偏移和大小）
+/// @param heap      堆句柄
+/// @param offset    在堆中的偏移（字节）
+/// @param size      缓冲区大小（字节）
+/// @param out_buffer 输出：metal_buffer 句柄（其生命周期绑定到 heap）
+METAL_BRIDGE_EXPORT metal_result metal_heap_create_buffer(
+    metal_heap* heap,
+    uint64_t offset,
+    uint64_t size,
+    metal_buffer** out_buffer);
 
 // TODO: Phase 4
 // - metal_compile_program / metal_create_render_pipeline / metal_create_compute_pipeline

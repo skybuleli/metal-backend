@@ -1,0 +1,36 @@
+{
+  "task": "P4.1.5",
+  "phase": "Phase 4",
+  "name": "稀疏缓冲区 CreateBufferSparse: MTLHeap + MTLBuffer",
+  "implementation": [
+    "src/libmetal_bridge/src/MetalHeap.cpp",
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/include/metal_internal.h",
+    "src/libmetal_bridge/src/MetalDevice.cpp",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs"
+  ],
+  "tests": [
+    "src/libmetal_bridge/tests/test_heap.cpp"
+  ],
+  "key_design": [
+    "metal_create_heap: MTLHeapDescriptor → MTL::Heap (Automatic placement)",
+    "metal_heap_create_buffer: heap->newBuffer(offset, size) → MTL::Buffer 视图",
+    "子缓冲区生命周期绑定到 heap：释放 heap 时 Metal 自动清理所有子 buffer",
+    "HEAP handle type (17) 纳入 metal_release 统一析构",
+    "C# CreateSparse: 计算总大小 → MTLHeap → 堆分配总缓冲区 → 回退到普通 Create",
+    "C# _heapHandles 跟踪堆句柄，Dispose 时统一释放",
+    "边界校验: offset+size 不超堆大小 → INVALID_ARGUMENT",
+    "空参数完整校验 (nullptr/size=0/null out)"
+  ],
+  "test_results": "10/10 Catch2 tests（堆创建/大堆/空参数/子缓冲区/偏移分配/多子缓冲区/越界/空参数2/生命周期/存储模式）",
+  "build": "libmetal_bridge.a 构建通过，Ryujinx.Graphics.Metal 构建通过",
+  "dependencies": [
+    "P4.1.1 MetalDevice",
+    "P4.1.2 MetalBuffer",
+    "Catch2",
+    "macOS SDK (CLT)",
+    "metal-cpp"
+  ],
+  "next": "P4.1.6 — GetCapabilities/HardwareInfo 查询实现"
+}

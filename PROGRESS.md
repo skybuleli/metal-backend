@@ -1,7 +1,7 @@
 # 项目进度账本
 # 最后更新: 2026-06-13T17:45:00+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 62/144 任务 (43.1%)
+# 完成度: 63/144 任务 (43.8%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -114,7 +114,7 @@
 | P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ✅ | 2026-06-13T16:10:00+08:00 | src/libmetal_bridge/src/MetalBuffer.cpp + src/libmetal_bridge/tests/test_buffer.cpp + src/libmetal_bridge/include/metal_internal.h + docs/evidence/P4.1.2-meta.json：22/22 测试通过（203 断言），libmetal_bridge.a 构建通过 |
 | P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ✅ | 2026-06-13T16:45:00+08:00 | src/libmetal_bridge/src/MetalTexture.cpp + src/libmetal_bridge/include/metal_bridge.h + src/libmetal_bridge/tests/test_texture.cpp + docs/evidence/P4.1.3-meta.json：13/13 test_texture 测试通过（389 断言），总计 42/42 通过（728 断言），格式映射表覆盖 53 种像素格式 |
 | P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ✅ | 2026-06-13T17:30:00+08:00 | src/libmetal_bridge/src/MetalSampler.cpp + src/libmetal_bridge/tests/test_sampler.cpp + docs/evidence/P4.1.4-meta.json：8/8 Catch2 测试通过，覆盖默认/各向异性/阴影比较/边界颜色/MirrorClampToEdge/空参数/过滤器组合/生命周期 |
-| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ⬜ | — | — |
+| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ✅ | 2026-06-13T18:00:00+08:00 | src/libmetal_bridge/src/MetalHeap.cpp + src/libmetal_bridge/tests/test_heap.cpp + C# MetalResources.CreateSparse：MTLHeap 创建 + 堆分配缓冲区 + 回退策略 + 10/10 Catch2 测试 |
 | P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ⬜ | — | — |
 
 ### 4.2 着色器编译器集成
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 62 (43.1%)
+- 已完成: 63 (43.8%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 82
+- 待开始: 81
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.1.5 — 稀疏缓冲区 CreateBufferSparse
+- 下一任务: P4.1.6 — GetCapabilities/HardwareInfo 查询实现

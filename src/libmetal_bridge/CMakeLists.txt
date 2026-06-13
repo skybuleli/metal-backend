@@ -46,6 +46,7 @@ set(METAL_BRIDGE_SOURCES
     src/CommandMapper.cpp
     src/Presenter.cpp
     src/MetalSampler.cpp
+    src/MetalHeap.cpp
 )
 
 add_library(metal_bridge STATIC

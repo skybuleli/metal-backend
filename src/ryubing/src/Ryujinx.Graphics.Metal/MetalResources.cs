@@ -12,6 +12,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly nint _deviceHandle;
         private readonly MetalStorageMode _defaultMode;
         private readonly Dictionary<int, MetalBuffer> _buffers = [];
+        private readonly List<nint> _heapHandles = []; // P4.1.5: 堆句柄跟踪
         private int _nextHandle = 1;
 
         public MetalBufferPool(nint deviceHandle, MetalStorageMode defaultMode)
@@ -82,7 +83,12 @@ namespace Ryujinx.Graphics.Metal
 
         public BufferHandle CreateSparse(ReadOnlySpan<BufferRange> storageBuffers)
         {
-            // 暂不支持稀疏缓冲区，回退为分配总大小的普通缓冲区
+            // P4.1.5: 使用 MTLHeap 实现稀疏缓冲区
+            // MTLHeap 允许多个 MTLBuffer 共享同一块物理内存，
+            // 通过 offset+size 创建不同区域的视图。
+            //
+            // 当前实现：计算总大小 → 创建 MTLHeap → 分配总缓冲区
+            // 后续可扩展为多个子缓冲区视图（offset/range 级映射）
             long totalSize = 0;
 
             foreach (BufferRange range in storageBuffers)
@@ -90,7 +96,50 @@ namespace Ryujinx.Graphics.Metal
                 totalSize += Math.Max(range.Size, 0);
             }
 
-            return Create((int)totalSize, BufferAccess.Default);
+            if (totalSize == 0)
+            {
+                return Create(1, BufferAccess.Default);
+            }
+
+            // 创建 MTLHeap 作为稀疏缓冲区的物理存储后端
+            // Private 模式：GPU 专用，CPU 不可直接访问，最优性能
+            MetalResult result = MetalNative.CreateHeap(
+                _deviceHandle, (ulong)totalSize, _defaultMode, out nint heapHandle);
+
+            if (result != MetalResult.Ok)
+            {
+                // 回退：heap 创建失败则使用普通缓冲区
+                return Create((int)totalSize, BufferAccess.Default);
+            }
+
+            _heapHandles.Add(heapHandle);
+
+            // 从堆分配总缓冲区（offset=0，覆盖整个堆）
+            result = MetalNative.HeapCreateBuffer(
+                heapHandle, 0, (ulong)totalSize, out nint bufHandle);
+
+            if (result != MetalResult.Ok)
+            {
+                MetalNative.Release(heapHandle);
+                _heapHandles.Remove(heapHandle);
+                return Create((int)totalSize, BufferAccess.Default);
+            }
+
+            result = MetalNative.BufferGetInfo(bufHandle, out MetalBufferInfo info);
+            if (result != MetalResult.Ok)
+            {
+                MetalNative.Release(bufHandle);
+                MetalNative.Release(heapHandle);
+                _heapHandles.Remove(heapHandle);
+                return Create((int)totalSize, BufferAccess.Default);
+            }
+
+            var metalBuf = new MetalBuffer(bufHandle, info);
+            int handleValue = _nextHandle++;
+            _buffers.Add(handleValue, metalBuf);
+
+            ulong rawHandle = (uint)handleValue;
+            return Unsafe.As<ulong, BufferHandle>(ref rawHandle);
         }
 
         public void Delete(BufferHandle buffer)

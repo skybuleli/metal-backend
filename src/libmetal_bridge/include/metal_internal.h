@@ -92,3 +92,15 @@ struct metal_sampler
 
 static_assert(offsetof(struct metal_sampler, sampler_state) >= sizeof(metal_handle_base),
     "metal_sampler.base 必须在最前面");
+
+/// metal_heap 内部实现
+struct metal_heap
+{
+    METAL_HANDLE_HEADER
+    MTL::Heap* heap;                  // Metal 堆对象
+    size_t     size;                  // 堆总大小（字节）
+};
+
+static_assert(offsetof(struct metal_heap, heap) >= sizeof(metal_handle_base),
+    "metal_heap.base 必须在最前面");
+

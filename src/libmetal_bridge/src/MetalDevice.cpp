@@ -398,6 +398,17 @@ void metal_release(void* handle)
         delete samp;
         break;
     }
+    case METAL_HANDLE_TYPE_HEAP:
+    {
+        metal_heap* h = static_cast<metal_heap*>(handle);
+        if (h->heap != nullptr)
+        {
+            h->heap->release();
+            h->heap = nullptr;
+        }
+        delete h;
+        break;
+    }
     default:
         // 未知 type tag：不做任何操作
         // 这是一个防御性检查，防止未注册的 handle 类型被错误释放
