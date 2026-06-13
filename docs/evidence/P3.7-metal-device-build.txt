@@ -1,0 +1,13 @@
+  正在确定要还原的项目…
+  所有项目均是最新的，无法还原。
+  Spv.Generator -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Spv.Generator/bin/Release/net10.0/Spv.Generator.dll
+  Ryujinx.Common -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/bin/Release/net10.0/Ryujinx.Common.dll
+  Ryujinx.Graphics.Shader -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Shader/bin/Release/net10.0/Ryujinx.Graphics.Shader.dll
+  Ryujinx.Graphics.GAL -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.GAL/bin/Release/net10.0/Ryujinx.Graphics.GAL.dll
+  Ryujinx.Graphics.Metal -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Metal/bin/Release/net10.0/Ryujinx.Graphics.Metal.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:06.38

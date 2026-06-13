@@ -623,3 +623,18 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前所有状态设置、绘制、同步与条件渲染入口都只保留签名与占位行为；真实 Metal API 映射仍留给 Phase 4/5
+
+### 2026-06-13 下午 | P3.7 创建 MetalDevice.cs (MTLDevice 管理) | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已新增 `MetalDevice`，将 `libmetal_bridge` 的 device 生命周期、ABI 校验和错误消息读取收口到单独托管类型
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalDevice.cs`
+  - 封装 `metal_create_device`、`metal_get_device_info`、`metal_release`、`metal_get_last_error_message`
+  - 在托管侧固定 ABI 版本校验和异常构造逻辑
+  - 增加 macOS 平台标注，清除平台分析警告
+  - 生成证据日志 `docs/evidence/P3.7-metal-device-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前 `MetalDevice` 仍未在 `MetalRenderer` 构造阶段强绑定，以避免在原生库部署路径尚未固定前过早触发运行时装载

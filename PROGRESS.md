@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T13:15:00+08:00
+# 最后更新: 2026-06-13T13:18:04+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 52/144 任务 (36.1%)
+# 完成度: 53/144 任务 (36.8%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -95,7 +95,7 @@
 | P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ✅ | 2026-06-13T13:03:22+08:00 | docs/evidence/P3.4-metal-native-build.txt：已新增 MetalNative.cs，声明 libmetal_bridge 的句柄、枚举、结构体与 P/Invoke 入口，Release 构建通过（0 警告，0 错误） |
 | P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ✅ | 2026-06-13T13:05:33+08:00 | docs/evidence/P3.5-metal-renderer-build.txt：已新增 MetalRenderer.cs，实现 IRenderer 占位骨架并隔离未实现能力，Release 构建通过（0 警告，0 错误） |
 | P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ✅ | 2026-06-13T13:14:29+08:00 | docs/evidence/P3.6-metal-pipeline-build.txt：已新增 MetalPipeline.cs，按真实 IPipeline 签名补齐 stub，并接入 MetalRenderer.Pipeline，Release 构建通过（0 警告，0 错误） |
-| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ⬜ | — | — |
+| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ✅ | 2026-06-13T13:17:29+08:00 | docs/evidence/P3.7-metal-device-build.txt：已新增 MetalDevice.cs，封装 device 创建、ABI 校验、句柄信息读取与释放，Release 构建通过（0 警告，0 错误） |
 | P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
 | P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ⬜ | — | — |
 | P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 52 (36.1%)
+- 已完成: 53 (36.8%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 92
+- 待开始: 91
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.7 — 创建 MetalDevice.cs (MTLDevice 管理)
+- 下一任务: P3.8 — 创建 MetalShaderCompiler.cs (Slang+MSC 封装)
