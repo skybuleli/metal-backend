@@ -1,0 +1,34 @@
+{
+  "task": "P4.1.3",
+  "phase": "Phase 4",
+  "name": "MetalTexture: Maxwell→MTLPixelFormat 映射表",
+  "implementation": [
+    "src/libmetal_bridge/src/MetalTexture.cpp",
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/include/metal_internal.h",
+    "src/libmetal_bridge/src/MetalDevice.cpp"
+  ],
+  "csharp_binding": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs"
+  ],
+  "tests": [
+    "src/libmetal_bridge/tests/test_texture.cpp"
+  ],
+  "test_results": "13/13 test_texture passed (389 assertions), total 42/42 (728 assertions across test_device + test_buffer + test_texture)",
+  "build": "libmetal_bridge.a + test_device + test_buffer + test_texture",
+  "key_design": [
+    "格式映射表覆盖 53 种像素格式 (RGBA/BGRA/Depth/BC/ASTC/ETC2)",
+    "metal_texture_usage 位掩码映射 MTLTextureUsage",
+    "metal_texture_type 枚举覆盖 2D/2DArray/Cube/3D/2DMSAA",
+    "metal_pixel_format_get_info 返回 bytes_per_pixel/block/type/sRGB",
+    "metal_create_texture 含尺寸限制校验",
+    "metal_texture_upload/replaceRegion + metal_texture_readback/getBytes 完整闭环"
+  ],
+  "coverage": {
+    "format_entries": 53,
+    "test_cases": 13,
+    "test_assertions": 389,
+    "total_tests": 42,
+    "total_assertions": 728
+  }
+}

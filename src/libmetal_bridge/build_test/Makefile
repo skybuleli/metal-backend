@@ -165,6 +165,19 @@ test_buffer/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_buffer.dir/build.make CMakeFiles/test_buffer.dir/build
 .PHONY : test_buffer/fast
 
+#=============================================================================
+# Target rules for targets named test_texture
+
+# Build rule for target.
+test_texture: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_texture
+.PHONY : test_texture
+
+# fast build rule for target.
+test_texture/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_texture.dir/build.make CMakeFiles/test_texture.dir/build
+.PHONY : test_texture/fast
+
 src/CommandMapper.o: src/CommandMapper.cpp.o
 .PHONY : src/CommandMapper.o
 
@@ -381,6 +394,30 @@ tests/test_device.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_device.dir/build.make CMakeFiles/test_device.dir/tests/test_device.cpp.s
 .PHONY : tests/test_device.cpp.s
 
+tests/test_texture.o: tests/test_texture.cpp.o
+.PHONY : tests/test_texture.o
+
+# target to build an object file
+tests/test_texture.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_texture.dir/build.make CMakeFiles/test_texture.dir/tests/test_texture.cpp.o
+.PHONY : tests/test_texture.cpp.o
+
+tests/test_texture.i: tests/test_texture.cpp.i
+.PHONY : tests/test_texture.i
+
+# target to preprocess a source file
+tests/test_texture.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_texture.dir/build.make CMakeFiles/test_texture.dir/tests/test_texture.cpp.i
+.PHONY : tests/test_texture.cpp.i
+
+tests/test_texture.s: tests/test_texture.cpp.s
+.PHONY : tests/test_texture.s
+
+# target to generate assembly for a file
+tests/test_texture.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_texture.dir/build.make CMakeFiles/test_texture.dir/tests/test_texture.cpp.s
+.PHONY : tests/test_texture.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -393,6 +430,7 @@ help:
 	@echo "... metal_bridge"
 	@echo "... test_buffer"
 	@echo "... test_device"
+	@echo "... test_texture"
 	@echo "... src/CommandMapper.o"
 	@echo "... src/CommandMapper.i"
 	@echo "... src/CommandMapper.s"
@@ -420,6 +458,9 @@ help:
 	@echo "... tests/test_device.o"
 	@echo "... tests/test_device.i"
 	@echo "... tests/test_device.s"
+	@echo "... tests/test_texture.o"
+	@echo "... tests/test_texture.i"
+	@echo "... tests/test_texture.s"
 .PHONY : help
 
 

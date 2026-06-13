@@ -116,4 +116,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_buffer COMMAND test_buffer)
+
+    add_executable(test_texture
+        tests/test_texture.cpp
+    )
+    target_link_libraries(test_texture PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_texture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_texture COMMAND test_texture)
 endif()

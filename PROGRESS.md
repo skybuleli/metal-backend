@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T15:23:28+08:00
+# 最后更新: 2026-06-13T15:36:03+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 60/144 任务 (41.7%)
+# 完成度: 61/144 任务 (42.4%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -112,7 +112,7 @@
 | P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-13T14:10:00+08:00 | src/libmetal_bridge/include/metal_limits.h + docs/evidence/P4.1.0-meta.json + src/libmetal_bridge/build/libmetal_bridge.a |
 | P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ✅ | 2026-06-13T15:40:00+08:00 | src/libmetal_bridge/src/MetalDevice.cpp + src/libmetal_bridge/tests/test_device.cpp + docs/evidence/P4.1.1-meta.json：11/11 Catch2 测试通过，libmetal_bridge.a 构建通过 |
 | P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ✅ | 2026-06-13T16:10:00+08:00 | src/libmetal_bridge/src/MetalBuffer.cpp + src/libmetal_bridge/tests/test_buffer.cpp + src/libmetal_bridge/include/metal_internal.h + docs/evidence/P4.1.2-meta.json：22/22 测试通过（203 断言），libmetal_bridge.a 构建通过 |
-| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
+| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ✅ | 2026-06-13T16:45:00+08:00 | src/libmetal_bridge/src/MetalTexture.cpp + src/libmetal_bridge/include/metal_bridge.h + src/libmetal_bridge/tests/test_texture.cpp + docs/evidence/P4.1.3-meta.json：13/13 test_texture 测试通过（389 断言），总计 42/42 通过（728 断言），格式映射表覆盖 53 种像素格式 |
 | P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ⬜ | — | — |
 | P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ⬜ | — | — |
 | P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 60 (41.7%)
+- 已完成: 61 (42.4%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 84
+- 待开始: 83
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.1.3 — MetalTexture: Maxwell→MTLPixelFormat 映射表
+- 下一任务: P4.1.4 — MetalSampler: 过滤/包裹/比较模式映射

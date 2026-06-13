@@ -238,8 +238,168 @@ METAL_BRIDGE_EXPORT metal_result metal_buffer_get_cpu_address(
     metal_buffer* buffer,
     void** out_ptr);
 
+// ════════════════════════════════════════════════════════════════════
+// 纹理类型与像素格式枚举（P4.1.3）
+// ════════════════════════════════════════════════════════════════════
+
+typedef enum metal_texture_usage
+{
+    METAL_TEXTURE_USAGE_UNKNOWN = 0,
+    METAL_TEXTURE_USAGE_SHADER_READ = 1u << 0,
+    METAL_TEXTURE_USAGE_SHADER_WRITE = 1u << 1,
+    METAL_TEXTURE_USAGE_RENDER_TARGET = 1u << 2,
+    METAL_TEXTURE_USAGE_PIXEL_FORMAT_VIEW = 1u << 3,
+} metal_texture_usage;
+
+typedef enum metal_texture_type
+{
+    METAL_TEXTURE_TYPE_2D = 0,
+    METAL_TEXTURE_TYPE_2D_ARRAY = 1,
+    METAL_TEXTURE_TYPE_CUBE = 2,
+    METAL_TEXTURE_TYPE_3D = 3,
+    METAL_TEXTURE_TYPE_2D_MULTISAMPLE = 4,
+} metal_texture_type;
+
+typedef enum metal_pixel_format
+{
+    METAL_PIXEL_FORMAT_INVALID = 0,
+    // 8-bit
+    METAL_PIXEL_FORMAT_R8_UNORM = 1,
+    METAL_PIXEL_FORMAT_R8_SNORM = 2,
+    METAL_PIXEL_FORMAT_R8_UINT = 3,
+    METAL_PIXEL_FORMAT_R8_SINT = 4,
+    // 16-bit
+    METAL_PIXEL_FORMAT_R16_FLOAT = 5,
+    METAL_PIXEL_FORMAT_R16_UNORM = 6,
+    METAL_PIXEL_FORMAT_R16_UINT = 7,
+    METAL_PIXEL_FORMAT_R16_SINT = 8,
+    METAL_PIXEL_FORMAT_RG8_UNORM = 9,
+    // 32-bit
+    METAL_PIXEL_FORMAT_R32_FLOAT = 10,
+    METAL_PIXEL_FORMAT_R32_UINT = 11,
+    METAL_PIXEL_FORMAT_R32_SINT = 12,
+    METAL_PIXEL_FORMAT_RG16_FLOAT = 13,
+    METAL_PIXEL_FORMAT_RG16_UNORM = 14,
+    METAL_PIXEL_FORMAT_RG16_UINT = 15,
+    METAL_PIXEL_FORMAT_RG16_SINT = 16,
+    METAL_PIXEL_FORMAT_RGBA8_UNORM = 17,
+    METAL_PIXEL_FORMAT_RGBA8_SNORM = 18,
+    METAL_PIXEL_FORMAT_RGBA8_UINT = 19,
+    METAL_PIXEL_FORMAT_RGBA8_SINT = 20,
+    METAL_PIXEL_FORMAT_RGBA8_SRGB = 21,
+    METAL_PIXEL_FORMAT_BGRA8_UNORM = 22,
+    METAL_PIXEL_FORMAT_BGRA8_SRGB = 23,
+    // 64-bit
+    METAL_PIXEL_FORMAT_RG32_FLOAT = 24,
+    METAL_PIXEL_FORMAT_RG32_UINT = 25,
+    METAL_PIXEL_FORMAT_RG32_SINT = 26,
+    METAL_PIXEL_FORMAT_RGBA16_FLOAT = 27,
+    METAL_PIXEL_FORMAT_RGBA16_UNORM = 28,
+    METAL_PIXEL_FORMAT_RGBA16_UINT = 29,
+    METAL_PIXEL_FORMAT_RGBA16_SINT = 30,
+    // 128-bit
+    METAL_PIXEL_FORMAT_RGBA32_FLOAT = 31,
+    METAL_PIXEL_FORMAT_RGBA32_UINT = 32,
+    METAL_PIXEL_FORMAT_RGBA32_SINT = 33,
+    // Packed
+    METAL_PIXEL_FORMAT_R10G10B10A2_UNORM = 34,
+    METAL_PIXEL_FORMAT_R11G11B10_FLOAT = 35,
+    METAL_PIXEL_FORMAT_RGB9E5_FLOAT = 36,
+    // Depth / Stencil
+    METAL_PIXEL_FORMAT_D16_UNORM = 37,
+    METAL_PIXEL_FORMAT_D32_FLOAT = 38,
+    METAL_PIXEL_FORMAT_D24_UNORM_S8_UINT = 39,
+    METAL_PIXEL_FORMAT_D32_FLOAT_S8_UINT = 40,
+    // Compressed (BC)
+    METAL_PIXEL_FORMAT_BC1_RGBA = 41,
+    METAL_PIXEL_FORMAT_BC2_RGBA = 42,
+    METAL_PIXEL_FORMAT_BC3_RGBA = 43,
+    METAL_PIXEL_FORMAT_BC4_R = 44,
+    METAL_PIXEL_FORMAT_BC5_RG = 45,
+    METAL_PIXEL_FORMAT_BC6H_RGB = 46,
+    METAL_PIXEL_FORMAT_BC7_RGBA = 47,
+    // Compressed (ASTC)
+    METAL_PIXEL_FORMAT_ASTC_4x4_LDR = 48,
+    METAL_PIXEL_FORMAT_ASTC_6x6_LDR = 49,
+    METAL_PIXEL_FORMAT_ASTC_8x8_LDR = 50,
+    METAL_PIXEL_FORMAT_ASTC_12x12_LDR = 51,
+    // Compressed (ETC2 — 在 Metal 侧展开到 RGBA8)
+    METAL_PIXEL_FORMAT_ETC2_RGB = 52,
+    METAL_PIXEL_FORMAT_ETC2_RGBA = 53,
+} metal_pixel_format;
+
+/// 像素格式元信息
+#define METAL_PIXEL_FORMAT_NAME_MAX 32
+typedef struct metal_pixel_format_info
+{
+    char name[METAL_PIXEL_FORMAT_NAME_MAX];
+    uint32_t bytes_per_pixel;
+    uint32_t block_width;
+    uint32_t block_height;
+    bool is_depth;
+    bool is_compressed;
+    bool is_srgb;
+    uint32_t reserved;
+} metal_pixel_format_info;
+
+/// 纹理元信息
+typedef struct metal_texture_info
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+    uint32_t levels;
+    uint32_t samples;
+    metal_texture_type type;
+    metal_pixel_format pixel_format;
+    metal_storage_mode storage_mode;
+    uint32_t reserved;
+} metal_texture_info;
+
+// ── 纹理入口：P4.1.3 MetalTexture 完整实现 ──
+METAL_BRIDGE_EXPORT metal_result metal_create_texture(
+    metal_device* device,
+    metal_pixel_format format,
+    uint32_t width,
+    uint32_t height,
+    uint32_t depth,
+    uint32_t levels,
+    uint32_t samples,
+    metal_texture_type type,
+    uint32_t usage_flags,
+    metal_storage_mode storage_mode,
+    metal_texture** out_texture);
+
+METAL_BRIDGE_EXPORT metal_result metal_texture_get_info(
+    metal_texture* texture,
+    metal_texture_info* out_info);
+
+METAL_BRIDGE_EXPORT metal_result metal_texture_upload(
+    metal_texture* texture,
+    metal_buffer* buffer,
+    uint64_t buffer_offset,
+    uint32_t layer,
+    uint32_t level,
+    uint32_t region_x,
+    uint32_t region_y,
+    uint32_t region_z,
+    uint32_t region_width,
+    uint32_t region_height,
+    uint32_t bytes_per_row);
+
+METAL_BRIDGE_EXPORT metal_result metal_texture_readback(
+    metal_texture* texture,
+    metal_buffer* buffer,
+    uint64_t buffer_offset,
+    uint32_t layer,
+    uint32_t level,
+    uint32_t bytes_per_row);
+
+// ── 像素格式查询：供 C# 侧缓存使用 ———
+METAL_BRIDGE_EXPORT metal_pixel_format_info metal_pixel_format_get_info(
+    metal_pixel_format format);
+
 // TODO: Phase 4
-// - metal_create_texture / metal_upload_texture / metal_readback_texture
 // - metal_create_sampler
 // - metal_compile_program / metal_create_render_pipeline / metal_create_compute_pipeline
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer

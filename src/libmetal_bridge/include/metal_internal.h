@@ -64,3 +64,21 @@ struct metal_buffer
 
 static_assert(offsetof(struct metal_buffer, buffer) >= sizeof(metal_handle_base),
     "metal_buffer.base 必须在最前面");
+
+/// metal_texture 内部实现
+struct metal_texture
+{
+    METAL_HANDLE_HEADER
+    MTL::Texture* texture;            // 真实的 Metal 纹理
+    uint32_t      width;              // 纹理宽度
+    uint32_t      height;             // 纹理高度
+    uint32_t      depth;              // 纹理深度
+    uint32_t      levels;             // mip 级数
+    uint32_t      samples;            // MSAA 采样数
+    metal_texture_type type;          // 纹理类型
+    metal_pixel_format pixel_format;  // 像素格式
+    metal_storage_mode storage_mode;  // 存储模式
+};
+
+static_assert(offsetof(struct metal_texture, texture) >= sizeof(metal_handle_base),
+    "metal_texture.base 必须在最前面");

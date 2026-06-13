@@ -376,6 +376,17 @@ void metal_release(void* handle)
         delete buf;
         break;
     }
+    case METAL_HANDLE_TYPE_TEXTURE:
+    {
+        metal_texture* tex = static_cast<metal_texture*>(handle);
+        if (tex->texture != nullptr)
+        {
+            tex->texture->release();
+            tex->texture = nullptr;
+        }
+        delete tex;
+        break;
+    }
     default:
         // 未知 type tag：不做任何操作
         // 这是一个防御性检查，防止未注册的 handle 类型被错误释放
