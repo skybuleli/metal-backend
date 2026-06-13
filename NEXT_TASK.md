@@ -1,6 +1,6 @@
 # 下一任务 — P4.2.3 libmetalirconverter P/Invoke: DXIL→metallib
 
-> 生成时间：2026-06-13 19:43:28
+> 生成时间：2026-06-13 20:00:39
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情

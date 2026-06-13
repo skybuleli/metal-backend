@@ -81,7 +81,7 @@ static slang::IGlobalSession* acquire_global_session()
 {
     if (!g_slang_global_session)
     {
-        slang::createGlobalSession(g_slang_global_session);
+        slang::createGlobalSession(&g_slang_global_session);
         if (g_slang_global_session)
         {
             g_slang_refcount = 1;
@@ -234,7 +234,7 @@ metal_shader_compile_result metal_compile_shader(
         sessionDesc.targetCount = 1;
 
         slang::ISession* compileSession = nullptr;
-        slang::SlangResult sr = globalSession->createSession(sessionDesc, &compileSession);
+        SlangResult sr = globalSession->createSession(sessionDesc, &compileSession);
         if (SLANG_FAILED(sr) || !compileSession)
         {
             result.result = METAL_RESULT_RUNTIME_ERROR;
@@ -258,9 +258,10 @@ metal_shader_compile_result metal_compile_shader(
             return result;
         }
 
-        // 查找入口点，获取实际 IComponentType
-        SlangInt entryPointIndex = module->findEntryPointByName(entry_point);
-        if (entryPointIndex < 0)
+        // 查找入口点，获取 IEntryPoint（继承自 IComponentType）
+        slang::IEntryPoint* entryPointComponent = nullptr;
+        sr = module->findEntryPointByName(entry_point, &entryPointComponent);
+        if (SLANG_FAILED(sr) || !entryPointComponent)
         {
             result.result = METAL_RESULT_COMPILE_FAILED;
             snprintf(result.error_message, sizeof(result.error_message),
@@ -269,23 +270,6 @@ metal_shader_compile_result metal_compile_shader(
             compileSession->release();
             release_global_session();
             return result;
-        }
-
-        // 通过索引获取入口点 IComponentType
-        slang::IComponentType* entryPointComponent = nullptr;
-        {
-            SlangInt actualCount = 0;
-            module->getDefinedEntryPoints(entryPointIndex, 1, &actualCount, &entryPointComponent);
-            if (actualCount < 1 || !entryPointComponent)
-            {
-                result.result = METAL_RESULT_COMPILE_FAILED;
-                snprintf(result.error_message, sizeof(result.error_message),
-                         "无法获取入口点组件 #%d。", (int)entryPointIndex);
-                module->release();
-                compileSession->release();
-                release_global_session();
-                return result;
-            }
         }
 
         // 创建复合组件类型（module + entry point）
