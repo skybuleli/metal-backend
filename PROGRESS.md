@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T02:53:47+08:00
+# 最后更新: 2026-06-13T12:29:21+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 43/137 任务 (31.4%)
+# 完成度: 45/144 任务 (31.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -86,7 +86,10 @@
 # ===================================================================
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ⬜ | — | — |
+| P3.0 | 基于 kk 报告收口后续任务拆分与风险清单 | ✅ | 2026-06-13T12:11:05+08:00 | docs/kk-task-expansion.md + /Users/liliang/Downloads/deliverables_kk-extraction-report.md：新增 P3.1a/P3.1b/P4.1.0/P4.2.0/P5.0/P6.2.0，明确当前仍先执行 P3.1 |
+| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | docs/evidence/P3.1-ryubing-sync-build.txt：已从 /Users/liliang/MetalBackend/Ryubing 同步完整源码到 src/ryubing，外部基线分支为 feature/native-metal-backend，当前仓库内 src/ryubing/Ryujinx.sln 可 Release 构建通过（16 警告，0 错误） |
+| P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ⬜ | — | — |
+| P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ⬜ | — | — |
 | P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
 | P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ⬜ | — | — |
 | P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ⬜ | — | — |
@@ -106,6 +109,7 @@
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
+| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ⬜ | — | — |
 | P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ⬜ | — | — |
 | P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ⬜ | — | — |
 | P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
@@ -116,6 +120,7 @@
 ### 4.2 着色器编译器集成
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
+| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ⬜ | — | — |
 | P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
@@ -156,6 +161,7 @@
 # ===================================================================
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
+| P5.0 | 搭建 Maxwell/GAL→Metal 状态映射表骨架 | ⬜ | — | — |
 | P5.1 | Maxwell→Metal 状态映射表 (deko3d+envytools) | ⬜ | — | — |
 | P5.2 | NVN SetBlendState → Metal blend state | ⬜ | — | — |
 | P5.3 | NVN SetDepthStencilState → Metal depth/stencil | ⬜ | — | — |
@@ -187,6 +193,7 @@
 ### 6.2 着色器编译集成测试
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
+| P6.2.0 | 将 kk Metal 限制清单转为着色器编译回归样本 | ⬜ | — | — |
 | P6.2.1 | Path A 端到端编译 (10个真实着色器) | ⬜ | — | — |
 | P6.2.2 | Path C 端到端编译 (同10个着色器) | ⬜ | — | — |
 | P6.2.3 | 回退逻辑验证 | ⬜ | — | — |
@@ -265,11 +272,11 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 137
-- 已完成: 43 (31.4%)
+- 总任务数: 144
+- 已完成: 45 (31.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 94
+- 待开始: 99
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.1 — Fork Ryubing + feature/native-metal-backend 分支
+- 下一任务: P3.1a — 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案

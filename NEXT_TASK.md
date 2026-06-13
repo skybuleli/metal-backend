@@ -1,14 +1,14 @@
-# 下一任务 — P3.1 Fork Ryubing + feature/native-metal-backend 分支
+# 下一任务 — P3.1a 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案
 
-> 生成时间：2026-06-13 02:53:47
+> 生成时间：2026-06-13 12:29:21
 > 所属阶段：Phase 3 — Ryubing Fork 与 GAL 集成
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P3.1 |
-| 任务名称 | Fork Ryubing + feature/native-metal-backend 分支 |
+| 任务 ID | P3.1a |
+| 任务名称 | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P3.1 → ✅
+- 更新 PROGRESS.md：P3.1a → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

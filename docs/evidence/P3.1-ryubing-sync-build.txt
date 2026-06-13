@@ -1,0 +1,134 @@
+== 外部基线分支 ==
+feature/native-metal-backend
+
+== 当前仓库已同步文件 ==
+src/ryubing/Ryujinx.sln OK
+IPipeline.cs OK
+IRenderer.cs OK
+
+== dotnet build src/ryubing/Ryujinx.sln -c Release ==
+  正在确定要还原的项目…
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.RenderDocApi/Ryujinx.Graphics.RenderDocApi.csproj (用时 837 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Common/Ryujinx.Horizon.Common.csproj (用时 1.73 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SDL3/Ryujinx.Audio.Backends.SDL3.csproj (用时 1.73 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.Apple/Ryujinx.Audio.Backends.Apple.csproj (用时 663 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Spv.Generator/Spv.Generator.csproj (用时 34 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec.FFmpeg/Ryujinx.Graphics.Nvdec.FFmpeg.csproj (用时 1.73 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/ARMeilleure/ARMeilleure.csproj (用时 1.73 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Input.SDL3/Ryujinx.Input.SDL3.csproj (用时 1.83 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Device/Ryujinx.Graphics.Device.csproj (用时 1.75 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.OpenAL/Ryujinx.Audio.Backends.OpenAL.csproj (用时 1.73 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.ShaderTools/Ryujinx.ShaderTools.csproj (用时 95 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.SDL3.Common/Ryujinx.SDL3.Common.csproj (用时 67 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests.Unicorn/Ryujinx.Tests.Unicorn.csproj (用时 78 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon/Ryujinx.Horizon.csproj (用时 189 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Kernel.Generators/Ryujinx.Horizon.Kernel.Generators.csproj (用时 153 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Memory/Ryujinx.Memory.csproj (用时 187 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.UI.LocaleGenerator/Ryujinx.UI.LocaleGenerator.csproj (用时 554 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests/Ryujinx.Tests.csproj (用时 473 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Input/Ryujinx.Input.csproj (用时 345 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Generators/Ryujinx.Horizon.Generators.csproj (用时 147 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE.Generators/Ryujinx.HLE.Generators.csproj (用时 58 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Video/Ryujinx.Graphics.Video.csproj (用时 25 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/Ryujinx.HLE.csproj (用时 81 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests.Memory/Ryujinx.Tests.Memory.csproj (用时 586 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Shader/Ryujinx.Graphics.Shader.csproj (用时 34 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Host1x/Ryujinx.Graphics.Host1x.csproj (用时 14 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Vic/Ryujinx.Graphics.Vic.csproj (用时 161 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Gpu/Ryujinx.Graphics.Gpu.csproj (用时 15 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec.Vp9/Ryujinx.Graphics.Nvdec.Vp9.csproj (用时 14 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec/Ryujinx.Graphics.Nvdec.csproj (用时 233 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Vulkan/Ryujinx.Graphics.Vulkan.csproj (用时 335 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Texture/Ryujinx.Graphics.Texture.csproj (用时 246 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Cpu/Ryujinx.Cpu.csproj (用时 162 毫秒)。
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.OpenGL/Ryujinx.Graphics.OpenGL.csproj (用时 43 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.GAL/Ryujinx.Graphics.GAL.csproj (用时 171 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio/Ryujinx.Audio.csproj (用时 186 毫秒)。
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/Ryujinx.Common.csproj (用时 298 毫秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj (用时 1 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj (用时 3.9 秒)。
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+  Ryujinx.Tests.Unicorn -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests.Unicorn/bin/Release/net10.0/Ryujinx.Tests.Unicorn.dll
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+  Ryujinx.UI.LocaleGenerator -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.UI.LocaleGenerator/bin/Release/netstandard2.0/Ryujinx.UI.LocaleGenerator.dll
+  Ryujinx.Horizon.Kernel.Generators -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Kernel.Generators/bin/Release/netstandard2.0/Ryujinx.Horizon.Kernel.Generators.dll
+  Ryujinx.Horizon.Generators -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Generators/bin/Release/netstandard2.0/Ryujinx.Horizon.Generators.dll
+  Ryujinx.Graphics.RenderDocApi -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.RenderDocApi/bin/Release/net10.0/Ryujinx.Graphics.RenderDocApi.dll
+  Spv.Generator -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Spv.Generator/bin/Release/net10.0/Spv.Generator.dll
+  Ryujinx.HLE.Generators -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE.Generators/bin/Release/netstandard2.0/Ryujinx.HLE.Generators.dll
+  Ryujinx.Common -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/bin/Release/net10.0/Ryujinx.Common.dll
+  包 Ryujinx.Common.1.0.0 缺少自述文件。转到 https://aka.ms/nuget/authoring-best-practices/readme 了解为什么包阅读主题很重要。
+  已成功创建包“/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/bin/Release/Ryujinx.Common.1.0.0.nupkg”。
+  Ryujinx.Graphics.Video -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Video/bin/Release/net10.0/Ryujinx.Graphics.Video.dll
+  Ryujinx.SDL3.Common -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.SDL3.Common/bin/Release/net10.0/Ryujinx.SDL3.Common.dll
+  Ryujinx.Memory -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Memory/bin/Release/net10.0/Ryujinx.Memory.dll
+  Ryujinx.Graphics.Nvdec.FFmpeg -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec.FFmpeg/bin/Release/net10.0/Ryujinx.Graphics.Nvdec.FFmpeg.dll
+  Ryujinx.Graphics.Texture -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Texture/bin/Release/net10.0/Ryujinx.Graphics.Texture.dll
+  包 Ryujinx.Memory.1.0.0 缺少自述文件。转到 https://aka.ms/nuget/authoring-best-practices/readme 了解为什么包阅读主题很重要。
+  已成功创建包“/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Memory/bin/Release/Ryujinx.Memory.1.0.0.nupkg”。
+  Ryujinx.Graphics.Device -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Device/bin/Release/net10.0/Ryujinx.Graphics.Device.dll
+  Ryujinx.Graphics.Nvdec.Vp9 -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec.Vp9/bin/Release/net10.0/Ryujinx.Graphics.Nvdec.Vp9.dll
+  Ryujinx.Graphics.Shader -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Shader/bin/Release/net10.0/Ryujinx.Graphics.Shader.dll
+  Ryujinx.ShaderTools -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.ShaderTools/bin/Release/net10.0/Ryujinx.ShaderTools.dll
+  Ryujinx.Graphics.GAL -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.GAL/bin/Release/net10.0/Ryujinx.Graphics.GAL.dll
+  ARMeilleure -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/ARMeilleure/bin/Release/net10.0/ARMeilleure.dll
+  Ryujinx.Horizon.Common -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon.Common/bin/Release/net10.0/Ryujinx.Horizon.Common.dll
+  Ryujinx.Graphics.Vic -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Vic/bin/Release/net10.0/Ryujinx.Graphics.Vic.dll
+  包 ARMeilleure.1.0.0 缺少自述文件。转到 https://aka.ms/nuget/authoring-best-practices/readme 了解为什么包阅读主题很重要。
+  已成功创建包“/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/ARMeilleure/bin/Release/ARMeilleure.1.0.0.nupkg”。
+  Ryujinx.Graphics.OpenGL -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.OpenGL/bin/Release/net10.0/Ryujinx.Graphics.OpenGL.dll
+  Ryujinx.Tests.Memory -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests.Memory/bin/Release/net10.0/Ryujinx.Tests.Memory.dll
+  Ryujinx.Graphics.Nvdec -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Nvdec/bin/Release/net10.0/Ryujinx.Graphics.Nvdec.dll
+  Ryujinx.Graphics.Host1x -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Host1x/bin/Release/net10.0/Ryujinx.Graphics.Host1x.dll
+  Ryujinx.Graphics.Vulkan -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Vulkan/bin/Release/net10.0/Ryujinx.Graphics.Vulkan.dll
+  Ryujinx.Cpu -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Cpu/bin/Release/net10.0/Ryujinx.Cpu.dll
+  Ryujinx.Graphics.Gpu -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Gpu/bin/Release/net10.0/Ryujinx.Graphics.Gpu.dll
+  Ryujinx.Audio -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio/bin/Release/net10.0/Ryujinx.Audio.dll
+  Ryujinx.Audio.Backends.SDL3 -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SDL3/bin/Release/net10.0/Ryujinx.Audio.Backends.SDL3.dll
+  Ryujinx.Audio.Backends.OpenAL -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.OpenAL/bin/Release/net10.0/Ryujinx.Audio.Backends.OpenAL.dll
+  Ryujinx.Audio.Backends.Apple -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.Apple/bin/Release/net10.0/Ryujinx.Audio.Backends.Apple.dll
+  Ryujinx.Audio.Backends.SoundIo -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/bin/Release/net10.0/Ryujinx.Audio.Backends.SoundIo.dll
+  Ryujinx.Horizon -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Horizon/bin/Release/net10.0/Ryujinx.Horizon.dll
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/HOS/Services/Notification/INotificationSystemEventAccessor.cs(12,33): warning CS0649: 从未对字段“INotificationSystemEventAccessor._getNotificationSendingNotifierEvent”赋值，字段将一直保持其默认值 null [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/Ryujinx.HLE.csproj]
+  Ryujinx.HLE -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/bin/Release/net10.0/Ryujinx.HLE.dll
+  Ryujinx.Input -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Input/bin/Release/net10.0/Ryujinx.Input.dll
+  Ryujinx.Input.SDL3 -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Input.SDL3/bin/Release/net10.0/Ryujinx.Input.SDL3.dll
+  Ryujinx.Tests -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Tests/bin/Release/net10.0/Ryujinx.Tests.dll
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/Helpers/PhysicalKeyLabelHelper.cs(111,47): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/Views/Settings/SettingsInputView.axaml.cs(47,23): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/ViewModels/MainWindowViewModel.cs(2080,37): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+  Ryujinx -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/bin/Release/net10.0/Ryujinx.dll
+  /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/bin/Release/net10.0/Ryujinx: replacing existing signature
+
+已成功生成。
+
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc [/Users/liliang/MetalBackend/metal-backend/src/ryubing/Ryujinx.sln]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/HOS/Services/Notification/INotificationSystemEventAccessor.cs(12,33): warning CS0649: 从未对字段“INotificationSystemEventAccessor._getNotificationSendingNotifierEvent”赋值，字段将一直保持其默认值 null [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.HLE/Ryujinx.HLE.csproj]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/Helpers/PhysicalKeyLabelHelper.cs(111,47): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/Views/Settings/SettingsInputView.axaml.cs(47,23): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/UI/ViewModels/MainWindowViewModel.cs(2080,37): warning CS8632: 只能在 "#nullable" 注释上下文内的代码中使用可为 null 的引用类型的注释。 [/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj]
+    16 个警告
+    0 个错误
+
+已用时间 00:01:55.43
