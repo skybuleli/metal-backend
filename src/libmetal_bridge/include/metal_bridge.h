@@ -502,8 +502,45 @@ METAL_BRIDGE_EXPORT metal_result metal_heap_create_buffer(
     uint64_t size,
     metal_buffer** out_buffer);
 
-// TODO: Phase 4
-// - metal_compile_program / metal_create_render_pipeline / metal_create_compute_pipeline
+// ════════════════════════════════════════════════════════════════════
+// 着色器编译（P4.2.1）
+// ════════════════════════════════════════════════════════════════════
+
+/// 编译结果 — 通过 metal_compile_shader 返回
+typedef struct metal_shader_compile_result
+{
+    metal_result result;
+    char error_message[512];
+    uint32_t _pad0;             ///< 显式填充，保证 void* 8 字节对齐
+    void* metallib_data;       ///< malloc 分配，调用者须通过 metal_free_shader_data 释放
+    uint64_t metallib_size;
+} metal_shader_compile_result;
+
+// 编译期验证：C 侧内存布局与 C# 侧 Marshal 一致
+#ifdef __cplusplus
+static_assert(sizeof(metal_shader_compile_result) == 536,
+              "metal_shader_compile_result 大小异常，需检查 C# MetalShaderCompileResult 对齐");
+static_assert(offsetof(metal_shader_compile_result, metallib_data) == 520,
+              "metallib_data 偏移异常，C# Marshal 会读错");
+#endif
+
+/// 编译单个着色器：Slang 原生语法 → DXIL → MSC → metallib
+/// @param compiler   着色器编译器句柄（由 metal_acquire_shader_compiler 获取）
+/// @param source_code Slang 原生语法源码（以 null 结尾）
+/// @param stage      "vertex" / "fragment" / "compute"
+/// @param entry_point 入口函数名（通常 "main"）
+/// @param profile    "sm_6_0" / "ps_6_0" / "cs_6_0"
+METAL_BRIDGE_EXPORT metal_shader_compile_result metal_compile_shader(
+    metal_shader_compiler* compiler,
+    const char* source_code,
+    const char* stage,
+    const char* entry_point,
+    const char* profile);
+
+/// 释放 metal_compile_shader 返回的 metallib 数据
+METAL_BRIDGE_EXPORT void metal_free_shader_data(void* data);
+
+// TODO: Phase 4.3+
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
 // - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口
 

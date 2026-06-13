@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T18:55:47+08:00
+# 最后更新: 2026-06-13T19:21:11+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 65/144 任务 (45.1%)
+# 完成度: 66/144 任务 (45.8%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -121,7 +121,7 @@
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T19:00:00+08:00 | tools/test_msc_shader_limits.sh：35/35 Path A 编译测试通过，覆盖 4 维度 10 类 (纹理22 + discard5 + subgroup7 + helper1)，证据 docs/evidence/P4.2.0-shader-limits-run.txt。发现：SV_IsHelperInvocation 在 Slang DXIL 中不受支持 |
-| P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
+| P4.2.1 | CreateProgram: Source→MTLLibrary | ✅ | 2026-06-13T20:00:00+08:00 | ShaderCompiler.cpp: popen() 调 slangc+MSC 编译管线 + MetalNative.cs: CompileShader P/Invoke + MetalShaderCompiler.cs: CreateProgram 实际编译 + MetalProgram: 多阶段 metallib 存储与序列化。C# 0 错误构建通过 |
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
 | P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 65 (45.1%)
+- 已完成: 66 (45.8%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 79
+- 待开始: 78
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.2.1 — CreateProgram: Source→MTLLibrary
+- 下一任务: P4.2.2 — Slang API P/Invoke: Slang 原生语法→DXIL

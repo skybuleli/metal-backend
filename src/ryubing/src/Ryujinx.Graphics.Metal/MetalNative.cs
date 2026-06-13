@@ -137,6 +137,18 @@ namespace Ryujinx.Graphics.Metal
             nint device,
             in MetalSamplerDescriptor descriptor,
             out nint sampler);
+
+        // ── 着色器编译 P/Invoke (P4.2.1) ──
+        [DllImport(LibraryName, EntryPoint = "metal_compile_shader")]
+        internal static extern MetalShaderCompileResult CompileShader(
+            nint compiler,
+            string sourceCode,
+            string stage,
+            string entryPoint,
+            string profile);
+
+        [DllImport(LibraryName, EntryPoint = "metal_free_shader_data")]
+        internal static extern void FreeShaderData(nint data);
     }
 
     internal enum MetalResult : uint
@@ -364,6 +376,17 @@ namespace Ryujinx.Graphics.Metal
         NotEqual = 5,
         GreaterEqual = 6,
         Always = 7,
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct MetalShaderCompileResult
+    {
+        public MetalResult Result;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 512)]
+        public string ErrorMessage;
+        private uint _pad0;          ///< 对齐填充，与 C 侧 metal_shader_compile_result._pad0 对应
+        public nint MetallibData;
+        public ulong MetallibSize;
     }
 
     [StructLayout(LayoutKind.Sequential)]
