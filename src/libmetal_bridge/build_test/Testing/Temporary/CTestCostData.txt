@@ -1,4 +1,4 @@
-test_device 1 1.01638
-test_buffer 1 0.46058
-test_texture 1 0.615838
+test_device 1 0.815915
+test_buffer 1 0.510553
+test_texture 1 0.508167
 ---

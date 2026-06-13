@@ -26,6 +26,9 @@ namespace Ryujinx.Graphics.Metal
         [LibraryImport(LibraryName, EntryPoint = "metal_get_device_info")]
         internal static partial MetalResult GetDeviceInfo(nint device, out MetalHandleInfo info);
 
+        [DllImport(LibraryName, EntryPoint = "metal_get_device_caps")]
+        internal static extern MetalResult GetDeviceCaps(nint device, out MetalDeviceCaps caps);
+
         [LibraryImport(LibraryName, EntryPoint = "metal_create_queue")]
         internal static partial MetalResult CreateQueue(nint device, out nint queue);
 
@@ -107,8 +110,8 @@ namespace Ryujinx.Graphics.Metal
             uint level,
             uint bytesPerRow);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_pixel_format_get_info")]
-        internal static partial MetalPixelFormatInfo PixelFormatGetInfo(MetalPixelFormat format);
+        [DllImport(LibraryName, EntryPoint = "metal_pixel_format_get_info")]
+        internal static extern MetalPixelFormatInfo PixelFormatGetInfo(MetalPixelFormat format);
     }
 
     internal enum MetalResult : uint
@@ -157,6 +160,38 @@ namespace Ryujinx.Graphics.Metal
     {
         public uint AbiVersion;
         public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalBufferInfo
+    {
+        public ulong Size;
+        public MetalStorageMode StorageMode;
+        public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct MetalDeviceCaps
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string DeviceName;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool HasUnifiedMemory;
+        public ulong RegistryId;
+        public ulong MaxBufferLength;
+        public uint MaxThreadsPerThreadgroupX;
+        public uint MaxThreadsPerThreadgroupY;
+        public uint MaxThreadsPerThreadgroupZ;
+        public uint MaxThreadgroupMemory;
+        public uint MaxArgumentBufferSamplerCount;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool SupportsApple7;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool SupportsMac1;
+        public uint MaxColorAttachments;
+        public uint MaxViewports;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        public uint[] Reserved;
     }
 
     // ── Texture 类型与格式枚举 (P4.1.3) ──

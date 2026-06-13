@@ -455,3 +455,59 @@ TEST_CASE("metal_create_buffer_from_pointer 释放后原始指针仍有效", "[b
         REQUIRE(backing_memory[i] == 0xAA);
     }
 }
+
+TEST_CASE("Private 模式 map 返回 UNSUPPORTED", "[buffer][map][private]")
+{
+    DeviceGuard dev_guard;
+
+    // Private 模式的缓冲区 CPU 不可见，map 应返回 UNSUPPORTED
+    metal_buffer* buf = nullptr;
+    metal_result result = metal_create_buffer(
+        dev_guard.dev, 256, METAL_STORAGE_MODE_PRIVATE, &buf);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(buf != nullptr);
+
+    void* ptr = nullptr;
+    result = metal_map_buffer(buf, &ptr);
+    REQUIRE(result == METAL_RESULT_UNSUPPORTED);
+    REQUIRE(ptr == nullptr);
+
+    // get_cpu_address 也应对 Private 模式返回 UNSUPPORTED
+    result = metal_buffer_get_cpu_address(buf, &ptr);
+    REQUIRE(result == METAL_RESULT_UNSUPPORTED);
+    REQUIRE(ptr == nullptr);
+
+    metal_release(buf);
+}
+
+TEST_CASE("零大小创建缓冲区自动提升", "[buffer][create][zero]")
+{
+    DeviceGuard dev_guard;
+
+    // 创建 size=0 的缓冲区，内部应自动提升到 MIN_CONSTANT_BUFFER_SIZE
+    metal_buffer* buf = nullptr;
+    metal_result result = metal_create_buffer(
+        dev_guard.dev, 0, METAL_STORAGE_MODE_SHARED, &buf);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(buf != nullptr);
+
+    metal_buffer_info info;
+    std::memset(&info, 0xFF, sizeof(info));
+    result = metal_buffer_get_info(buf, &info);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    // 大小应 >= 16 (METAL_MIN_CONSTANT_BUFFER_SIZE) 且对齐到 256 字节
+    REQUIRE(info.size >= METAL_MIN_CONSTANT_BUFFER_SIZE);
+    REQUIRE(info.size % METAL_BUFFER_OFFSET_ALIGNMENT == 0);
+
+    // 验证映射后可写入
+    void* ptr = nullptr;
+    result = metal_map_buffer(buf, &ptr);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(ptr != nullptr);
+
+    static_cast<uint8_t*>(ptr)[0] = 0x42;
+    REQUIRE(static_cast<uint8_t*>(ptr)[0] == 0x42);
+
+    metal_release(buf);
+}

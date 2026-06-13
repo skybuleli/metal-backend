@@ -6,19 +6,23 @@
 
 ```text
 libmetal_bridge/
-├── CMakeLists.txt          # CMake 构建配置
+├── CMakeLists.txt                    # CMake 构建配置
 ├── include/
-│   └── metal_bridge.h      # C ABI 头文件（opaque handle + 基础入口）
+│   ├── metal_bridge.h                # C ABI 头文件（opaque handle + 全部入口）
+│   ├── metal_limits.h                # Metal 硬件限制常量与资源对齐策略
+│   └── metal_internal.h              # 内部结构体定义（device/queue/buffer/texture）
 ├── src/
-│   ├── MetalDevice.cpp     # MTLDevice 创建、GPU 选择、能力查询
-│   ├── MetalQueue.cpp      # MTLCommandQueue + command buffer 入口
-│   ├── MetalBuffer.cpp     # MTLBuffer / upload / map / readback
-│   ├── MetalTexture.cpp    # MTLTexture + 格式映射 + 上传下载
-│   ├── ShaderCompiler.cpp  # Slang + MSC + 缓存 + workaround
-│   ├── CommandMapper.cpp   # GAL/Maxwell 状态 → Metal API 翻译
-│   └── Presenter.cpp       # CAMetalLayer、交换链、显示路径
+│   ├── MetalDevice.cpp               # MTLDevice 创建、GPU 选择、能力查询
+│   ├── MetalQueue.cpp                # MTLCommandQueue + command buffer 入口
+│   ├── MetalBuffer.cpp               # MTLBuffer / create / map / unmap / flush
+│   ├── MetalTexture.cpp              # MTLTexture + 格式映射 + 上传/回读
+│   ├── ShaderCompiler.cpp            # Slang + MSC + 缓存 + workaround（P4.2 实现）
+│   ├── CommandMapper.cpp             # GAL/Maxwell 状态 → Metal API 翻译（P5 实现）
+│   └── Presenter.cpp                 # CAMetalLayer、交换链、显示路径（P4.4 实现）
 └── tests/
-    └── test_device.cpp     # 设备创建单元测试
+    ├── test_device.cpp               # 11 个设备与生命周期测试
+    ├── test_buffer.cpp               # 19 个缓冲区测试
+    └── test_texture.cpp              # 19 个纹理测试（含格式映射 + 上传/回读）
 ```
 
 ## C ABI 设计原则
@@ -28,24 +32,11 @@ libmetal_bridge/
 - **最小稳定面**：Phase 3 只固定句柄类型、错误码、版本和少量入口，不提前发明大批函数
 - **按模块扩展**：Phase 4 再按 `device / queue / buffer / texture / compiler / presenter` 逐组补接口
 
-## P3.1a 当前确定的 handle 集合
+## 当前确定的 opaque handle 集合（16 个）
 
-- `metal_device`
-- `metal_queue`
-- `metal_buffer`
-- `metal_texture`
-- `metal_sampler`
-- `metal_library`
-- `metal_shader_compiler`
-- `metal_render_pipeline`
-- `metal_compute_pipeline`
-- `metal_command_buffer`
-- `metal_render_encoder`
-- `metal_compute_encoder`
-- `metal_blit_encoder`
-- `metal_presenter`
-- `metal_fence`
-- `metal_shared_event`
+`metal_device` / `metal_queue` / `metal_buffer` / `metal_texture` / `metal_sampler` / `metal_library` / `metal_shader_compiler` / `metal_render_pipeline` / `metal_compute_pipeline` / `metal_command_buffer` / `metal_render_encoder` / `metal_compute_encoder` / `metal_blit_encoder` / `metal_presenter` / `metal_fence` / `metal_shared_event`
+
+> 定义在 `metal_bridge.h` 的 `metal_handle_type` 枚举中。
 
 ## 模块拆分约束
 

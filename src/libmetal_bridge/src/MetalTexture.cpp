@@ -386,13 +386,17 @@ metal_result metal_create_texture(
     desc->setWidth(static_cast<NS::UInteger>(width));
     desc->setHeight(static_cast<NS::UInteger>(height));
 
+    // Metal 要求：
+    //   - 3D 纹理：depth 表示体积深度
+    //   - 2D / 2DArray / Cube / 2DMSAA：depth 必须为 1
+    //   数组纹理的层数由 setArrayLength 单独设置
     if (type == METAL_TEXTURE_TYPE_3D)
     {
         desc->setDepth(static_cast<NS::UInteger>(depth));
     }
     else
     {
-        desc->setDepth(static_cast<NS::UInteger>(depth > 1 ? depth : 1));
+        desc->setDepth(1);
     }
 
     desc->setMipmapLevelCount(static_cast<NS::UInteger>(levels));
