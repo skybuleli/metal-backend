@@ -10,6 +10,8 @@ namespace Ryujinx.Graphics.Metal
         private const int MaxVertexAttributes = 31;
         private const int MaxVertexBufferBindings = 31;
         private const int MaxUniformBufferBindings = 31;
+        private const int MaxTextureBindings = 32;
+        private const int MaxShaderStages = 3;
 
         private IProgram _program;
         private nint _pipelineHandle;
@@ -18,6 +20,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly VertexAttribDescriptor[] _vertexAttribs;
         private readonly VertexBufferDescriptor[] _vertexBuffers;
         private readonly MetalBufferBinding[] _uniformBuffers;
+        private readonly MetalTextureBinding[,] _textureBindings;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
 
@@ -34,6 +37,7 @@ namespace Ryujinx.Graphics.Metal
             _vertexAttribs = new VertexAttribDescriptor[MaxVertexAttributes];
             _vertexBuffers = new VertexBufferDescriptor[MaxVertexBufferBindings];
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
+            _textureBindings = new MetalTextureBinding[MaxShaderStages, MaxTextureBindings];
         }
 
         public void Barrier()
@@ -321,6 +325,27 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetTextureAndSampler(ShaderStage stage, int binding, ITexture texture, ISampler sampler)
         {
+            if (!TryGetShaderStageIndex(stage, out int stageIndex) ||
+                (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            nint textureHandle = nint.Zero;
+            if (texture != null)
+            {
+                MetalTexture.TryGetNativeHandle(texture, out textureHandle);
+            }
+
+            nint samplerHandle = sampler is MetalSampler metalSampler
+                ? metalSampler.Handle
+                : nint.Zero;
+
+            _textureBindings[stageIndex, binding] = new MetalTextureBinding
+            {
+                TextureHandle = textureHandle,
+                SamplerHandle = samplerHandle,
+            };
         }
 
         public void SetTextureArray(ShaderStage stage, int binding, ITextureArray array)
@@ -629,11 +654,52 @@ namespace Ryujinx.Graphics.Metal
             return handle != nint.Zero && size != 0;
         }
 
+        internal bool TryGetTextureBinding(ShaderStage stage, int binding, out nint textureHandle, out nint samplerHandle)
+        {
+            if (!TryGetShaderStageIndex(stage, out int stageIndex) ||
+                (uint)binding >= MaxTextureBindings)
+            {
+                textureHandle = nint.Zero;
+                samplerHandle = nint.Zero;
+                return false;
+            }
+
+            MetalTextureBinding bindingState = _textureBindings[stageIndex, binding];
+            textureHandle = bindingState.TextureHandle;
+            samplerHandle = bindingState.SamplerHandle;
+            return textureHandle != nint.Zero || samplerHandle != nint.Zero;
+        }
+
+        private static bool TryGetShaderStageIndex(ShaderStage stage, out int stageIndex)
+        {
+            switch (stage)
+            {
+                case ShaderStage.Vertex:
+                    stageIndex = 0;
+                    return true;
+                case ShaderStage.Fragment:
+                    stageIndex = 1;
+                    return true;
+                case ShaderStage.Compute:
+                    stageIndex = 2;
+                    return true;
+                default:
+                    stageIndex = -1;
+                    return false;
+            }
+        }
+
         private struct MetalBufferBinding
         {
             public nint Handle;
             public ulong Offset;
             public ulong Size;
+        }
+
+        private struct MetalTextureBinding
+        {
+            public nint TextureHandle;
+            public nint SamplerHandle;
         }
     }
 }

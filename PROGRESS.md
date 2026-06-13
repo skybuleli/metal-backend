@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T22:43:40+08:00
+# 最后更新: 2026-06-13T22:52:22+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 74/144 任务 (51.4%)
+# 完成度: 75/144 任务 (52.1%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -134,7 +134,7 @@
 | P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ✅ | 2026-06-13T23:00:00+08:00 | src/libmetal_bridge/src/MetalPipeline.cpp + include/metal_bridge.h + include/metal_internal.h + MetalDevice.cpp (metal_release) + CMake + MetalNative.cs + MetalPipeline.cs + MetalRenderer.cs，C++ + C# 双端编译通过 |
 | P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ✅ | 2026-06-13T23:24:00+08:00 | docs/evidence/P4.3.2-meta.json：扩展 render pipeline ABI 顶点布局描述符，native 创建 MTLVertexDescriptor，C# SetVertexAttribs/SetVertexBuffers 触发布局重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过 |
 | P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ✅ | 2026-06-13T23:36:00+08:00 | docs/evidence/P4.3.3-meta.json：MetalBufferPool 句柄解析 + MetalPipeline uniform buffer 状态缓存/裁剪/后续 draw 可复用绑定查询；Ryujinx.Graphics.Metal 构建通过 |
-| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ⬜ | — | — |
+| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ✅ | 2026-06-13T23:50:00+08:00 | docs/evidence/P4.3.4-meta.json：实现 MetalTexture/texture view 句柄提取、按 ShaderStage+binding 缓存 texture/sampler 原生句柄，并提供后续 draw/dispatch 查询入口；Ryujinx.Graphics.Metal 构建通过 |
 | P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ⬜ | — | — |
 | P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ⬜ | — | — |
 | P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 74 (51.4%)
+- 已完成: 75 (52.1%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 70
+- 待开始: 69
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.3.4 — SetTextureAndSampler: 纹理+采样器绑定
+- 下一任务: P4.3.5 — SetStorageBuffers: Compute/Graphics 存储缓冲

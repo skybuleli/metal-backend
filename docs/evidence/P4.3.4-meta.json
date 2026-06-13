@@ -1,0 +1,20 @@
+{
+  "task": "P4.3.4",
+  "phase": "Phase 4",
+  "name": "SetTextureAndSampler: 纹理+采样器绑定",
+  "implementation": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs"
+  ],
+  "key_design": [
+    "MetalTexture 新增统一的 native handle 提取辅助，兼容父纹理与 texture view",
+    "MetalPipeline 按 ShaderStage + binding 缓存 texture/sampler 原生句柄",
+    "仅缓存真实可用的 MetalTexture / MetalSampler 句柄，不为未知 ITexture/ISampler 实现臆造 native 资源",
+    "新增 TryGetTextureBinding，供后续 Draw/Dispatch 直接读取绑定状态并下发 encoder"
+  ],
+  "verification": [
+    "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj"
+  ],
+  "build": "Ryujinx.Graphics.Metal 构建通过（82 个 CA1416 平台警告，0 错误）",
+  "next": "P4.3.5 — SetStorageBuffers: Compute/Graphics 存储缓冲"
+}

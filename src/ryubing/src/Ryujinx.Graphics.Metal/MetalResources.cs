@@ -262,6 +262,8 @@ namespace Ryujinx.Graphics.Metal
 
         public int Height => Info.Height;
 
+        internal nint Handle => _handle;
+
         /// <summary>
         /// 创建 Metal 原生纹理。格式通过 MetalFormatMapping 映射表转换为 MetalPixelFormat。
         /// </summary>
@@ -378,6 +380,7 @@ namespace Ryujinx.Graphics.Metal
             public BufferRange Storage { get; set; }
             public int Width => Info.Width;
             public int Height => Info.Height;
+            internal nint Handle => _handle;
 
             public MetalTextureViewProxy(
                 nint handle,
@@ -687,7 +690,24 @@ namespace Ryujinx.Graphics.Metal
             {
                 MetalNative.Release(_handle);
                 _handle = nint.Zero;
-                _released = true;
+            }
+
+            _released = true;
+        }
+
+        internal static bool TryGetNativeHandle(ITexture texture, out nint handle)
+        {
+            switch (texture)
+            {
+                case MetalTexture metalTexture:
+                    handle = metalTexture._handle;
+                    return handle != nint.Zero;
+                case MetalTextureViewProxy textureView:
+                    handle = textureView.Handle;
+                    return handle != nint.Zero;
+                default:
+                    handle = nint.Zero;
+                    return false;
             }
         }
 

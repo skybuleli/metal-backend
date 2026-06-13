@@ -842,3 +842,18 @@
   - 当前阶段聚焦“绑定状态缓存”而非真正 encoder 下发；真实 `setVertexBuffer` / `setFragmentBuffer` 调用将在 `P4.3.6 Draw/DrawIndexed` 中消费这些缓存状态
   - 空句柄、越界 offset、超长 size 都会被安全清空或裁剪，避免后续 draw 访问非法范围
 - **下一任务**: P4.3.4 — SetTextureAndSampler: 纹理+采样器绑定
+
+### 2026-06-13 | P4.3.4 SetTextureAndSampler — 纹理+采样器绑定 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 完成纹理/采样器绑定状态缓存，按 `ShaderStage + binding` 记录原生句柄，为后续 `Draw/DrawIndexed` 和 compute encoder 下发绑定做准备
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs`：新增 `MetalTexture.TryGetNativeHandle`，统一提取父纹理/texture view 的原生句柄
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：实现 `SetTextureAndSampler`，缓存 `TextureHandle + SamplerHandle`，并新增 `TryGetTextureBinding`
+  - `docs/evidence/P4.3.4-meta.json`：补充实现与验证证据
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（82 个 CA1416 平台警告，0 错误）
+- **关键说明**:
+  - 当前阶段只缓存绑定状态，不提前发明 encoder API；真实 `setFragmentTexture` / `setFragmentSamplerState` / compute 对应绑定会在后续绘制或派发任务中消费
+  - 仅接受 `MetalTexture` / `texture view` / `MetalSampler` 的原生句柄，未知实现会安全回落为 `0`
+- **下一任务**: P4.3.5 — SetStorageBuffers: Compute/Graphics 存储缓冲

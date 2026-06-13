@@ -1,14 +1,14 @@
-# 下一任务 — P4.3.4 SetTextureAndSampler: 纹理+采样器绑定
+# 下一任务 — P4.3.5 SetStorageBuffers: Compute/Graphics 存储缓冲
 
-> 生成时间：2026-06-13 22:43:40
+> 生成时间：2026-06-13 22:52:22
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.3.4 |
-| 任务名称 | SetTextureAndSampler: 纹理+采样器绑定 |
+| 任务 ID | P4.3.5 |
+| 任务名称 | SetStorageBuffers: Compute/Graphics 存储缓冲 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.3.4 → ✅
+- 更新 PROGRESS.md：P4.3.5 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
