@@ -144,4 +144,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_sampler COMMAND test_sampler)
+
+    add_executable(test_heap
+        tests/test_heap.cpp
+    )
+    target_link_libraries(test_heap PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_heap PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_heap COMMAND test_heap)
 endif()
