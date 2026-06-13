@@ -96,6 +96,25 @@ else()
     message(WARNING "未找到 slang.h，P4.2.2 着色器编译将不可用")
 endif()
 
+# ── Metal IR Converter SDK（MSC）──
+find_library(METAL_IRCONVERTER_LIB metalirconverter HINTS /usr/local/lib)
+if(METAL_IRCONVERTER_LIB)
+    message(STATUS "MSC 库: ${METAL_IRCONVERTER_LIB}")
+    target_link_libraries(metal_bridge PRIVATE "${METAL_IRCONVERTER_LIB}")
+    target_compile_definitions(metal_bridge PRIVATE METAL_IRCONVERTER_FOUND=1)
+else()
+    message(WARNING "未找到 libmetalirconverter.dylib，MSC SDK 将不可用")
+    target_compile_definitions(metal_bridge PRIVATE METAL_IRCONVERTER_FOUND=0)
+endif()
+
+find_path(METAL_IRCONVERTER_INCLUDE_DIR metal_irconverter/metal_irconverter.h HINTS /usr/local/include)
+if(METAL_IRCONVERTER_INCLUDE_DIR)
+    message(STATUS "MSC 头文件: ${METAL_IRCONVERTER_INCLUDE_DIR}")
+    target_include_directories(metal_bridge PRIVATE "${METAL_IRCONVERTER_INCLUDE_DIR}")
+else()
+    message(WARNING "未找到 metal_irconverter.h，MSC SDK 将不可用")
+endif()
+
 # ── metal-cpp 私有头文件路径（不对外暴露）──
 if(EXISTS "${METAL_CPP_DIR}")
     target_include_directories(metal_bridge

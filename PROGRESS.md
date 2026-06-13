@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T20:25:22+08:00
+# 最后更新: 2026-06-13T20:39:08+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 67/144 任务 (46.5%)
+# 完成度: 68/144 任务 (47.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -123,7 +123,7 @@
 | P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T19:00:00+08:00 | tools/test_msc_shader_limits.sh：35/35 Path A 编译测试通过，覆盖 4 维度 10 类 (纹理22 + discard5 + subgroup7 + helper1)，证据 docs/evidence/P4.2.0-shader-limits-run.txt。发现：SV_IsHelperInvocation 在 Slang DXIL 中不受支持 |
 | P4.2.1 | CreateProgram: Source→MTLLibrary | ✅ | 2026-06-13T20:00:00+08:00 | ShaderCompiler.cpp: popen() 调 slangc+MSC 编译管线 + MetalNative.cs: CompileShader P/Invoke + MetalShaderCompiler.cs: CreateProgram 实际编译 + MetalProgram: 多阶段 metallib 存储与序列化。C# 0 错误构建通过 |
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: popen slangc → Slang C API (libslang.dylib) 直接调用 + createGlobalSession/ISession/loadModuleFromSourceString/link/getEntryPointCode + CMake 集成 + popen 回退保护。ShaderCompiler.cpp 编译通过。 |
-| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
+| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: IRCompiler SDK API (libmetalirconverter.dylib) 替换 MSC popen。IRCompilerCreate→IRObjectCreateFromDXIL→IRCompilerAllocCompileAndLink→IRObjectGetMetalLibBinary→IRMetalLibGetBytecode。CMakeLists.txt 集成 find_library。保留 popen 回退。ShaderCompiler.cpp 编译通过。 |
 | P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ⬜ | — | — |
 | P4.2.5 | 回退逻辑: Path A→Path C→Path B | ⬜ | — | — |
 | P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 67 (46.5%)
+- 已完成: 68 (47.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 77
+- 待开始: 76
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.2.3 — libmetalirconverter P/Invoke: DXIL→metallib
+- 下一任务: P4.2.4 — 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/)

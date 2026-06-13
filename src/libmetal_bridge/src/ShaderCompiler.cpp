@@ -3,11 +3,12 @@
 // P3.1b   — 收口了单例策略、workaround 位掩码与默认配置
 // P4.2.1  — popen() 调 slangc + MSC CLI 打通全链路
 // P4.2.2  — slangc popen 替换为 Slang C API（本篇当前实现）
-// P4.2.3  — 后续将 MSC popen 替换为 IRCompiler SDK API
+// P4.2.3  — MSC popen 替换为 IRCompiler SDK API（保留 popen 回退）
 //
 // 编译流程（Path A）：
 //   Slang 原生语法 → slang C API (libslang.dylib) → DXIL byte[]
-//                                                → popen("metal-shaderconverter") → metallib byte[]
+//          → IRCompiler SDK API (libmetalirconverter.dylib) → metallib byte[]
+//          → 回退：popen("metal-shaderconverter") → metallib byte[]
 
 #include "metal_bridge.h"
 #include "metal_internal.h"
@@ -23,6 +24,11 @@
 #if METAL_SLANG_FOUND
 #include <slang.h>
 #include <slang-com-ptr.h>
+#endif
+
+// Metal IR Converter SDK：仅在可用时引入
+#if METAL_IRCONVERTER_FOUND
+#include <metal_irconverter/metal_irconverter.h>
 #endif
 
 // ── 内部辅助函数 ──
@@ -417,8 +423,105 @@ metal_shader_compile_result metal_compile_shader(
         return result;
     }
 
-    // ── 步骤 2：MSC（DXIL → metallib），仍使用 popen，P4.2.3 将替换 ──
+    // ── 步骤 2：MSC（DXIL → metallib），使用 IRCompiler SDK API（P4.2.3）──
+    // 回退：MSC SDK 不可用或失败时使用 popen("metal-shaderconverter")
+    bool msc_ok = false;
+
+#if METAL_IRCONVERTER_FOUND
     {
+        // 映射着色器阶段到 IRShaderStage
+        IRShaderStage msc_stage = IRShaderStageInvalid;
+        if (strcmp(stage, "vertex") == 0)
+            msc_stage = IRShaderStageVertex;
+        else if (strcmp(stage, "fragment") == 0)
+            msc_stage = IRShaderStageFragment;
+        else if (strcmp(stage, "compute") == 0)
+            msc_stage = IRShaderStageCompute;
+
+        if (msc_stage != IRShaderStageInvalid)
+        {
+            // 创建 IRCompiler
+            IRCompiler* ir_compiler = IRCompilerCreate();
+            if (ir_compiler)
+            {
+                // 从 DXIL 字节创建 IRObject
+                IRObject* dxil_obj = IRObjectCreateFromDXIL(
+                    dxil_data.data(), dxil_data.size(), IRBytecodeOwnershipCopy);
+
+                if (dxil_obj)
+                {
+                    // 编译并链接（产出 Metal IR）
+                    IRError* ir_error = nullptr;
+                    IRObject* compiled_obj = IRCompilerAllocCompileAndLink(
+                        ir_compiler, entry_point, dxil_obj, &ir_error);
+
+                    if (compiled_obj)
+                    {
+                        // 获取编译后对象的着色器阶段
+                        IRShaderStage compiled_stage = IRObjectGetMetalIRShaderStage(compiled_obj);
+
+                        // 提取 metallib 二进制数据
+                        // IRMetalLibBinary 是不透明结构体，需通过 Create 分配
+                        IRMetalLibBinary* lib_binary = IRMetalLibBinaryCreate();
+                        if (lib_binary && IRObjectGetMetalLibBinary(
+                                compiled_obj, compiled_stage, lib_binary))
+                        {
+                            size_t metallib_sz = IRMetalLibGetBytecodeSize(lib_binary);
+                            if (metallib_sz > 0)
+                            {
+                                result.metallib_data = malloc(metallib_sz);
+                                if (result.metallib_data)
+                                {
+                                    IRMetalLibGetBytecode(lib_binary,
+                                        static_cast<uint8_t*>(result.metallib_data));
+                                    result.metallib_size = metallib_sz;
+                                    msc_ok = true;
+                                }
+                            }
+                            IRMetalLibBinaryDestroy(lib_binary);
+                        }
+                        IRObjectDestroy(compiled_obj);
+                    }
+                    else if (ir_error)
+                    {
+                        uint32_t err_code = IRErrorGetCode(ir_error);
+                        const void* err_payload = IRErrorGetPayload(ir_error);
+                        if (err_payload)
+                        {
+                            snprintf(result.error_message, sizeof(result.error_message),
+                                     "MSC 编译失败（code=%u）：%.400s",
+                                     err_code, static_cast<const char*>(err_payload));
+                        }
+                        else
+                        {
+                            snprintf(result.error_message, sizeof(result.error_message),
+                                     "MSC 编译失败（code=%u）", err_code);
+                        }
+                    }
+
+                    IRObjectDestroy(dxil_obj);
+                }
+                else
+                {
+                    snprintf(result.error_message, sizeof(result.error_message),
+                             "MSC IRObjectCreateFromDXIL 失败。");
+                }
+
+                IRCompilerDestroy(ir_compiler);
+            }
+            else
+            {
+                snprintf(result.error_message, sizeof(result.error_message),
+                         "MSC IRCompilerCreate 失败。");
+            }
+        }
+    }
+#endif
+
+    // MSC SDK 失败或不可用时回退到 popen
+    if (!msc_ok)
+    {
+        // ── 回退：popen metal-shaderconverter CLI ──
         char tmpdir_template[] = "/tmp/metal_shader_XXXXXX";
         char* tmpdir = mkdtemp(tmpdir_template);
         if (!tmpdir)
