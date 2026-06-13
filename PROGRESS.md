@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T12:13:00+08:00
+# 最后更新: 2026-06-13T12:29:21+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 44/144 任务 (30.6%)
+# 完成度: 45/144 任务 (31.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -87,7 +87,7 @@
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P3.0 | 基于 kk 报告收口后续任务拆分与风险清单 | ✅ | 2026-06-13T12:11:05+08:00 | docs/kk-task-expansion.md + /Users/liliang/Downloads/deliverables_kk-extraction-report.md：新增 P3.1a/P3.1b/P4.1.0/P4.2.0/P5.0/P6.2.0，明确当前仍先执行 P3.1 |
-| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ⬜ | — | — |
+| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | docs/evidence/P3.1-ryubing-sync-build.txt：已从 /Users/liliang/MetalBackend/Ryubing 同步完整源码到 src/ryubing，外部基线分支为 feature/native-metal-backend，当前仓库内 src/ryubing/Ryujinx.sln 可 Release 构建通过（16 警告，0 错误） |
 | P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ⬜ | — | — |
 | P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ⬜ | — | — |
 | P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 44 (30.6%)
+- 已完成: 45 (31.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 100
+- 待开始: 99
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.1 — Fork Ryubing + feature/native-metal-backend 分支
+- 下一任务: P3.1a — 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案

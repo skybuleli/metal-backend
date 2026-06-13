@@ -506,3 +506,18 @@
 - **验证**:
   - `python3 tools/gen_next_task.py`
   - `python3 tools/verify_progress.py` → 44/144 任务完成，验证通过
+
+### 2026-06-13 中午 | P3.1 Fork Ryubing + feature/native-metal-backend 分支 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已将最新可编译的 Ryubing 基线同步进当前仓库 `src/ryubing`，并确认外部基线仓库分支为 `feature/native-metal-backend`
+- **变更**:
+  - 以 `/Users/liliang/MetalBackend/Ryubing` 作为最新基线，排除 `.git`、`bin`、`obj` 后同步到 `src/ryubing`
+  - 当前仓库已包含 `src/ryubing/Ryujinx.sln`、`src/ryubing/src/Ryujinx.Graphics.GAL/IPipeline.cs`、`src/ryubing/src/Ryujinx.Graphics.GAL/IRenderer.cs`
+  - 原先仓内的 `Ryujinx.Graphics.Metal` 模板文件已随同步被移除，后续按 `P3.2` 基于真实 Ryubing 重新创建项目
+  - 新增证据日志 `docs/evidence/P3.1-ryubing-sync-build.txt`
+- **验证**:
+  - `git -C /Users/liliang/MetalBackend/Ryubing branch --show-current` → `feature/native-metal-backend`
+  - `dotnet build src/ryubing/Ryujinx.sln -c Release` → 成功，16 警告 / 0 错误
+- **注意事项**:
+  - 构建存在上游既有警告：`System.Private.Uri 4.3.0` 漏洞告警、少量 `CS0649/CS8632`，不阻塞当前 `P3.1`
