@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T12:50:16+08:00
+# 最后更新: 2026-06-13T12:53:32+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 47/144 任务 (32.6%)
+# 完成度: 48/144 任务 (33.3%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -90,7 +90,7 @@
 | P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | docs/evidence/P3.1-ryubing-sync-build.txt：已从 /Users/liliang/MetalBackend/Ryubing 同步完整源码到 src/ryubing，外部基线分支为 feature/native-metal-backend，当前仓库内 src/ryubing/Ryujinx.sln 可 Release 构建通过（16 警告，0 错误） |
 | P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ✅ | 2026-06-13T12:36:00+08:00 | docs/p3-libmetal-bridge-abi.md + docs/evidence/P3.1a-libmetal-bridge-abi.txt：已固定 opaque handle / 最小 C ABI / 模块边界，CMake 可成功构建 libmetal_bridge.a |
 | P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ✅ | 2026-06-13T12:45:00+08:00 | docs/p3-shader-compiler-design.md + docs/evidence/P3.1b-shader-compiler-design.txt：已固定 compiler 单例策略、workaround bitmask 与默认配置，CMake 可成功构建 libmetal_bridge.a |
-| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
+| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ✅ | 2026-06-13T12:54:00+08:00 | docs/evidence/P3.2-metal-project-build.txt：已在 src/ryubing/src/Ryujinx.Graphics.Metal 创建项目并加入 Ryujinx.sln，Release 构建通过（0 警告，0 错误） |
 | P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ⬜ | — | — |
 | P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ⬜ | — | — |
 | P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 47 (32.6%)
+- 已完成: 48 (33.3%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 97
+- 待开始: 96
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.2 — 创建 Ryujinx.Graphics.Metal 项目 + .csproj
+- 下一任务: P3.3 — 引用 Ryujinx.Graphics.GAL 和 Shader 依赖

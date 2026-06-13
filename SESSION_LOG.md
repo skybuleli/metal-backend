@@ -553,3 +553,17 @@
   - `cmake --build /tmp/metal_bridge_p31b` → 成功生成 `libmetal_bridge.a`
 - **注意事项**:
   - 当前仍未实现真实 compiler 哈希表、环境变量解析和 Slang/MSC 调用；这些故意留给 `P3.8` 与 `P4.2.x`
+
+### 2026-06-13 中午 | P3.2 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已在真实 Ryubing 源树内创建 `Ryujinx.Graphics.Metal` 项目骨架，并接入 `Ryujinx.sln`
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj`
+  - 将新项目加入 `src/ryubing/Ryujinx.sln`
+  - 生成证据日志 `docs/evidence/P3.2-metal-project-build.txt`
+- **验证**:
+  - `dotnet sln src/ryubing/Ryujinx.sln add src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj`
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前项目只建立空骨架，依赖引用与源码文件留给 `P3.3` 及后续任务
