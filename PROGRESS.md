@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T13:03:57+08:00
+# 最后更新: 2026-06-13T13:06:02+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 50/144 任务 (34.7%)
+# 完成度: 51/144 任务 (35.4%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -93,7 +93,7 @@
 | P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ✅ | 2026-06-13T12:54:00+08:00 | docs/evidence/P3.2-metal-project-build.txt：已在 src/ryubing/src/Ryujinx.Graphics.Metal 创建项目并加入 Ryujinx.sln，Release 构建通过（0 警告，0 错误） |
 | P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ✅ | 2026-06-13T13:00:22+08:00 | docs/evidence/P3.3-metal-project-deps-build.txt：已为 Ryujinx.Graphics.Metal 引入 Ryujinx.Common、Ryujinx.Graphics.GAL、Ryujinx.Graphics.Shader 项目引用，Release 构建通过（0 警告，0 错误） |
 | P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ✅ | 2026-06-13T13:03:22+08:00 | docs/evidence/P3.4-metal-native-build.txt：已新增 MetalNative.cs，声明 libmetal_bridge 的句柄、枚举、结构体与 P/Invoke 入口，Release 构建通过（0 警告，0 错误） |
-| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ⬜ | — | — |
+| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ✅ | 2026-06-13T13:05:33+08:00 | docs/evidence/P3.5-metal-renderer-build.txt：已新增 MetalRenderer.cs，实现 IRenderer 占位骨架并隔离未实现能力，Release 构建通过（0 警告，0 错误） |
 | P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ⬜ | — | — |
 | P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ⬜ | — | — |
 | P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 50 (34.7%)
+- 已完成: 51 (35.4%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 94
+- 待开始: 93
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.5 — 创建 MetalRenderer.cs (IRenderer stub)
+- 下一任务: P3.6 — 创建 MetalPipeline.cs (IPipeline 63方法 stub)

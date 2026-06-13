@@ -595,3 +595,17 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前仅建立 P/Invoke 声明层，尚未添加错误字符串解码、句柄封装或更高层托管对象；这些留给后续 `MetalRenderer` / `MetalDevice` 任务
+
+### 2026-06-13 下午 | P3.5 创建 MetalRenderer.cs (IRenderer stub) | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已新增 `MetalRenderer` 占位实现，完整对齐真实 `IRenderer` 接口签名，并把未实现能力明确隔离为 stub
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`
+  - 为 `IRenderer` 的全部成员提供占位实现或显式 `NotSupportedException`
+  - 将后台动作、同步、初始化等无状态入口收口为最小 no-op 行为
+  - 生成证据日志 `docs/evidence/P3.5-metal-renderer-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - `Pipeline` 和 `Window` 目前仍显式抛出未实现异常，等待 `P3.6` 与 `P3.7` 分别补齐 `MetalPipeline` 和设备/展示层

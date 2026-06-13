@@ -1,14 +1,14 @@
-# 下一任务 — P3.5 创建 MetalRenderer.cs (IRenderer stub)
+# 下一任务 — P3.6 创建 MetalPipeline.cs (IPipeline 63方法 stub)
 
-> 生成时间：2026-06-13 13:03:57
+> 生成时间：2026-06-13 13:06:02
 > 所属阶段：Phase 3 — Ryubing Fork 与 GAL 集成
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P3.5 |
-| 任务名称 | 创建 MetalRenderer.cs (IRenderer stub) |
+| 任务 ID | P3.6 |
+| 任务名称 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P3.5 → ✅
+- 更新 PROGRESS.md：P3.6 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
