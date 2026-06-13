@@ -521,3 +521,19 @@
   - `dotnet build src/ryubing/Ryujinx.sln -c Release` → 成功，16 警告 / 0 错误
 - **注意事项**:
   - 构建存在上游既有警告：`System.Private.Uri 4.3.0` 漏洞告警、少量 `CS0649/CS8632`，不阻塞当前 `P3.1`
+
+### 2026-06-13 中午 | P3.1a 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已为 `libmetal_bridge` 固定 Phase 3 所需的模块边界、opaque handle 规则和最小 C ABI，后续 `MetalNative.cs` / `MetalShaderCompiler.cs` 可以基于稳定边界继续实现
+- **变更**:
+  - 重写 `src/libmetal_bridge/include/metal_bridge.h`，加入 ABI 版本、导出宏、opaque handle、基础返回码、统一释放入口和少量稳定入口
+  - 重写 `src/libmetal_bridge/README.md`，明确模块职责、C ABI 原则、handle 集合和与 Phase 3 任务的关系
+  - 重写 `src/libmetal_bridge/CMakeLists.txt`，固定模块编译单元列表并形成可构建静态库骨架
+  - 新增 `docs/p3-libmetal-bridge-abi.md`，记录为什么现在先收口边界、哪些函数当前不做、它服务哪些后续任务
+  - 新增 `docs/evidence/P3.1a-libmetal-bridge-abi.txt`，记录 CMake configure/build 验证结果
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B /tmp/metal_bridge_p31a`
+  - `cmake --build /tmp/metal_bridge_p31a` → 成功生成 `libmetal_bridge.a`
+- **注意事项**:
+  - 当前 `.cpp` 仍是占位文件，因此 `ranlib` 报告 “has no symbols” 警告；这不阻塞 `P3.1a`，属于 Phase 4 实现前的正常状态
