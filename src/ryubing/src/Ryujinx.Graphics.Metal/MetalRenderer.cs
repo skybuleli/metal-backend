@@ -42,7 +42,7 @@ namespace Ryujinx.Graphics.Metal
             _buffers = new MetalBufferPool(_device.Handle, _defaultStorageMode);
             _shaderCompiler = new MetalShaderCompiler();
             _shaderCompiler.AttachDevice(_device); // 绑定设备，初始化编译器句柄
-            _pipeline = new MetalPipeline();
+            _pipeline = new MetalPipeline(_device.Handle);
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
             _window = new MetalWindow();

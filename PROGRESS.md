@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T21:23:16+08:00
+# 最后更新: 2026-06-13T21:35:30+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 71/144 任务 (49.3%)
+# 完成度: 72/144 任务 (50.0%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -131,7 +131,7 @@
 ### 4.3 管线状态与绘制
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ⬜ | — | — |
+| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ✅ | 2026-06-13T23:00:00+08:00 | src/libmetal_bridge/src/MetalPipeline.cpp + include/metal_bridge.h + include/metal_internal.h + MetalDevice.cpp (metal_release) + CMake + MetalNative.cs + MetalPipeline.cs + MetalRenderer.cs，C++ + C# 双端编译通过 |
 | P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ⬜ | — | — |
 | P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ⬜ | — | — |
 | P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 71 (49.3%)
+- 已完成: 72 (50.0%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 73
+- 待开始: 72
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.3.1 — SetProgram → MTLRenderPipelineState 创建
+- 下一任务: P4.3.2 — SetVertexBuffers/SetVertexAttribs: 顶点布局映射

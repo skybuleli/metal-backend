@@ -149,6 +149,31 @@ namespace Ryujinx.Graphics.Metal
 
         [DllImport(LibraryName, EntryPoint = "metal_free_shader_data")]
         internal static extern void FreeShaderData(nint data);
+
+        // ── 渲染管线 P/Invoke (P4.3.1) ──
+        [DllImport(LibraryName, EntryPoint = "metal_create_render_pipeline")]
+        internal static extern MetalResult CreateRenderPipeline(
+            nint device,
+            in MetalRenderPipelineDescriptor descriptor,
+            out nint pipeline);
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct MetalRenderPipelineDescriptor
+    {
+        public uint AbiVersion;
+        public nint VertexMetallibData;
+        public ulong VertexMetallibSize;
+        public nint FragmentMetallibData;
+        public ulong FragmentMetallibSize;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string VertexFunction;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string FragmentFunction;
+        public MetalPixelFormat ColorAttachmentFormat;
+        public MetalPixelFormat DepthStencilFormat;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public uint[] Reserved;
     }
 
     internal enum MetalResult : uint

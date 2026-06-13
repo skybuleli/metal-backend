@@ -551,6 +551,45 @@ METAL_BRIDGE_EXPORT metal_result metal_shader_cache_clear(void);
 METAL_BRIDGE_EXPORT metal_shader_compile_result metal_load_program_binary(
     const char* cache_key);
 
+// ════════════════════════════════════════════════════════════════════
+// 渲染管线状态（P4.3.1）
+// ════════════════════════════════════════════════════════════════════
+
+/// 渲染管线描述符
+/// 从 metallib 数据和基本像素格式创建 MTLRenderPipelineState
+typedef struct metal_render_pipeline_descriptor
+{
+    uint32_t abi_version;
+
+    /// 顶点着色器 metallib 数据（调用者管理生命周期）
+    const void* vertex_metallib_data;
+    uint64_t vertex_metallib_size;
+
+    /// 片段着色器 metallib 数据（调用者管理生命周期）
+    const void* fragment_metallib_data;
+    uint64_t fragment_metallib_size;
+
+    /// 入口函数名（默认 "main"）
+    const char* vertex_function;
+    const char* fragment_function;
+
+    /// 颜色附件像素格式（默认 BGRA8_UNORM = 22）
+    metal_pixel_format color_attachment_format;
+    /// 深度模板附件格式（传 METAL_PIXEL_FORMAT_INVALID = 0 表示无深度模板）
+    metal_pixel_format depth_stencil_format;
+
+    uint32_t reserved[4];
+} metal_render_pipeline_descriptor;
+
+/// 创建渲染管线状态
+/// @param device     Metal 设备句柄
+/// @param descriptor 渲染管线描述符
+/// @param out_pipeline 输出：metal_render_pipeline 句柄（通过 metal_release 释放）
+METAL_BRIDGE_EXPORT metal_result metal_create_render_pipeline(
+    metal_device* device,
+    const metal_render_pipeline_descriptor* descriptor,
+    metal_render_pipeline** out_pipeline);
+
 // TODO: Phase 4.3+
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
 // - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口

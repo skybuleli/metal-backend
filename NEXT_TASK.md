@@ -1,14 +1,14 @@
-# 下一任务 — P4.3.1 SetProgram → MTLRenderPipelineState 创建
+# 下一任务 — P4.3.2 SetVertexBuffers/SetVertexAttribs: 顶点布局映射
 
-> 生成时间：2026-06-13 21:23:16
+> 生成时间：2026-06-13 21:35:30
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.3.1 |
-| 任务名称 | SetProgram → MTLRenderPipelineState 创建 |
+| 任务 ID | P4.3.2 |
+| 任务名称 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.3.1 → ✅
+- 更新 PROGRESS.md：P4.3.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

@@ -378,6 +378,17 @@ void metal_release(void* handle)
         free(compiler);
         break;
     }
+    case METAL_HANDLE_TYPE_RENDER_PIPELINE:
+    {
+        metal_render_pipeline* pipeline = static_cast<metal_render_pipeline*>(handle);
+        if (pipeline->pipeline_state != nullptr)
+        {
+            pipeline->pipeline_state->release();
+            pipeline->pipeline_state = nullptr;
+        }
+        delete pipeline;
+        break;
+    }
     default:
         // 未知 type tag：不做任何操作
         // 这是一个防御性检查，防止未注册的 handle 类型被错误释放

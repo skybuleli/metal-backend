@@ -118,3 +118,13 @@ static_assert(offsetof(struct metal_shader_compiler, device) >= sizeof(metal_han
 // ── 编译器内部释放函数：由 metal_release 调用，处理 Slang 会话清理 ──
 void metal_shader_compiler_release(metal_shader_compiler* compiler);
 
+/// metal_render_pipeline 内部实现（P4.3.1）
+struct metal_render_pipeline
+{
+    METAL_HANDLE_HEADER
+    MTL::RenderPipelineState* pipeline_state;  // Metal 渲染管线状态
+};
+
+static_assert(offsetof(struct metal_render_pipeline, pipeline_state) >= sizeof(metal_handle_base),
+    "metal_render_pipeline.base 必须在最前面");
+
