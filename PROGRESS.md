@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T18:40:27+08:00
+# 最后更新: 2026-06-13T18:49:49+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 64/144 任务 (44.4%)
+# 完成度: 65/144 任务 (45.1%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -120,7 +120,7 @@
 ### 4.2 着色器编译器集成
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ⬜ | — | — |
+| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T18:45:00+08:00 | tools/test_msc_texture_limits.sh：22/22 Path A 编译测试通过，覆盖 7 类纹理操作 (类型/格式/采样器/gather/多绑定/Compute/偏导)，证据 docs/evidence/P4.2.0-texture-run.txt |
 | P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 64 (44.4%)
+- 已完成: 65 (45.1%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 80
+- 待开始: 79
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.2.0 — 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper)
+- 下一任务: P4.2.1 — CreateProgram: Source→MTLLibrary
