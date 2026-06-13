@@ -769,3 +769,42 @@
   ```
 - **验证**: C# 构建 0 错误 ✅
 - **记录**: 无额外文件变更
+
+### 2026-06-13 | P4.2.0 MSC/Metal 着色器能力验证矩阵 — 4 维度 35/35 全部通过 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 建立 MSC/Metal 限制验证矩阵，覆盖纹理/discard/subgroup/helper 四个维度，35/35 Path A 编译测试全部通过
+- **变更**:
+  - `tools/test_msc_shader_limits.sh`（新建）：着色器能力验证矩阵脚本，599 行
+  - `tools/test_msc_texture_limits.sh`（已删除，被上一文件取代）
+  - `docs/evidence/P4.2.0-shader-limits-run.txt`：运行证据
+  - `PROGRESS.md`：P4.2.0 ✅ + gen_next_task.py 更新统计
+- **验证覆盖**:
+  - 纹理 22 项：类型（2D/2DArray/3D/Cube）、格式（R8/RGBA16F/DepthCompare）、采样器模式（各向异性/mipmap/边界颜色）、操作（gather/GatherRed/Load）、多绑定（4纹理/2采样器）、Compute（读/RW）、偏导（ddx/ddy/SampleGrad）
+  - Discard 5 项：alpha test、条件 discard、位置 discard、discard 后导数
+  - Subgroup 7 项：WaveGetLaneIndex、WaveReadLaneAt、WaveActiveSum、WaveActiveBallot、WaveActiveMinMax、WaveIsFirstLane、FS 中 WaveIsFirstLane
+  - Helper 1 项：导数触发 helper lanes（显式 SV_IsHelperInvocation 在 Slang DXIL 中不受支持，已记录限制）
+- **关键发现**: SV_IsHelperInvocation 在 Slang→DXIL 路径中不受支持（slangc 报 unknown semantic）。如需 isHelper 功能，CommandMapper 应在 MSL 层面直接处理 [[is_helper_invocation]]
+- **提交**: `d02206e` — test(shader): P4.2.0 全维度着色器验证矩阵 — 35/35 Path A 编译通过 [done]
+- **下一任务**: P4.2.1 — CreateProgram: Source→MTLLibrary
+
+### 2026-06-13 | P4.2.2 Slang API P/Invoke — Slang 原生语法→DXIL | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ popen slangc CLI 替换为 Slang C API 直接调用，CMake 集成 libslang.dylib，完整编译测试通过
+- **变更**:
+  - `src/libmetal_bridge/CMakeLists.txt`：新增 `find_library(libslang.dylib)` + `target_link_libraries` + `METAL_SLANG_FOUND` 条件编译
+  - `src/libmetal_bridge/src/ShaderCompiler.cpp`：重写编译管线。Slang C API 路径：`createGlobalSession` → `ISession` (每编译按 profile 新建) → `loadModuleFromSourceString` → `findEntryPointByName` (IEntryPoint) → `createCompositeComponentType` (module+entry point, 2 components) → `link` → `getEntryPointCode` → DXIL byte[]。popen slangc 保留为回退路径。
+  - `src/libmetal_bridge/tests/test_slang_api.cpp`（新建）：Slang C API 独立测试，直接 link libslang.dylib（无 Metal 依赖），验证 createGlobalSession/findProfile/createSession/compile_to_dxil/DXIL 魔数/重复编译
+  - `tools/test_slang_api.sh`（新建）：构建+运行脚本，含可选 MSC 全链路验证
+  - ShaderCompiler.cpp 修复：`createGlobalSession(&ptr)` 签名修复、`SlangResult` 命名空间修复、`findEntryPointByName` 2 参数签名修复
+- **C++ 编译**：ShaderCompiler.cpp 编译通过（MetalHeap.cpp 预存错误阻塞全库构建）
+- **独立测试验证**: 创建 Slang 全局会话 ✅ → Profile 查询 (sm_6_0/ps_6_0/cs_6_0) 互不相同 ✅ → 顶点 DXIL 3212B + DXBC 魔数 ✅ → 片段 DXIL 3212B ✅ → 计算 DXIL 3212B ✅ → 3 次重复编译稳定 ✅
+- **关键发现**: 
+  - Slang `SlangResult`/`SlangProfileID` 是全局类型，不在 `slang` 命名空间中
+  - `findEntryPointByName` 返回 `SlangResult`，通过 `IEntryPoint**` out 参数输出
+  - `getDefinedEntryPoints` 在此 Slang 版本中不存在
+  - 标准编译模式：`module + entryPoint` 两个组件创建 composite → link → getEntryPointCode
+  - profile 必须通过创建新 `ISession` 的方式切换（session 创建后 target profile 不可修改）
+- **提交 ID**: `6866d87`
+- **下一任务**: P4.2.3 — libmetalirconverter P/Invoke: DXIL→metallib
