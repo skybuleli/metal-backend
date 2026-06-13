@@ -339,6 +339,172 @@ uint32_t metal_shader_compiler_get_workarounds(
 }
 
 // ════════════════════════════════════════════════════════════════════
+// Path B 回退：Slang C API → MSL → xcrun metal → metallib（P4.2.5）
+// ════════════════════════════════════════════════════════════════════
+
+/// 使用 Slang C API 的 SLANG_METAL 目标编译到 MSL，再通过 xcrun metal 转为 metallib
+/// @return true 如果成功产出了 metallib 数据
+static bool compile_path_b_metallib(
+    const char* source_code,
+    const char* entry_point,
+    const char* stage,
+    const char* profile,
+    metal_shader_compile_result& result)
+{
+#if !METAL_SLANG_FOUND
+    (void)source_code;
+    (void)entry_point;
+    (void)stage;
+    (void)profile;
+    (void)result;
+    return false;
+#else
+    // 获取全局会话
+    slang::IGlobalSession* globalSession = acquire_global_session();
+    if (!globalSession) return false;
+
+    // 创建 ISession，target 设为 SLANG_METAL
+    slang::TargetDesc targetDesc = {};
+    targetDesc.structureSize = sizeof(targetDesc);
+    targetDesc.format = SLANG_METAL;
+    targetDesc.profile = globalSession->findProfile(profile);
+
+    slang::SessionDesc sessionDesc = {};
+    sessionDesc.structureSize = sizeof(sessionDesc);
+    sessionDesc.targets = &targetDesc;
+    sessionDesc.targetCount = 1;
+
+    slang::ISession* session = nullptr;
+    SlangResult sr = globalSession->createSession(sessionDesc, &session);
+    if (SLANG_FAILED(sr) || !session)
+    {
+        release_global_session();
+        return false;
+    }
+
+    // 加载模块
+    slang::IModule* module = session->loadModuleFromSourceString(
+        "path_b_module", ".", source_code, nullptr);
+    if (!module)
+    {
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    // 查找入口点
+    slang::IEntryPoint* entryPoint = nullptr;
+    sr = module->findEntryPointByName(entry_point, &entryPoint);
+    if (SLANG_FAILED(sr) || !entryPoint)
+    {
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    // 创建 composite
+    slang::IComponentType* components[] = { module, entryPoint };
+    slang::IComponentType* composite = nullptr;
+    sr = session->createCompositeComponentType(components, 2, &composite, nullptr);
+    if (SLANG_FAILED(sr) || !composite)
+    {
+        entryPoint->release();
+        session->release();
+        release_global_session();
+        return false;
+    }
+    entryPoint->release();
+
+    // Link
+    slang::IComponentType* linked = nullptr;
+    sr = composite->link(&linked, nullptr);
+    if (SLANG_FAILED(sr) || !linked)
+    {
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    // 获取 MSL 入口点代码（SLANG_METAL 目标下返回 MSL 源码文本）
+    slang::IBlob* mslBlob = nullptr;
+    sr = linked->getEntryPointCode(0, 0, &mslBlob, nullptr);
+    if (SLANG_FAILED(sr) || !mslBlob)
+    {
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    const void* mslData = mslBlob->getBufferPointer();
+    size_t mslSize = mslBlob->getBufferSize();
+    if (!mslData || mslSize == 0)
+    {
+        mslBlob->release();
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    // 写 MSL 到临时文件
+    char tmpdir_template[] = "/tmp/metal_shader_pathb_XXXXXX";
+    char* tmpdir = mkdtemp(tmpdir_template);
+    if (!tmpdir)
+    {
+        mslBlob->release();
+        session->release();
+        release_global_session();
+        return false;
+    }
+
+    std::string tmpdir_str(tmpdir);
+    std::string msl_path = tmpdir_str + "/shader.msl";
+    std::string metallib_path = tmpdir_str + "/shader.metallib";
+
+    bool ok = false;
+    FILE* f = fopen(msl_path.c_str(), "wb");
+    if (f)
+    {
+        fwrite(mslData, 1, mslSize, f);
+        fclose(f);
+
+        // 尝试 xcrun metal 编译 MSL→metallib
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+            "xcrun metal -x metal-staticlib -o \"%s\" \"%s\" 2>/dev/null",
+            metallib_path.c_str(), msl_path.c_str());
+
+        int rc = system(cmd);
+        if (rc == 0)
+        {
+            auto data = read_file(metallib_path);
+            if (!data.empty())
+            {
+                result.metallib_size = data.size();
+                result.metallib_data = malloc(result.metallib_size);
+                if (result.metallib_data)
+                {
+                    memcpy(result.metallib_data, data.data(), result.metallib_size);
+                    ok = true;
+                }
+            }
+        }
+    }
+
+    // 清理
+    mslBlob->release();
+    // linked/composite/module — session 释放时自动清理
+    session->release();
+    release_global_session();
+
+    // 清理临时文件
+    std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+    system(cleanup.c_str());
+
+    return ok;
+#endif
+}
+
+// ════════════════════════════════════════════════════════════════════
 // 编译实现（P4.2.2：Slang C API → DXIL → MSC popen → metallib）
 // ════════════════════════════════════════════════════════════════════
 
@@ -778,6 +944,30 @@ metal_shader_compile_result metal_compile_shader(
         {
             std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
             system(cleanup.c_str());
+        }
+    }
+
+    // ── 步骤 3：Path B 回退（P4.2.5）—— Path A 全部失败时尝试 Slang→MSL→xcrun metal ──
+    if (!result.metallib_data || result.metallib_size == 0)
+    {
+        bool pathb_ok = compile_path_b_metallib(
+            source_code, entry_point, stage, profile, result);
+
+        if (pathb_ok)
+        {
+            result.result = METAL_RESULT_OK;
+            snprintf(result.error_message, sizeof(result.error_message),
+                     "Path B 回退成功：Slang→MSL→xcrun metal");
+        }
+        else if (!result.metallib_data || result.metallib_size == 0)
+        {
+            // 所有路径均失败
+            if (result.error_message[0] == '\0')
+            {
+                snprintf(result.error_message, sizeof(result.error_message),
+                         "所有着色器编译路径均失败（Path A + Path B）");
+            }
+            result.result = METAL_RESULT_COMPILE_FAILED;
         }
     }
 

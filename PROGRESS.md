@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T20:46:52+08:00
+# 最后更新: 2026-06-13T21:08:24+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 69/144 任务 (47.9%)
+# 完成度: 70/144 任务 (48.6%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -125,7 +125,7 @@
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: popen slangc → Slang C API (libslang.dylib) 直接调用 + createGlobalSession/ISession/loadModuleFromSourceString/link/getEntryPointCode + CMake 集成 + popen 回退保护。ShaderCompiler.cpp 编译通过。 |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: IRCompiler SDK API (libmetalirconverter.dylib) 替换 MSC popen。IRCompilerCreate→IRObjectCreateFromDXIL→IRCompilerAllocCompileAndLink→IRObjectGetMetalLibBinary→IRMetalLibGetBytecode。CMakeLists.txt 集成 find_library。保留 popen 回退。ShaderCompiler.cpp 编译通过。 |
 | P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ✅ | 2026-06-13T21:00:00+08:00 | ShaderCompiler.cpp: SHA256 缓存键 + ~/Library/Caches/SwitchMetal/abi_v1/{key[0:2]}/{key}/ 分目录缓存 + metallib.bin/dxil.bin/meta.json + load_from_cache/store_to_cache + metal_shader_cache_clear C ABI。集成到 metal_compile_shader：编译前查缓存直接返回、编译后自动写缓存。 |
-| P4.2.5 | 回退逻辑: Path A→Path C→Path B | ⬜ | — | — |
+| P4.2.5 | 回退逻辑: Path A→Path B（Slang→MSL→xcrun metal） | ✅ | 2026-06-13T21:30:00+08:00 | ShaderCompiler.cpp: compile_path_b_metallib() — Slang C API SLANG_METAL 目标→MSL→xcrun metal→metallib。集成到 metal_compile_shader：Path A 全部失败后自动回退到 Path B。全量 CMake 构建通过。 |
 | P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ⬜ | — | — |
 
 ### 4.3 管线状态与绘制
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 69 (47.9%)
+- 已完成: 70 (48.6%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 75
+- 待开始: 74
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.2.5 — 回退逻辑: Path A→Path C→Path B
+- 下一任务: P4.2.6 — LoadProgramBinary: 加载缓存 metallib
