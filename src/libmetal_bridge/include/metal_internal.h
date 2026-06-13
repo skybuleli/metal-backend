@@ -82,3 +82,13 @@ struct metal_texture
 
 static_assert(offsetof(struct metal_texture, texture) >= sizeof(metal_handle_base),
     "metal_texture.base 必须在最前面");
+
+/// metal_sampler 内部实现
+struct metal_sampler
+{
+    METAL_HANDLE_HEADER
+    MTL::SamplerState* sampler_state;  // Metal 采样器状态对象
+};
+
+static_assert(offsetof(struct metal_sampler, sampler_state) >= sizeof(metal_handle_base),
+    "metal_sampler.base 必须在最前面");

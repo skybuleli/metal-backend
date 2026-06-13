@@ -387,6 +387,17 @@ void metal_release(void* handle)
         delete tex;
         break;
     }
+    case METAL_HANDLE_TYPE_SAMPLER:
+    {
+        metal_sampler* samp = static_cast<metal_sampler*>(handle);
+        if (samp->sampler_state != nullptr)
+        {
+            samp->sampler_state->release();
+            samp->sampler_state = nullptr;
+        }
+        delete samp;
+        break;
+    }
     default:
         // 未知 type tag：不做任何操作
         // 这是一个防御性检查，防止未注册的 handle 类型被错误释放

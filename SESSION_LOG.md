@@ -724,3 +724,48 @@
   - `src/libmetal_bridge/build_test/test_buffer`（可执行）
 - **提交**: `7018ae8 feat(metal): P4.1.2 MetalBuffer MTLStorageMode 策略 + 6 个 C ABI 函数 + Catch2 测试 [done]`
 - **下一任务**: P4.1.3 — MetalTexture: Maxwell→MTLPixelFormat 映射表
+
+### 2026-06-13 晚间 | MetalDeviceCaps → HasUnifiedMemory 驱动 MetalBufferPool 存储模式决策 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 完整修复 MetalDeviceCaps → 存储模式决策链路：MetalDevice 查询 Caps、MetalRenderer 推导存储模式、MetalBufferPool 调用真实 MetalNative.CreateBuffer
+- **变更**:
+  - `MetalDevice.cs`：+`_caps` 字段、`Caps`/`HasUnifiedMemory` 属性、`Create()` 末尾调用 `GetDeviceCaps`
+  - `MetalBuffer.cs`：**新建** — 包装 `nint handle` + `MetalBufferInfo`，提供 `Flush()` / `Dispose()`
+  - `MetalResources.cs`：**重写** `MetalBufferPool` — 接收 `deviceHandle`+`defaultMode`，`Create/Delete/GetData/SetData` 全部调用 `MetalNative.*`，Map/Unmap 通过 `try/finally` 保证配对，Managed 模式写后自动 `Flush`，新增 `IDisposable`
+  - `MetalRenderer.cs`：构造时创建 `MetalDevice`，`HasUnifiedMemory` → `MetalStorageMode`（UMA→Shared，离散→Managed），`Dispose` 顺序：`_buffers → ... → _device`
+- **验证**:
+  - `dotnet build -c Release` → 0 错误 0 警告
+  - `libmetal_bridge ctest` → 3/3 测试全部通过
+- **提交**: `032a0ec feat(gal): MetalDeviceCaps → HasUnifiedMemory 驱动 MetalBufferPool 存储模式决策 [done]`
+- **下一任务**: P4.1.4 — MetalSampler: 过滤/包裹/比较模式映射
+
+### 2026-06-13 | MetalTextureViewProxy.GetData 审查结论：不需要修改 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 审查完成，确认 `MetalTextureViewProxy.GetData` 不需要与 `SetData(region)` 相同的父纹理 handle 改造
+- **审查内容**:
+  - `MetalTextureViewProxy.GetData` 使用 `_handle`（视图 handle）+ 视图相对 layer/level
+  - `MetalTextureViewProxy.SetData(region)` 在上一轮已改为使用 `_parent._handle` + 父纹理相对 layer/level
+- **结论**:
+  - `GetData` 没有 bug。与 `SetData(region)` 不同（之前完全忽略了 region 参数是真正的 bug），`GetData` 正确调用了 `TextureReadback`，Metal 原生支持视图的 `getBytes` 坐标自动映射到父纹理底层存储
+  - 当前行为已被 C++ Catch2 测试验证（array 视图测试 stage 1/2、双向上传回读测试均通过）
+  - 项目中存在两种模式：`GetData`/`SetData(full)` 用视图 handle，`SetData(region)` 用父纹理 handle，两种都是正确的，仅是哲学选择不同
+- **记录**: 无代码变更，结论已在会话中记录
+
+### 2026-06-13 | MetalTextureViewProxy 统一为父纹理 handle 模式 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 将 `MetalTextureViewProxy` 全部三个数据操作方法统一为父纹理 handle 模式（风格一致性）
+- **变更**:
+  - `MetalTextureViewProxy.GetData(int layer, int level)`: 从 `_handle` + view-relative layer/level 改为 `_parent._handle` + `parentLayer/parentLevel` = `_firstLayer + safeLayer` / `_firstLevel + safeLevel`
+  - `MetalTextureViewProxy.SetData(MemoryOwner<byte> data, int layer, int level)`: 同上，维度计算改为 `_parent.Info.Width/Height >> parentLevel`
+  - `MetalTextureViewProxy.SetData(MemoryOwner<byte> data, int layer, int level, Rectangle<int> region)`: 已在更早轮次统一，本次不变
+- **统一后的模式**:
+  ```
+  parentLayer = _firstLayer + safeLayer
+  parentLevel = _firstLevel + safeLevel
+  // 全部使用 _parent._handle + 父纹理相对坐标
+  ```
+- **验证**: C# 构建 0 错误 ✅
+- **记录**: 无额外文件变更

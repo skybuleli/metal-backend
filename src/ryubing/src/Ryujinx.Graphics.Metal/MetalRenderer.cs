@@ -18,6 +18,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalWindow _window;
         private readonly MetalDevice _device;
         private readonly bool _hasUnifiedMemory;
+        private readonly MetalStorageMode _defaultStorageMode;
         private Action<Action> _interruptAction;
         private uint _programCount;
 
@@ -34,11 +35,11 @@ namespace Ryujinx.Graphics.Metal
 
             // UMA（Apple Silicon）使用 Shared 存储模式，避免 map/unmap 开销
             // 离散 GPU（Intel Mac）使用 Managed 模式，需要显式 flush
-            MetalStorageMode defaultMode = _hasUnifiedMemory
+            _defaultStorageMode = _hasUnifiedMemory
                 ? MetalStorageMode.Shared
                 : MetalStorageMode.Managed;
 
-            _buffers = new MetalBufferPool(_device.Handle, defaultMode);
+            _buffers = new MetalBufferPool(_device.Handle, _defaultStorageMode);
             _shaderCompiler = new MetalShaderCompiler();
             _pipeline = new MetalPipeline();
             _nullTextureArray = new MetalTextureArray(0, false);
@@ -83,12 +84,12 @@ namespace Ryujinx.Graphics.Metal
 
         public ISampler CreateSampler(SamplerCreateInfo info)
         {
-            return new MetalSampler(info);
+            return new MetalSampler(_device.Handle, info);
         }
 
         public ITexture CreateTexture(TextureCreateInfo info)
         {
-            return new MetalTexture(info);
+            return new MetalTexture(_device.Handle, info, _defaultStorageMode);
         }
 
         public ITextureArray CreateTextureArray(int size, bool isBuffer)

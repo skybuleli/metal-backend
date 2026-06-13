@@ -395,12 +395,88 @@ METAL_BRIDGE_EXPORT metal_result metal_texture_readback(
     uint32_t level,
     uint32_t bytes_per_row);
 
+// ── 纹理视图：在现有纹理上创建共享底层存储的视图 ——
+METAL_BRIDGE_EXPORT metal_result metal_create_texture_view(
+    metal_texture* parent_texture,
+    metal_pixel_format format,
+    metal_texture_type type,
+    uint32_t first_layer,
+    uint32_t num_layers,
+    uint32_t first_level,
+    uint32_t num_levels,
+    metal_texture** out_texture);
+
 // ── 像素格式查询：供 C# 侧缓存使用 ———
 METAL_BRIDGE_EXPORT metal_pixel_format_info metal_pixel_format_get_info(
     metal_pixel_format format);
 
+// ════════════════════════════════════════════════════════════════════
+// 采样器枚举（P4.1.4）
+// ════════════════════════════════════════════════════════════════════
+
+/// 最小/最大过滤器（线性/最近）
+typedef enum metal_sampler_min_mag_filter
+{
+    METAL_SAMPLER_FILTER_NEAREST = 0,
+    METAL_SAMPLER_FILTER_LINEAR = 1,
+} metal_sampler_min_mag_filter;
+
+/// mipmap 过滤器
+typedef enum metal_sampler_mip_filter
+{
+    METAL_SAMPLER_MIP_FILTER_NOT_MIPMAPPED = 0,
+    METAL_SAMPLER_MIP_FILTER_NEAREST = 1,
+    METAL_SAMPLER_MIP_FILTER_LINEAR = 2,
+} metal_sampler_mip_filter;
+
+/// 寻址模式
+typedef enum metal_sampler_address_mode
+{
+    METAL_SAMPLER_ADDRESS_CLAMP_TO_EDGE = 0,
+    METAL_SAMPLER_ADDRESS_REPEAT = 1,
+    METAL_SAMPLER_ADDRESS_MIRRORED_REPEAT = 2,
+    METAL_SAMPLER_ADDRESS_CLAMP_TO_ZERO = 3,
+    METAL_SAMPLER_ADDRESS_CLAMP_TO_BORDER_COLOR = 4,
+    METAL_SAMPLER_ADDRESS_MIRROR_CLAMP_TO_EDGE = 5,
+} metal_sampler_address_mode;
+
+/// 比较函数
+typedef enum metal_compare_function
+{
+    METAL_COMPARE_NEVER = 0,
+    METAL_COMPARE_LESS = 1,
+    METAL_COMPARE_EQUAL = 2,
+    METAL_COMPARE_LESS_EQUAL = 3,
+    METAL_COMPARE_GREATER = 4,
+    METAL_COMPARE_NOT_EQUAL = 5,
+    METAL_COMPARE_GREATER_EQUAL = 6,
+    METAL_COMPARE_ALWAYS = 7,
+} metal_compare_function;
+
+/// 采样器描述符
+typedef struct metal_sampler_descriptor
+{
+    metal_sampler_min_mag_filter mag_filter;
+    metal_sampler_min_mag_filter min_filter;
+    metal_sampler_mip_filter mip_filter;
+    metal_sampler_address_mode address_s;
+    metal_sampler_address_mode address_t;
+    metal_sampler_address_mode address_r;
+    metal_compare_function compare_function;
+    float max_anisotropy;
+    float lod_min_clamp;
+    float lod_max_clamp;
+    bool normalized_coordinates;
+    uint32_t reserved[3];
+} metal_sampler_descriptor;
+
+// ── 采样器入口：P4.1.4 MetalSampler 完整实现 ──
+METAL_BRIDGE_EXPORT metal_result metal_create_sampler(
+    metal_device* device,
+    const metal_sampler_descriptor* descriptor,
+    metal_sampler** out_sampler);
+
 // TODO: Phase 4
-// - metal_create_sampler
 // - metal_compile_program / metal_create_render_pipeline / metal_create_compute_pipeline
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
 // - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口

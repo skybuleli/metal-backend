@@ -11,67 +11,67 @@ namespace Ryujinx.Graphics.Metal
 
         internal const uint AbiVersion = 1;
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_bridge_abi_version")]
-        internal static partial uint BridgeAbiVersion();
+        [DllImport(LibraryName, EntryPoint = "metal_bridge_abi_version")]
+        internal static extern uint BridgeAbiVersion();
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_release")]
-        internal static partial void Release(nint handle);
+        [DllImport(LibraryName, EntryPoint = "metal_release")]
+        internal static extern void Release(nint handle);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_get_last_error_message")]
-        internal static partial nint GetLastErrorMessage();
+        [DllImport(LibraryName, EntryPoint = "metal_get_last_error_message")]
+        internal static extern nint GetLastErrorMessage();
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_device")]
-        internal static partial MetalResult CreateDevice(out nint device);
+        [DllImport(LibraryName, EntryPoint = "metal_create_device")]
+        internal static extern MetalResult CreateDevice(out nint device);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_get_device_info")]
-        internal static partial MetalResult GetDeviceInfo(nint device, out MetalHandleInfo info);
+        [DllImport(LibraryName, EntryPoint = "metal_get_device_info")]
+        internal static extern MetalResult GetDeviceInfo(nint device, out MetalHandleInfo info);
 
         [DllImport(LibraryName, EntryPoint = "metal_get_device_caps")]
         internal static extern MetalResult GetDeviceCaps(nint device, out MetalDeviceCaps caps);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_queue")]
-        internal static partial MetalResult CreateQueue(nint device, out nint queue);
+        [DllImport(LibraryName, EntryPoint = "metal_create_queue")]
+        internal static extern MetalResult CreateQueue(nint device, out nint queue);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_acquire_shader_compiler")]
-        internal static partial MetalResult AcquireShaderCompiler(nint device, out nint compiler);
+        [DllImport(LibraryName, EntryPoint = "metal_acquire_shader_compiler")]
+        internal static extern MetalResult AcquireShaderCompiler(nint device, out nint compiler);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_get_default_shader_compiler_config")]
-        internal static partial MetalResult GetDefaultShaderCompilerConfig(out MetalShaderCompilerConfig config);
+        [DllImport(LibraryName, EntryPoint = "metal_get_default_shader_compiler_config")]
+        internal static extern MetalResult GetDefaultShaderCompilerConfig(out MetalShaderCompilerConfig config);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_configure_shader_compiler")]
-        internal static partial MetalResult ConfigureShaderCompiler(nint compiler, in MetalShaderCompilerConfig config);
+        [DllImport(LibraryName, EntryPoint = "metal_configure_shader_compiler")]
+        internal static extern MetalResult ConfigureShaderCompiler(nint compiler, in MetalShaderCompilerConfig config);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_shader_compiler_get_workarounds")]
-        internal static partial uint ShaderCompilerGetWorkarounds(nint compiler);
+        [DllImport(LibraryName, EntryPoint = "metal_shader_compiler_get_workarounds")]
+        internal static extern uint ShaderCompilerGetWorkarounds(nint compiler);
 
         // ── Buffer P/Invoke (P4.1.2) ──
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer")]
-        internal static partial MetalResult CreateBuffer(nint device, ulong size, MetalStorageMode mode, out nint buffer);
+        [DllImport(LibraryName, EntryPoint = "metal_create_buffer")]
+        internal static extern MetalResult CreateBuffer(nint device, ulong size, MetalStorageMode mode, out nint buffer);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer_with_bytes")]
-        internal static partial MetalResult CreateBufferWithBytes(nint device, nint data, ulong size, MetalStorageMode mode, out nint buffer);
+        [DllImport(LibraryName, EntryPoint = "metal_create_buffer_with_bytes")]
+        internal static extern MetalResult CreateBufferWithBytes(nint device, nint data, ulong size, MetalStorageMode mode, out nint buffer);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_buffer_get_info")]
-        internal static partial MetalResult BufferGetInfo(nint buffer, out MetalBufferInfo info);
+        [DllImport(LibraryName, EntryPoint = "metal_buffer_get_info")]
+        internal static extern MetalResult BufferGetInfo(nint buffer, out MetalBufferInfo info);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_map_buffer")]
-        internal static partial MetalResult MapBuffer(nint buffer, out nint ptr);
+        [DllImport(LibraryName, EntryPoint = "metal_map_buffer")]
+        internal static extern MetalResult MapBuffer(nint buffer, out nint ptr);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_unmap_buffer")]
-        internal static partial MetalResult UnmapBuffer(nint buffer);
+        [DllImport(LibraryName, EntryPoint = "metal_unmap_buffer")]
+        internal static extern MetalResult UnmapBuffer(nint buffer);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_flush_buffer")]
-        internal static partial MetalResult FlushBuffer(nint buffer, ulong offset, ulong size);
+        [DllImport(LibraryName, EntryPoint = "metal_flush_buffer")]
+        internal static extern MetalResult FlushBuffer(nint buffer, ulong offset, ulong size);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer_from_pointer")]
-        internal static partial MetalResult CreateBufferFromPointer(nint device, nint ptr, ulong size, MetalStorageMode mode, out nint buffer);
+        [DllImport(LibraryName, EntryPoint = "metal_create_buffer_from_pointer")]
+        internal static extern MetalResult CreateBufferFromPointer(nint device, nint ptr, ulong size, MetalStorageMode mode, out nint buffer);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_buffer_get_cpu_address")]
-        internal static partial MetalResult BufferGetCpuAddress(nint buffer, out nint ptr);
+        [DllImport(LibraryName, EntryPoint = "metal_buffer_get_cpu_address")]
+        internal static extern MetalResult BufferGetCpuAddress(nint buffer, out nint ptr);
 
         // ── Texture P/Invoke (P4.1.3) ──
-        [LibraryImport(LibraryName, EntryPoint = "metal_create_texture")]
-        internal static partial MetalResult CreateTexture(
+        [DllImport(LibraryName, EntryPoint = "metal_create_texture")]
+        internal static extern MetalResult CreateTexture(
             nint device,
             MetalPixelFormat format,
             uint width,
@@ -84,11 +84,11 @@ namespace Ryujinx.Graphics.Metal
             MetalStorageMode storageMode,
             out nint texture);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_texture_get_info")]
-        internal static partial MetalResult TextureGetInfo(nint texture, out MetalTextureInfo info);
+        [DllImport(LibraryName, EntryPoint = "metal_texture_get_info")]
+        internal static extern MetalResult TextureGetInfo(nint texture, out MetalTextureInfo info);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_texture_upload")]
-        internal static partial MetalResult TextureUpload(
+        [DllImport(LibraryName, EntryPoint = "metal_texture_upload")]
+        internal static extern MetalResult TextureUpload(
             nint texture,
             nint buffer,
             ulong bufferOffset,
@@ -101,8 +101,8 @@ namespace Ryujinx.Graphics.Metal
             uint regionHeight,
             uint bytesPerRow);
 
-        [LibraryImport(LibraryName, EntryPoint = "metal_texture_readback")]
-        internal static partial MetalResult TextureReadback(
+        [DllImport(LibraryName, EntryPoint = "metal_texture_readback")]
+        internal static extern MetalResult TextureReadback(
             nint texture,
             nint buffer,
             ulong bufferOffset,
@@ -110,8 +110,26 @@ namespace Ryujinx.Graphics.Metal
             uint level,
             uint bytesPerRow);
 
+        [DllImport(LibraryName, EntryPoint = "metal_create_texture_view")]
+        internal static extern MetalResult CreateTextureView(
+            nint parentTexture,
+            MetalPixelFormat format,
+            MetalTextureType type,
+            uint firstLayer,
+            uint numLayers,
+            uint firstLevel,
+            uint numLevels,
+            out nint outTexture);
+
         [DllImport(LibraryName, EntryPoint = "metal_pixel_format_get_info")]
         internal static extern MetalPixelFormatInfo PixelFormatGetInfo(MetalPixelFormat format);
+
+        // ── 采样器 P/Invoke (P4.1.4) ──
+        [DllImport(LibraryName, EntryPoint = "metal_create_sampler")]
+        internal static extern MetalResult CreateSampler(
+            nint device,
+            in MetalSamplerDescriptor descriptor,
+            out nint sampler);
     }
 
     internal enum MetalResult : uint
@@ -302,5 +320,61 @@ namespace Ryujinx.Graphics.Metal
         public MetalPixelFormat PixelFormat;
         public MetalStorageMode StorageMode;
         public uint Reserved;
+    }
+
+    // ── 采样器枚举与 P/Invoke (P4.1.4) ──
+
+    internal enum MetalSamplerMinMagFilter : uint
+    {
+        Nearest = 0,
+        Linear = 1,
+    }
+
+    internal enum MetalSamplerMipFilter : uint
+    {
+        NotMipmapped = 0,
+        Nearest = 1,
+        Linear = 2,
+    }
+
+    internal enum MetalSamplerAddressMode : uint
+    {
+        ClampToEdge = 0,
+        Repeat = 1,
+        MirroredRepeat = 2,
+        ClampToZero = 3,
+        ClampToBorderColor = 4,
+        MirrorClampToEdge = 5,
+    }
+
+    internal enum MetalCompareFunction : uint
+    {
+        Never = 0,
+        Less = 1,
+        Equal = 2,
+        LessEqual = 3,
+        Greater = 4,
+        NotEqual = 5,
+        GreaterEqual = 6,
+        Always = 7,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalSamplerDescriptor
+    {
+        public MetalSamplerMinMagFilter MagFilter;
+        public MetalSamplerMinMagFilter MinFilter;
+        public MetalSamplerMipFilter MipFilter;
+        public MetalSamplerAddressMode AddressS;
+        public MetalSamplerAddressMode AddressT;
+        public MetalSamplerAddressMode AddressR;
+        public MetalCompareFunction CompareFunction;
+        public float MaxAnisotropy;
+        public float LodMinClamp;
+        public float LodMaxClamp;
+        [MarshalAs(UnmanagedType.U1)]
+        public bool NormalizedCoordinates;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public uint[] Reserved;
     }
 }

@@ -626,3 +626,84 @@ metal_result metal_texture_readback(
     pool->release();
     return METAL_RESULT_OK;
 }
+
+// ════════════════════════════════════════════════════════════════════
+// 创建纹理视图（共享父纹理的底层存储）
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_create_texture_view(
+    metal_texture* parent_texture,
+    metal_pixel_format format,
+    metal_texture_type type,
+    uint32_t first_layer,
+    uint32_t num_layers,
+    uint32_t first_level,
+    uint32_t num_levels,
+    metal_texture** out_texture)
+{
+    if (parent_texture == nullptr || out_texture == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (parent_texture->base.type != METAL_HANDLE_TYPE_TEXTURE)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (parent_texture->texture == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    // 验证参数范围
+    if (num_layers == 0 || num_levels == 0)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // 验证格式
+    MTL::PixelFormat mtl_format = to_mtl_pixel_format(format);
+    if (mtl_format == MTL::PixelFormatInvalid)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    MTL::TextureType mtl_type = to_mtl_texture_type(type);
+
+    NS::Range level_range(first_level, num_levels);
+    NS::Range slice_range(first_layer, num_layers);
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::Texture* view_texture = parent_texture->texture->newTextureView(
+        mtl_format, mtl_type, level_range, slice_range);
+
+    if (view_texture == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    // 从 MTLTexture 属性查询视图的实际尺寸
+    uint32_t view_width = static_cast<uint32_t>(view_texture->width());
+    uint32_t view_height = static_cast<uint32_t>(view_texture->height());
+    uint32_t view_depth = static_cast<uint32_t>(view_texture->depth());
+    uint32_t view_levels = static_cast<uint32_t>(view_texture->mipmapLevelCount());
+    uint32_t view_samples = static_cast<uint32_t>(view_texture->sampleCount());
+
+    metal_texture* tex = new (std::nothrow) metal_texture();
+    if (tex == nullptr)
+    {
+        view_texture->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    tex->base.type = METAL_HANDLE_TYPE_TEXTURE;
+    tex->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    tex->texture = view_texture;
+    tex->width = view_width;
+    tex->height = view_height;
+    tex->depth = view_depth;
+    tex->levels = view_levels;
+    tex->samples = view_samples;
+    tex->type = type;
+    tex->pixel_format = format;
+    tex->storage_mode = parent_texture->storage_mode;
+
+    pool->release();
+
+    *out_texture = tex;
+    return METAL_RESULT_OK;
+}

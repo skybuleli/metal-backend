@@ -45,6 +45,7 @@ set(METAL_BRIDGE_SOURCES
     src/ShaderCompiler.cpp
     src/CommandMapper.cpp
     src/Presenter.cpp
+    src/MetalSampler.cpp
 )
 
 add_library(metal_bridge STATIC
@@ -129,4 +130,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_texture COMMAND test_texture)
+
+    add_executable(test_sampler
+        tests/test_sampler.cpp
+    )
+    target_link_libraries(test_sampler PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_sampler PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_sampler COMMAND test_sampler)
 endif()
