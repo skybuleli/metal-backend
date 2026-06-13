@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <CommonCrypto/CommonCrypto.h>
 
 // Slang C API：仅在可用时引入
 #if METAL_SLANG_FOUND
@@ -70,13 +73,161 @@ static int run_command(const std::string& cmd, std::string& out_output, size_t m
     return rc;
 }
 
-// ── 内部结构体（opaque handle 的实际定义）──
+// ════════════════════════════════════════════════════════════════════
+// 磁盘着色器缓存（P4.2.4）
+// ════════════════════════════════════════════════════════════════════
 
-struct metal_shader_compiler
+/// 缓存目录的根路径
+static const char* kCacheRoot = "Library/Caches/SwitchMetal";
+
+/// 计算 SHA256 缓存键：source_code + entry_point + stage + profile
+static std::string compute_cache_key(
+    const char* source_code,
+    const char* entry_point,
+    const char* stage,
+    const char* profile)
 {
-    METAL_HANDLE_HEADER
-    metal_device* device;
-};
+    // 将四个输入拼接后计算 SHA256
+    std::string input = std::string(source_code) + "\0" +
+                        entry_point + "\0" +
+                        stage + "\0" +
+                        profile;
+
+    unsigned char hash[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(input.data(), (CC_LONG)input.size(), hash);
+
+    // 转 hex 字符串
+    char hex[CC_SHA256_DIGEST_LENGTH * 2 + 1];
+    for (int i = 0; i < CC_SHA256_DIGEST_LENGTH; i++)
+    {
+        snprintf(hex + i * 2, 3, "%02x", hash[i]);
+    }
+    return std::string(hex);
+}
+
+/// 获取缓存目录路径：~/Library/Caches/SwitchMetal/abi_v1/
+static std::string get_cache_root()
+{
+    const char* home = getenv("HOME");
+    if (!home)
+    {
+        struct passwd* pw = getpwuid(getuid());
+        if (pw && pw->pw_dir) home = pw->pw_dir;
+    }
+    if (!home) return "/tmp/SwitchMetalCache";
+
+    return std::string(home) + "/" + kCacheRoot + "/abi_v1";
+}
+
+/// 创建目录（如果不存在）
+static bool ensure_directory(const std::string& dir)
+{
+    struct stat st;
+    if (stat(dir.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
+        return true;
+    return (mkdir(dir.c_str(), 0755) == 0);
+}
+
+/// 构造缓存条目路径：root/ab/cd1234.../
+static std::string cache_entry_path(const std::string& root, const std::string& key)
+{
+    // key 是 64 字符的 SHA256 hex
+    std::string subdir = key.substr(0, 2);
+    std::string full = root + "/" + subdir + "/" + key;
+    return full;
+}
+
+/// 从缓存加载 metallib 数据
+/// @return true 如果缓存命中且加载成功
+static bool load_from_cache(
+    const std::string& root,
+    const std::string& cache_key,
+    std::vector<uint8_t>& out_metallib)
+{
+    std::string entry = cache_entry_path(root, cache_key);
+    std::string metallib_path = entry + "/metallib.bin";
+
+    struct stat st;
+    if (stat(metallib_path.c_str(), &st) != 0)
+        return false; // 缓存未命中
+
+    out_metallib = read_file(metallib_path);
+    return !out_metallib.empty();
+}
+
+/// 存储 metallib 数据到缓存
+static void store_to_cache(
+    const std::string& root,
+    const std::string& cache_key,
+    const uint8_t* metallib_data,
+    size_t metallib_size,
+    const uint8_t* dxil_data,
+    size_t dxil_size,
+    const char* stage,
+    const char* entry_point,
+    const char* profile)
+{
+    // 确保缓存目录结构存在
+    if (!ensure_directory(root)) return;
+
+    std::string entry = cache_entry_path(root, cache_key);
+    std::string parent = root + "/" + cache_key.substr(0, 2);
+    if (!ensure_directory(parent)) return;
+    if (!ensure_directory(entry)) return;
+
+    // 写入 metallib.bin
+    {
+        std::string path = entry + "/metallib.bin";
+        FILE* f = fopen(path.c_str(), "wb");
+        if (f)
+        {
+            fwrite(metallib_data, 1, metallib_size, f);
+            fclose(f);
+        }
+    }
+
+    // 写入 dxil.bin
+    if (dxil_data && dxil_size > 0)
+    {
+        std::string path = entry + "/dxil.bin";
+        FILE* f = fopen(path.c_str(), "wb");
+        if (f)
+        {
+            fwrite(dxil_data, 1, dxil_size, f);
+            fclose(f);
+        }
+    }
+
+    // 写入 meta.json
+    {
+        std::string path = entry + "/meta.json";
+        FILE* f = fopen(path.c_str(), "w");
+        if (f)
+        {
+            fprintf(f, "{\n");
+            fprintf(f, "  \"stage\": \"%s\",\n", stage);
+            fprintf(f, "  \"entry_point\": \"%s\",\n", entry_point);
+            fprintf(f, "  \"profile\": \"%s\",\n", profile);
+            fprintf(f, "  \"metallib_size\": %zu,\n", metallib_size);
+            fprintf(f, "  \"dxil_size\": %zu\n", dxil_size);
+            fprintf(f, "}\n");
+            fclose(f);
+        }
+    }
+}
+
+/// 清空缓存目录（删除 ~/Library/Caches/SwitchMetal/ 下所有内容）
+metal_result metal_shader_cache_clear(void)
+{
+    std::string root = get_cache_root();
+    if (root.empty()) return METAL_RESULT_RUNTIME_ERROR;
+
+    // 使用系统命令删除整个缓存目录
+    std::string cmd = "rm -rf \"" + root + "\" 2>/dev/null";
+    int rc = system(cmd.c_str());
+    (void)rc;
+    return METAL_RESULT_OK;
+}
 
 // ── Slang 全局会话（lazy singleton，进程生命周期）──
 #if METAL_SLANG_FOUND
@@ -109,6 +260,15 @@ static void release_global_session()
     }
 }
 #endif
+
+// ── metal_shader_compiler_release：由 metal_release 调用，清理 Slang 会话 ──
+void metal_shader_compiler_release(metal_shader_compiler* compiler)
+{
+    if (!compiler) return;
+#if METAL_SLANG_FOUND
+    release_global_session();
+#endif
+}
 
 // ════════════════════════════════════════════════════════════════════
 // 编译器生命周期
@@ -211,6 +371,25 @@ metal_shader_compile_result metal_compile_shader(
         result.result = METAL_RESULT_INVALID_ARGUMENT;
         snprintf(result.error_message, sizeof(result.error_message),
                  "不支持的着色器阶段：%s", stage);
+        return result;
+    }
+
+    // ── 步骤 0：检查磁盘着色器缓存（P4.2.4）──
+    std::string cache_root = get_cache_root();
+    std::string cache_key = compute_cache_key(source_code, entry_point, stage, profile);
+    std::vector<uint8_t> cached_metallib;
+    bool cache_hit = load_from_cache(cache_root, cache_key, cached_metallib);
+
+    if (cache_hit)
+    {
+        // 缓存命中：直接返回 metallib 数据
+        result.metallib_size = cached_metallib.size();
+        result.metallib_data = malloc(result.metallib_size);
+        if (result.metallib_data)
+        {
+            memcpy(result.metallib_data, cached_metallib.data(), result.metallib_size);
+        }
+        result.result = METAL_RESULT_OK;
         return result;
     }
 
@@ -602,7 +781,18 @@ metal_shader_compile_result metal_compile_shader(
         }
     }
 
-    result.result = METAL_RESULT_OK;
+    // ── 编译成功：写入磁盘缓存（P4.2.4）──
+    if (result.result == METAL_RESULT_OK && result.metallib_data && result.metallib_size > 0)
+    {
+        store_to_cache(
+            cache_root, cache_key,
+            static_cast<const uint8_t*>(result.metallib_data),
+            result.metallib_size,
+            dxil_data.empty() ? nullptr : dxil_data.data(),
+            dxil_data.size(),
+            stage, entry_point, profile);
+    }
+
     return result;
 }
 

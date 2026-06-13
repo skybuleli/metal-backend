@@ -540,6 +540,11 @@ METAL_BRIDGE_EXPORT metal_shader_compile_result metal_compile_shader(
 /// 释放 metal_compile_shader 返回的 metallib 数据
 METAL_BRIDGE_EXPORT void metal_free_shader_data(void* data);
 
+// ── 着色器磁盘缓存（P4.2.4）──
+
+/// 清空磁盘着色器缓存（删除 ~/Library/Caches/SwitchMetal/ 下所有内容）
+METAL_BRIDGE_EXPORT metal_result metal_shader_cache_clear(void);
+
 // TODO: Phase 4.3+
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
 // - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口
