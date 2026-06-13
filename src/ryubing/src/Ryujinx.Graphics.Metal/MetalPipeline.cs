@@ -10,6 +10,7 @@ namespace Ryujinx.Graphics.Metal
         private const int MaxVertexAttributes = 31;
         private const int MaxVertexBufferBindings = 31;
         private const int MaxUniformBufferBindings = 31;
+        private const int MaxStorageBufferBindings = 31;
         private const int MaxTextureBindings = 32;
         private const int MaxShaderStages = 3;
 
@@ -20,6 +21,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly VertexAttribDescriptor[] _vertexAttribs;
         private readonly VertexBufferDescriptor[] _vertexBuffers;
         private readonly MetalBufferBinding[] _uniformBuffers;
+        private readonly MetalStorageBufferBinding[] _storageBuffers;
         private readonly MetalTextureBinding[,] _textureBindings;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
@@ -37,6 +39,7 @@ namespace Ryujinx.Graphics.Metal
             _vertexAttribs = new VertexAttribDescriptor[MaxVertexAttributes];
             _vertexBuffers = new VertexBufferDescriptor[MaxVertexBufferBindings];
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
+            _storageBuffers = new MetalStorageBufferBinding[MaxStorageBufferBindings];
             _textureBindings = new MetalTextureBinding[MaxShaderStages, MaxTextureBindings];
         }
 
@@ -321,6 +324,47 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetStorageBuffers(ReadOnlySpan<BufferAssignment> buffers)
         {
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                BufferAssignment assignment = buffers[i];
+                int binding = assignment.Binding;
+
+                if ((uint)binding >= MaxStorageBufferBindings)
+                {
+                    continue;
+                }
+
+                BufferRange range = assignment.Range;
+
+                if (range.Handle == BufferHandle.Null || range.Size <= 0)
+                {
+                    _storageBuffers[binding] = default;
+                    continue;
+                }
+
+                if (!_buffers.TryGet(range.Handle, out MetalBuffer metalBuffer))
+                {
+                    _storageBuffers[binding] = default;
+                    continue;
+                }
+
+                int safeOffset = Math.Clamp(range.Offset, 0, (int)metalBuffer.Size);
+                int safeSize = Math.Clamp(range.Size, 0, (int)metalBuffer.Size - safeOffset);
+
+                if (safeSize <= 0)
+                {
+                    _storageBuffers[binding] = default;
+                    continue;
+                }
+
+                _storageBuffers[binding] = new MetalStorageBufferBinding
+                {
+                    Handle = metalBuffer.Handle,
+                    Offset = (ulong)safeOffset,
+                    Size = (ulong)safeSize,
+                    Write = range.Write,
+                };
+            }
         }
 
         public void SetTextureAndSampler(ShaderStage stage, int binding, ITexture texture, ISampler sampler)
@@ -670,6 +714,29 @@ namespace Ryujinx.Graphics.Metal
             return textureHandle != nint.Zero || samplerHandle != nint.Zero;
         }
 
+        /// <summary>
+        /// 获取指定 binding 上当前缓存的 storage buffer 绑定。
+        /// 供后续 Draw/Dispatch 将状态批量下发到 render/compute encoder 使用。
+        /// </summary>
+        internal bool TryGetStorageBufferBinding(int binding, out nint handle, out ulong offset, out ulong size, out bool write)
+        {
+            if ((uint)binding >= MaxStorageBufferBindings)
+            {
+                handle = nint.Zero;
+                offset = 0;
+                size = 0;
+                write = false;
+                return false;
+            }
+
+            MetalStorageBufferBinding bindingState = _storageBuffers[binding];
+            handle = bindingState.Handle;
+            offset = bindingState.Offset;
+            size = bindingState.Size;
+            write = bindingState.Write;
+            return handle != nint.Zero && size != 0;
+        }
+
         private static bool TryGetShaderStageIndex(ShaderStage stage, out int stageIndex)
         {
             switch (stage)
@@ -700,6 +767,14 @@ namespace Ryujinx.Graphics.Metal
         {
             public nint TextureHandle;
             public nint SamplerHandle;
+        }
+
+        private struct MetalStorageBufferBinding
+        {
+            public nint Handle;
+            public ulong Offset;
+            public ulong Size;
+            public bool Write;
         }
     }
 }

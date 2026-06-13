@@ -1,6 +1,6 @@
 # 下一任务 — P4.3.6 Draw/DrawIndexed: MTLRenderCommandEncoder 绘制
 
-> 生成时间：2026-06-13 23:52:36
+> 生成时间：2026-06-13 23:52:58
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情

@@ -1,0 +1,19 @@
+{
+  "task": "P4.3.5",
+  "phase": "Phase 4",
+  "name": "SetStorageBuffers: Compute/Graphics 存储缓冲",
+  "implementation": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs"
+  ],
+  "key_design": [
+    "沿用 SetUniformBuffers 的绑定缓存模式，对 BufferHandle 解析出的原生 MetalBuffer 句柄做 binding 级缓存",
+    "对 storage buffer 的 offset 和 size 做安全裁剪，避免后续 draw 或 dispatch 消费非法范围",
+    "保留 BufferRange.Write 标志，供后续 graphics/compute encoder 区分只读和可写存储缓冲用法",
+    "新增 TryGetStorageBufferBinding，供后续 Draw/Dispatch 直接读取绑定状态并下发 encoder"
+  ],
+  "verification": [
+    "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj"
+  ],
+  "build": "Ryujinx.Graphics.Metal 构建通过（85 个 CA1416 平台警告，0 错误）",
+  "next": "P4.3.6 — Draw/DrawIndexed: MTLRenderCommandEncoder 绘制"
+}
