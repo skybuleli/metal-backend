@@ -51,6 +51,9 @@ namespace Ryujinx.Ava.UI.ViewModels
         public partial bool IsVulkanAvailable { get; set; } = true;
 
         [ObservableProperty]
+        public partial bool IsMetalAvailable { get; set; } = OperatingSystem.IsMacOS();
+
+        [ObservableProperty]
         public partial bool GameListNeedsRefresh { get; set; }
 
         private readonly List<string> _gpuIds = [];
@@ -284,7 +287,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         public bool IsScalingFilterActive => _scalingFilter == (int)Ryujinx.Common.Configuration.ScalingFilter.Fsr;
 
         public bool IsVulkanSelected =>
-            GraphicsBackendIndex == 1 || (GraphicsBackendIndex == 0 && !OperatingSystem.IsMacOS());
+            (GraphicsBackend)GraphicsBackendIndex == GraphicsBackend.Vulkan;
         public bool UseHypervisor { get; set; }
         public bool GCLowLatency { get; set; }
         public bool DisableP2P { get; set; }

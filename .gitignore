@@ -73,3 +73,7 @@ shader_cache/
 
 # OS noise
 Thumbs.db
+
+# AI tool artifacts
+.codegraph/
+.sofluffy/

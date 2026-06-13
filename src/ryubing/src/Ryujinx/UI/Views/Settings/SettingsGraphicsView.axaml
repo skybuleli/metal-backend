@@ -43,6 +43,9 @@
                             <ComboBoxItem
                                 IsEnabled="{Binding IsOpenGLAvailable}"
                                 Content="OpenGL" />
+                            <ComboBoxItem
+                                IsVisible="{Binding IsMetalAvailable}"
+                                Content="Metal" />
                         </ComboBox>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" IsVisible="{Binding IsVulkanSelected}">

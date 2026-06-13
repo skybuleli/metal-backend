@@ -10,6 +10,7 @@ namespace Ryujinx.Ava.UI.Renderer
     public class RendererHost : UserControl, IDisposable
     {
         public readonly EmbeddedWindow EmbeddedWindow;
+        private readonly GraphicsBackend _backend;
 
         public event EventHandler<EventArgs> WindowCreated;
         public event Action<object, Size> BoundsChanged;
@@ -19,23 +20,20 @@ namespace Ryujinx.Ava.UI.Renderer
             Focusable = true;
             FlowDirection = FlowDirection.LeftToRight;
 
-            EmbeddedWindow = ConfigurationState.Instance.Graphics.GraphicsBackend.Value switch
+            _backend = ConfigurationState.Instance.Graphics.GraphicsBackend.Value;
+
+            EmbeddedWindow = _backend switch
             {
                 GraphicsBackend.OpenGl => new EmbeddedWindowOpenGL(),
                 GraphicsBackend.Vulkan => new EmbeddedWindowVulkan(),
+                GraphicsBackend.Metal => new EmbeddedWindowOpenGL(),
                 _ => throw new NotSupportedException()
             };
 
             Initialize();
         }
 
-        public GraphicsBackend Backend =>
-            EmbeddedWindow switch
-            {
-                EmbeddedWindowVulkan => GraphicsBackend.Vulkan,
-                EmbeddedWindowOpenGL => GraphicsBackend.OpenGl,
-                _ => throw new NotImplementedException()
-            };
+        public GraphicsBackend Backend => _backend;
 
 
         private void Initialize()

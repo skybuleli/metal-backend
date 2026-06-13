@@ -15,6 +15,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalImageArray _nullImageArray;
         private readonly MetalPipeline _pipeline;
         private readonly MetalTextureArray _nullTextureArray;
+        private readonly MetalWindow _window;
         private Action<Action> _interruptAction;
         private uint _programCount;
 
@@ -31,9 +32,10 @@ namespace Ryujinx.Graphics.Metal
             _pipeline = new MetalPipeline();
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
+            _window = new MetalWindow();
         }
 
-        public IWindow Window => throw new NotSupportedException("P3.7 之后再接入 Metal 窗口与 presenter。");
+        public IWindow Window => _window;
 
         public uint ProgramCount => _programCount;
 
@@ -99,6 +101,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void Dispose()
         {
+            _window.Dispose();
             _nullImageArray.Dispose();
             _nullTextureArray.Dispose();
             _shaderCompiler.Dispose();
@@ -111,7 +114,69 @@ namespace Ryujinx.Graphics.Metal
 
         public Capabilities GetCapabilities()
         {
-            throw new NotSupportedException();
+            return new Capabilities(
+                api: TargetApi.Metal,
+                vendorName: "Apple Metal",
+                memoryType: SystemMemoryType.UnifiedMemory,
+                hasFrontFacingBug: false,
+                hasVectorIndexingBug: false,
+                needsFragmentOutputSpecialization: false,
+                reduceShaderPrecision: false,
+                supportsAstcCompression: true,
+                supportsBc123Compression: false,
+                supportsBc45Compression: false,
+                supportsBc67Compression: false,
+                supportsEtc2Compression: true,
+                supports3DTextureCompression: true,
+                supportsBgraFormat: true,
+                supportsR4G4Format: false,
+                supportsR4G4B4A4Format: true,
+                supportsScaledVertexFormats: true,
+                supportsSnormBufferTextureFormat: true,
+                supports5BitComponentFormat: true,
+                supportsSparseBuffer: false,
+                supportsBlendEquationAdvanced: false,
+                supportsFragmentShaderInterlock: false,
+                supportsFragmentShaderOrderingIntel: false,
+                supportsGeometryShader: false,
+                supportsGeometryShaderPassthrough: false,
+                supportsTransformFeedback: false,
+                supportsImageLoadFormatted: true,
+                supportsLayerVertexTessellation: true,
+                supportsMismatchingViewFormat: true,
+                supportsCubemapView: true,
+                supportsNonConstantTextureOffset: true,
+                supportsQuads: false,
+                supportsSeparateSampler: true,
+                supportsShaderBallot: false,
+                supportsShaderBarrierDivergence: true,
+                supportsShaderFloat64: false,
+                supportsShaderNonUniformIndexing: true,
+                supportsTextureGatherOffsets: true,
+                supportsTextureShadowLod: true,
+                supportsVertexStoreAndAtomics: true,
+                supportsViewportIndexVertexTessellation: true,
+                supportsViewportMask: false,
+                supportsViewportSwizzle: false,
+                supportsIndirectParameters: true,
+                supportsDepthClipControl: true,
+                uniformBufferSetIndex: 0,
+                storageBufferSetIndex: 1,
+                textureSetIndex: 2,
+                imageSetIndex: 3,
+                extraSetBaseIndex: 0,
+                maximumExtraSets: 0,
+                maximumUniformBuffersPerStage: 16,
+                maximumStorageBuffersPerStage: 16,
+                maximumTexturesPerStage: 32,
+                maximumImagesPerStage: 16,
+                maximumComputeSharedMemorySize: 32768,
+                maximumSupportedAnisotropy: 16f,
+                shaderSubgroupSize: 32,
+                storageBufferOffsetAlignment: 16,
+                textureBufferOffsetAlignment: 16,
+                gatherBiasPrecision: 0,
+                maximumGpuMemory: 0);
         }
 
         public ulong GetCurrentSync()
@@ -121,7 +186,7 @@ namespace Ryujinx.Graphics.Metal
 
         public HardwareInfo GetHardwareInfo()
         {
-            throw new NotSupportedException();
+            return new HardwareInfo("Apple", "Metal Stub Renderer", "libmetal_bridge");
         }
 
         public void Initialize(GraphicsDebugLevel logLevel)

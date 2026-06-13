@@ -13,6 +13,7 @@ using Ryujinx.Cpu;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.OpenGL;
 using Ryujinx.Graphics.Vulkan;
+using Ryujinx.Graphics.Metal;
 using Ryujinx.HLE;
 using Ryujinx.Input;
 using Ryujinx.Input.SDL3;
@@ -208,6 +209,11 @@ namespace Ryujinx.Headless
                     (instance, vk) => new SurfaceKHR((ulong)vulkanWindow.CreateWindowSurface(instance.Handle)),
                     VulkanWindow.GetRequiredInstanceExtensions,
                     preferredGpuId);
+            }
+
+            if (options.GraphicsBackend == GraphicsBackend.Metal)
+            {
+                return new MetalRenderer();
             }
 
             return new OpenGLRenderer();

@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T13:28:41+08:00
+# 最后更新: 2026-06-13T13:42:20+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 55/144 任务 (38.2%)
+# 完成度: 56/144 任务 (38.9%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -98,7 +98,7 @@
 | P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ✅ | 2026-06-13T13:17:29+08:00 | docs/evidence/P3.7-metal-device-build.txt：已新增 MetalDevice.cs，封装 device 创建、ABI 校验、句柄信息读取与释放，Release 构建通过（0 警告，0 错误） |
 | P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ✅ | 2026-06-13T13:23:45+08:00 | docs/evidence/P3.8-metal-shader-compiler-build.txt：已新增 MetalShaderCompiler.cs，封装 compiler 获取、默认配置、workaround 读取，并接入 MetalRenderer 的程序创建路径，Release 构建通过（0 警告，0 错误） |
 | P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ✅ | 2026-06-13T13:28:00+08:00 | docs/evidence/P3.9-metal-resources-build.txt：已新增 MetalBufferPool / MetalTexture / MetalSampler / MetalTextureArray / MetalImageArray，并接入 MetalRenderer 资源创建入口，Release 构建通过（0 警告，0 错误） |
-| P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
+| P3.10 | 修改启动代码注册 Metal 后端选项 | ✅ | 2026-06-13T14:05:00+08:00 | docs/evidence/P3.10-metal-backend-register-build.txt：GraphicsBackend + Metal 枚举 (MetalWindow.cs)、Program.cs CLI 解析、Headless/Ava 启动注册、Settings UI 选项 (IsMetalAvailable)、RendererHost 后端路由、AppHost 创建、csproj 依赖，Release 构建 0 错误 12 警告（均为已有包漏洞/平台兼容性警告） |
 | P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ⬜ | — | — |
 
 # ===================================================================
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 55 (38.2%)
+- 已完成: 56 (38.9%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 89
+- 待开始: 88
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.10 — 修改启动代码注册 Metal 后端选项
+- 下一任务: P3.11 — 验证：选择 Metal 后端→启动→空白窗口不崩溃

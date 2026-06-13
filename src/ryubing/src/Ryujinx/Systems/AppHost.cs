@@ -35,6 +35,7 @@ using Ryujinx.Graphics.GAL.Multithreading;
 using Ryujinx.Graphics.Gpu;
 using Ryujinx.Graphics.OpenGL;
 using Ryujinx.Graphics.Vulkan;
+using Ryujinx.Graphics.Metal;
 using Ryujinx.HLE.FileSystem;
 using Ryujinx.HLE.HOS;
 using Ryujinx.HLE.HOS.Services.Account.Acc;
@@ -985,6 +986,7 @@ namespace Ryujinx.Ava.Systems
                     ConfigurationState.Instance.Graphics.PreferredGpu,
                     (RendererHost.EmbeddedWindow as EmbeddedWindowVulkan)!.CreateSurface,
                     VulkanHelper.GetRequiredInstanceExtensions),
+                GraphicsBackend.Metal => new MetalRenderer(),
                 _ => new OpenGLRenderer()
             };
 
@@ -1196,6 +1198,7 @@ namespace Ryujinx.Ava.Systems
             {
                 GraphicsBackend.Vulkan => "Vulkan",
                 GraphicsBackend.OpenGl => "OpenGL",
+                GraphicsBackend.Metal => "Metal",
                 _ => throw new NotImplementedException()
             };
 

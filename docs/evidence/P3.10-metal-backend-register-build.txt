@@ -1,0 +1,14 @@
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/Ryujinx.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-5f2m-466j-3848
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1902: 包 "System.Private.Uri" 4.3.0 具有已知的 中 严重性漏洞，https://github.com/advisories/GHSA-x5qj-9vmx-7g6g
+/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Audio.Backends.SoundIo/Ryujinx.Audio.Backends.SoundIo.csproj : warning NU1903: 包 "System.Private.Uri" 4.3.0 具有已知的 高 严重性漏洞，https://github.com/advisories/GHSA-xhfc-gr8f-ffwc
+    12 个警告
+    0 个错误
+
+已用时间 00:00:07.76
+=== BUILD RESULT ===
+已成功生成。
+    12 个警告
+    0 个错误
