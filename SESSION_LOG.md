@@ -638,3 +638,19 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前 `MetalDevice` 仍未在 `MetalRenderer` 构造阶段强绑定，以避免在原生库部署路径尚未固定前过早触发运行时装载
+
+### 2026-06-13 下午 | P3.8 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已新增 `MetalShaderCompiler` 托管封装，并把 `MetalRenderer` 的 program 创建/加载入口收口到统一编译器路径
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalShaderCompiler.cs`
+  - 封装 `metal_acquire_shader_compiler`、默认配置获取、配置提交与 workaround 读取
+  - 在同文件新增最小 `MetalProgram` 占位实现，满足 `IProgram` 接口
+  - 更新 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`，接入 `MetalShaderCompiler`、维护 `ProgramCount`
+  - 增加 macOS 平台标注，清除平台分析警告
+  - 生成证据日志 `docs/evidence/P3.8-metal-shader-compiler-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前仍未实现真实 `Slang → DXIL → MSC → metallib` 编译流程；`MetalShaderCompiler` 现阶段只收口生命周期、配置与占位程序对象，具体编译逻辑留给 Phase 4.2

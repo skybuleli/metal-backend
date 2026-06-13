@@ -2,13 +2,17 @@ using Ryujinx.Common.Configuration;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader.Translation;
 using System;
+using System.Runtime.Versioning;
 
 namespace Ryujinx.Graphics.Metal
 {
+    [SupportedOSPlatform("macos")]
     public sealed class MetalRenderer : IRenderer
     {
+        private readonly MetalShaderCompiler _shaderCompiler;
         private readonly MetalPipeline _pipeline;
         private Action<Action> _interruptAction;
+        private uint _programCount;
 
         public event EventHandler<ScreenCaptureImageInfo> ScreenCaptured;
 
@@ -18,12 +22,13 @@ namespace Ryujinx.Graphics.Metal
 
         public MetalRenderer()
         {
+            _shaderCompiler = new MetalShaderCompiler();
             _pipeline = new MetalPipeline();
         }
 
         public IWindow Window => throw new NotSupportedException("P3.7 之后再接入 Metal 窗口与 presenter。");
 
-        public uint ProgramCount => 0;
+        public uint ProgramCount => _programCount;
 
         public void BackgroundContextAction(Action action, bool alwaysBackground = false)
         {
@@ -52,7 +57,8 @@ namespace Ryujinx.Graphics.Metal
 
         public IProgram CreateProgram(ShaderSource[] shaders, ShaderInfo info)
         {
-            throw new NotSupportedException();
+            _programCount++;
+            return _shaderCompiler.CreateProgram(shaders, info);
         }
 
         public ISampler CreateSampler(SamplerCreateInfo info)
@@ -86,6 +92,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void Dispose()
         {
+            _shaderCompiler.Dispose();
         }
 
         public PinnedSpan<byte> GetBufferData(BufferHandle buffer, int offset, int size)
@@ -114,7 +121,8 @@ namespace Ryujinx.Graphics.Metal
 
         public IProgram LoadProgramBinary(byte[] programBinary, bool hasFragmentShader, ShaderInfo info)
         {
-            throw new NotSupportedException();
+            _programCount++;
+            return _shaderCompiler.LoadProgramBinary(programBinary, hasFragmentShader, info);
         }
 
         public void PreFrame()

@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T13:18:04+08:00
+# 最后更新: 2026-06-13T13:24:17+08:00
 # 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 53/144 任务 (36.8%)
+# 完成度: 54/144 任务 (37.5%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -96,7 +96,7 @@
 | P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ✅ | 2026-06-13T13:05:33+08:00 | docs/evidence/P3.5-metal-renderer-build.txt：已新增 MetalRenderer.cs，实现 IRenderer 占位骨架并隔离未实现能力，Release 构建通过（0 警告，0 错误） |
 | P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ✅ | 2026-06-13T13:14:29+08:00 | docs/evidence/P3.6-metal-pipeline-build.txt：已新增 MetalPipeline.cs，按真实 IPipeline 签名补齐 stub，并接入 MetalRenderer.Pipeline，Release 构建通过（0 警告，0 错误） |
 | P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ✅ | 2026-06-13T13:17:29+08:00 | docs/evidence/P3.7-metal-device-build.txt：已新增 MetalDevice.cs，封装 device 创建、ABI 校验、句柄信息读取与释放，Release 构建通过（0 警告，0 错误） |
-| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
+| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ✅ | 2026-06-13T13:23:45+08:00 | docs/evidence/P3.8-metal-shader-compiler-build.txt：已新增 MetalShaderCompiler.cs，封装 compiler 获取、默认配置、workaround 读取，并接入 MetalRenderer 的程序创建路径，Release 构建通过（0 警告，0 错误） |
 | P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ⬜ | — | — |
 | P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
 | P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 53 (36.8%)
+- 已完成: 54 (37.5%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 91
+- 待开始: 90
 - 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.8 — 创建 MetalShaderCompiler.cs (Slang+MSC 封装)
+- 下一任务: P3.9 — 创建 MetalBuffer/Texture/Sampler stubs
