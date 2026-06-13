@@ -1,0 +1,24 @@
+{
+  "task": "P4.3.2",
+  "phase": "Phase 4",
+  "name": "SetVertexBuffers/SetVertexAttribs: 顶点布局映射",
+  "implementation": [
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/src/MetalPipeline.cpp",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs"
+  ],
+  "key_design": [
+    "扩展 metal_render_pipeline_descriptor：加入顶点属性格式、buffer layout、step function 的稳定 ABI",
+    "native 层创建 MTL::VertexDescriptor，并在 metal_create_render_pipeline 中挂到 RenderPipelineDescriptor",
+    "MetalPipeline 缓存当前 VertexAttribDescriptor/VertexBufferDescriptor，布局变化时自动重建 pipeline",
+    "支持常见 GAL 顶点格式到 MetalVertexFormat 的直接映射，覆盖 8/16/32 位标量、向量、normalized 与常用 packed 格式",
+    "对超出 Metal 31 槽限制的属性与缓冲布局做截断保护，避免 native 越界"
+  ],
+  "verification": [
+    "cmake -S src/libmetal_bridge -B build/libmetal_bridge && cmake --build build/libmetal_bridge --target metal_bridge -j4",
+    "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj"
+  ],
+  "build": "libmetal_bridge.a 构建通过；Ryujinx.Graphics.Metal 构建通过（78 个既有 CA1416 平台警告，0 错误）",
+  "next": "P4.3.3 — SetUniformBuffers: MTLBuffer 绑定"
+}

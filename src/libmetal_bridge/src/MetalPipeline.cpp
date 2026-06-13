@@ -10,6 +10,64 @@
 #include <cstdio>
 #include <new>
 
+static MTL::VertexDescriptor* create_vertex_descriptor(
+    const metal_render_pipeline_descriptor* descriptor)
+{
+    if (descriptor == nullptr)
+        return nullptr;
+
+    MTL::VertexDescriptor* vertexDesc = MTL::VertexDescriptor::alloc()->init();
+
+    uint32_t attrCount = descriptor->vertex_attribute_count;
+    if (attrCount > METAL_MAX_VERTEX_ATTRIBUTES)
+    {
+        attrCount = METAL_MAX_VERTEX_ATTRIBUTES;
+    }
+
+    for (uint32_t i = 0; i < attrCount; i++)
+    {
+        const metal_vertex_attribute_descriptor& src = descriptor->vertex_attributes[i];
+
+        if (src.attribute_index >= METAL_MAX_VERTEX_ATTRIBUTES ||
+            src.buffer_index >= METAL_MAX_VERTEX_BUFFER_BINDINGS ||
+            src.format == METAL_VERTEX_FORMAT_INVALID)
+        {
+            continue;
+        }
+
+        MTL::VertexAttributeDescriptor* attr =
+            vertexDesc->attributes()->object(src.attribute_index);
+        attr->setBufferIndex(src.buffer_index);
+        attr->setOffset(src.offset);
+        attr->setFormat(static_cast<MTL::VertexFormat>(src.format));
+    }
+
+    uint32_t layoutCount = descriptor->vertex_buffer_layout_count;
+    if (layoutCount > METAL_MAX_VERTEX_BUFFER_BINDINGS)
+    {
+        layoutCount = METAL_MAX_VERTEX_BUFFER_BINDINGS;
+    }
+
+    for (uint32_t i = 0; i < layoutCount; i++)
+    {
+        const metal_vertex_buffer_layout_descriptor& src =
+            descriptor->vertex_buffer_layouts[i];
+
+        if (src.buffer_index >= METAL_MAX_VERTEX_BUFFER_BINDINGS)
+        {
+            continue;
+        }
+
+        MTL::VertexBufferLayoutDescriptor* layout =
+            vertexDesc->layouts()->object(src.buffer_index);
+        layout->setStride(src.stride);
+        layout->setStepRate(src.step_rate);
+        layout->setStepFunction(static_cast<MTL::VertexStepFunction>(src.step_function));
+    }
+
+    return vertexDesc;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // 内部辅助函数：从 metallib 二进制数据创建 MTL::Library
 // ════════════════════════════════════════════════════════════════════
@@ -144,6 +202,12 @@ metal_result metal_create_render_pipeline(
         rpDesc->setFragmentFunction(fragmentFunction);
     }
 
+    MTL::VertexDescriptor* vertexDesc = create_vertex_descriptor(descriptor);
+    if (vertexDesc != nullptr)
+    {
+        rpDesc->setVertexDescriptor(vertexDesc);
+    }
+
     // 设置颜色附件格式
     MTL::PixelFormat colorFormat = MTL::PixelFormatBGRA8Unorm; // 默认
     if (descriptor->color_attachment_format != METAL_PIXEL_FORMAT_INVALID)
@@ -178,6 +242,7 @@ metal_result metal_create_render_pipeline(
     if (fragmentFunction) fragmentFunction->release();
     vertexLibrary->release();
     if (fragmentLibrary) fragmentLibrary->release();
+    if (vertexDesc) vertexDesc->release();
     rpDesc->release();
 
     if (pipelineState == nullptr)

@@ -808,3 +808,21 @@
   - profile 必须通过创建新 `ISession` 的方式切换（session 创建后 target profile 不可修改）
 - **提交 ID**: `6866d87`
 - **下一任务**: P4.2.3 — libmetalirconverter P/Invoke: DXIL→metallib
+
+### 2026-06-13 | P4.3.2 SetVertexBuffers/SetVertexAttribs — 顶点布局映射 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 打通 GAL 顶点属性/顶点缓冲布局到 Metal 渲染管线描述符的映射，布局变化时可自动重建 `MTLRenderPipelineState`
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：扩展 `metal_render_pipeline_descriptor`，加入顶点属性格式、buffer layout、step function ABI
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`：新增 `MTL::VertexDescriptor` 构造逻辑，并接入 `metal_create_render_pipeline`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：补齐顶点布局相关 P/Invoke 结构体与枚举
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：实现 `SetVertexAttribs` / `SetVertexBuffers`，缓存当前布局并在变化时重建 pipeline，增加 GAL `Format` → `MetalVertexFormat` 映射
+  - `docs/evidence/P4.3.2-meta.json`：记录实现与验证证据
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B build/libmetal_bridge && cmake --build build/libmetal_bridge --target metal_bridge -j4` ✅
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（78 个既有 CA1416 平台警告，0 错误）
+- **关键说明**:
+  - Metal 顶点属性/缓冲槽位按 31 上限截断，避免 native 越界
+  - `R8/R16/R32` 标量/向量、normalized、常见 packed/BGRA 顶点格式已映射；不支持的 GAL 顶点格式当前会跳过，等待后续按真实游戏需求补齐
+- **下一任务**: P4.3.3 — SetUniformBuffers: MTLBuffer 绑定

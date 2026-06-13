@@ -555,6 +555,92 @@ METAL_BRIDGE_EXPORT metal_shader_compile_result metal_load_program_binary(
 // 渲染管线状态（P4.3.1）
 // ════════════════════════════════════════════════════════════════════
 
+/// 顶点属性格式
+/// 数值与 MTLVertexFormat 保持一致，便于 native 层直接转换。
+typedef enum metal_vertex_format
+{
+    METAL_VERTEX_FORMAT_INVALID = 0,
+    METAL_VERTEX_FORMAT_UCHAR2 = 1,
+    METAL_VERTEX_FORMAT_UCHAR3 = 2,
+    METAL_VERTEX_FORMAT_UCHAR4 = 3,
+    METAL_VERTEX_FORMAT_CHAR2 = 4,
+    METAL_VERTEX_FORMAT_CHAR3 = 5,
+    METAL_VERTEX_FORMAT_CHAR4 = 6,
+    METAL_VERTEX_FORMAT_UCHAR2_NORMALIZED = 7,
+    METAL_VERTEX_FORMAT_UCHAR3_NORMALIZED = 8,
+    METAL_VERTEX_FORMAT_UCHAR4_NORMALIZED = 9,
+    METAL_VERTEX_FORMAT_CHAR2_NORMALIZED = 10,
+    METAL_VERTEX_FORMAT_CHAR3_NORMALIZED = 11,
+    METAL_VERTEX_FORMAT_CHAR4_NORMALIZED = 12,
+    METAL_VERTEX_FORMAT_USHORT2 = 13,
+    METAL_VERTEX_FORMAT_USHORT3 = 14,
+    METAL_VERTEX_FORMAT_USHORT4 = 15,
+    METAL_VERTEX_FORMAT_SHORT2 = 16,
+    METAL_VERTEX_FORMAT_SHORT3 = 17,
+    METAL_VERTEX_FORMAT_SHORT4 = 18,
+    METAL_VERTEX_FORMAT_USHORT2_NORMALIZED = 19,
+    METAL_VERTEX_FORMAT_USHORT3_NORMALIZED = 20,
+    METAL_VERTEX_FORMAT_USHORT4_NORMALIZED = 21,
+    METAL_VERTEX_FORMAT_SHORT2_NORMALIZED = 22,
+    METAL_VERTEX_FORMAT_SHORT3_NORMALIZED = 23,
+    METAL_VERTEX_FORMAT_SHORT4_NORMALIZED = 24,
+    METAL_VERTEX_FORMAT_HALF2 = 25,
+    METAL_VERTEX_FORMAT_HALF3 = 26,
+    METAL_VERTEX_FORMAT_HALF4 = 27,
+    METAL_VERTEX_FORMAT_FLOAT = 28,
+    METAL_VERTEX_FORMAT_FLOAT2 = 29,
+    METAL_VERTEX_FORMAT_FLOAT3 = 30,
+    METAL_VERTEX_FORMAT_FLOAT4 = 31,
+    METAL_VERTEX_FORMAT_INT = 32,
+    METAL_VERTEX_FORMAT_INT2 = 33,
+    METAL_VERTEX_FORMAT_INT3 = 34,
+    METAL_VERTEX_FORMAT_INT4 = 35,
+    METAL_VERTEX_FORMAT_UINT = 36,
+    METAL_VERTEX_FORMAT_UINT2 = 37,
+    METAL_VERTEX_FORMAT_UINT3 = 38,
+    METAL_VERTEX_FORMAT_UINT4 = 39,
+    METAL_VERTEX_FORMAT_INT1010102_NORMALIZED = 40,
+    METAL_VERTEX_FORMAT_UINT1010102_NORMALIZED = 41,
+    METAL_VERTEX_FORMAT_UCHAR4_NORMALIZED_BGRA = 42,
+    METAL_VERTEX_FORMAT_UCHAR = 45,
+    METAL_VERTEX_FORMAT_CHAR = 46,
+    METAL_VERTEX_FORMAT_UCHAR_NORMALIZED = 47,
+    METAL_VERTEX_FORMAT_CHAR_NORMALIZED = 48,
+    METAL_VERTEX_FORMAT_USHORT = 49,
+    METAL_VERTEX_FORMAT_SHORT = 50,
+    METAL_VERTEX_FORMAT_USHORT_NORMALIZED = 51,
+    METAL_VERTEX_FORMAT_SHORT_NORMALIZED = 52,
+    METAL_VERTEX_FORMAT_HALF = 53,
+    METAL_VERTEX_FORMAT_FLOAT_RG11B10 = 54,
+    METAL_VERTEX_FORMAT_FLOAT_RGB9E5 = 55,
+} metal_vertex_format;
+
+/// 顶点步进函数
+typedef enum metal_vertex_step_function
+{
+    METAL_VERTEX_STEP_FUNCTION_CONSTANT = 0,
+    METAL_VERTEX_STEP_FUNCTION_PER_VERTEX = 1,
+    METAL_VERTEX_STEP_FUNCTION_PER_INSTANCE = 2,
+} metal_vertex_step_function;
+
+/// 单个顶点属性描述符
+typedef struct metal_vertex_attribute_descriptor
+{
+    uint32_t attribute_index;
+    uint32_t buffer_index;
+    metal_vertex_format format;
+    uint32_t offset;
+} metal_vertex_attribute_descriptor;
+
+/// 单个顶点缓冲布局描述符
+typedef struct metal_vertex_buffer_layout_descriptor
+{
+    uint32_t buffer_index;
+    uint32_t stride;
+    metal_vertex_step_function step_function;
+    uint32_t step_rate;
+} metal_vertex_buffer_layout_descriptor;
+
 /// 渲染管线描述符
 /// 从 metallib 数据和基本像素格式创建 MTLRenderPipelineState
 typedef struct metal_render_pipeline_descriptor
@@ -578,7 +664,15 @@ typedef struct metal_render_pipeline_descriptor
     /// 深度模板附件格式（传 METAL_PIXEL_FORMAT_INVALID = 0 表示无深度模板）
     metal_pixel_format depth_stencil_format;
 
-    uint32_t reserved[4];
+    /// 顶点属性数与缓冲布局数
+    uint32_t vertex_attribute_count;
+    uint32_t vertex_buffer_layout_count;
+
+    /// 顶点布局描述符数组
+    metal_vertex_attribute_descriptor vertex_attributes[METAL_MAX_VERTEX_ATTRIBUTES];
+    metal_vertex_buffer_layout_descriptor vertex_buffer_layouts[METAL_MAX_VERTEX_BUFFER_BINDINGS];
+
+    uint32_t reserved[2];
 } metal_render_pipeline_descriptor;
 
 /// 创建渲染管线状态
