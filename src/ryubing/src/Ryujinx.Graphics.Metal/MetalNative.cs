@@ -40,6 +40,25 @@ namespace Ryujinx.Graphics.Metal
 
         [LibraryImport(LibraryName, EntryPoint = "metal_shader_compiler_get_workarounds")]
         internal static partial uint ShaderCompilerGetWorkarounds(nint compiler);
+
+        // ── Buffer P/Invoke (P4.1.2) ──
+        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer")]
+        internal static partial MetalResult CreateBuffer(nint device, ulong size, MetalStorageMode mode, out nint buffer);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer_with_bytes")]
+        internal static partial MetalResult CreateBufferWithBytes(nint device, nint data, ulong size, MetalStorageMode mode, out nint buffer);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_buffer_get_info")]
+        internal static partial MetalResult BufferGetInfo(nint buffer, out MetalBufferInfo info);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_map_buffer")]
+        internal static partial MetalResult MapBuffer(nint buffer, out nint ptr);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_unmap_buffer")]
+        internal static partial MetalResult UnmapBuffer(nint buffer);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_flush_buffer")]
+        internal static partial MetalResult FlushBuffer(nint buffer, ulong offset, ulong size);
     }
 
     internal enum MetalResult : uint

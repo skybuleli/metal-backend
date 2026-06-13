@@ -687,3 +687,20 @@
   - `src/libmetal_bridge/build/libmetal_bridge.a`
 - **提交**: `a4a18ea feat(metal): P4.1.0 固化 Metal 硬件限制常量与资源对齐策略 [done]`
 - **下一任务**: P4.1.1 — MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询
+
+### 2026-06-13 下午 | P4.1.1 MetalDevice GPU 选择 + 设备创建 + 能力查询 + 单元测试 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 完整实现了 MetalDevice 的 GPU 选择、MTLDevice 创建、能力查询和 MetalQueue 创建，含 Catch2 单元测试 11 个全部通过
+- **变更**:
+  - `metal_bridge.h`：新增 `metal_handle_type` type tag 枚举、`metal_handle_base` 公共头部、`metal_device_caps` 能力结构体（13 字段）、`metal_get_device_caps()` 声明
+  - `MetalDevice.cpp`：完整重写 — `metal_create_device` 调用 `MTL::CreateSystemDefaultDevice()`、`metal_get_device_caps` 查询 name/uma/registryID/maxBufferLength/threadgroup 等 11 项能力、`metal_create_queue` 创建 `MTLCommandQueue`、`metal_release` 通过 type tag 分发到 device/queue 的正确析构
+  - `CMakeLists.txt`：集成 Catch2 3.15.0 测试框架、`find_library` 方式引用 Metal/Foundation/QuartzCore 框架、添加 C++ 头文件显式路径（`<SDK>/usr/include/c++/v1`）
+  - `test_device.cpp`：11 个 Catch2 测试用例覆盖 ABI 版本、设备创建、能力查询、队列创建、nullptr 释放、限制校验、NULL 参数错误路径、多次创建、结构体大小、创建-释放循环
+- **验证**:
+  - `cmake .. -DBUILD_TESTS=ON && cmake --build . && ctest` → 11/11 tests PASSED
+- **证据**:
+  - `docs/evidence/P4.1.1-meta.json`
+  - `src/libmetal_bridge/build_test/test_device`（可执行）
+- **提交**: `f89d17e feat(metal): P4.1.1 MetalDevice GPU 选择 + 设备创建 + 能力查询 + Catch2 测试 [done]`
+- **下一任务**: P4.1.2 — MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared)

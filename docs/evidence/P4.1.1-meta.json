@@ -1,0 +1,27 @@
+{
+  "task": "P4.1.1",
+  "phase": "Phase 4",
+  "name": "MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询",
+  "implementation": [
+    "src/libmetal_bridge/src/MetalDevice.cpp",
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/CMakeLists.txt"
+  ],
+  "tests": [
+    "src/libmetal_bridge/tests/test_device.cpp"
+  ],
+  "key_design": [
+    "type tag (metal_handle_type) 统一分发 metal_release",
+    "metal_device_caps 结构体（13 个能力字段）",
+    "metal_get_device_caps() C ABI 接口",
+    "API 覆盖：create_device / get_device_info / get_device_caps / create_queue / release / abi_version"
+  ],
+  "test_results": "11/11 Catch2 tests PASSED",
+  "build": "libmetal_bridge.a + test_device 构建通过",
+  "dependencies": [
+    "Catch2 3.15.0 (Homebrew)",
+    "macOS SDK (CLT)",
+    "metal-cpp"
+  ],
+  "next": "P4.1.2 — MetalBuffer: MTLStorageMode 策略"
+}

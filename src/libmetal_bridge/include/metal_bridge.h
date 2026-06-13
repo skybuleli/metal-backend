@@ -21,6 +21,10 @@ extern "C" {
 #define METAL_BRIDGE_EXPORT __attribute__((visibility("default")))
 #endif
 
+// ── 所有 Handle 类型内部结构体的公共前缀：确保 metal_handle_base 在偏移 0 ──
+#define METAL_HANDLE_HEADER \
+    metal_handle_base base;
+
 // ── Opaque handle type tag：统一放在每个内部结构体的头部 ──
 typedef enum metal_handle_type
 {
@@ -180,8 +184,48 @@ METAL_BRIDGE_EXPORT metal_result metal_configure_shader_compiler(
 METAL_BRIDGE_EXPORT uint32_t metal_shader_compiler_get_workarounds(
     metal_shader_compiler* compiler);
 
+// ── 缓冲区信息 ──
+typedef struct metal_buffer_info
+{
+    /// 缓冲区大小（字节）
+    uint64_t size;
+    /// 存储模式
+    metal_storage_mode storage_mode;
+    /// 对齐填充到 16 字节
+    uint32_t reserved;
+} metal_buffer_info;
+
+// ── 缓冲区入口：P4.1.2 MetalBuffer 完整实现 ──
+METAL_BRIDGE_EXPORT metal_result metal_create_buffer(
+    metal_device* device,
+    uint64_t size,
+    metal_storage_mode mode,
+    metal_buffer** out_buffer);
+
+METAL_BRIDGE_EXPORT metal_result metal_create_buffer_with_bytes(
+    metal_device* device,
+    const void* data,
+    uint64_t size,
+    metal_storage_mode mode,
+    metal_buffer** out_buffer);
+
+METAL_BRIDGE_EXPORT metal_result metal_buffer_get_info(
+    metal_buffer* buffer,
+    metal_buffer_info* out_info);
+
+METAL_BRIDGE_EXPORT metal_result metal_map_buffer(
+    metal_buffer* buffer,
+    void** out_ptr);
+
+METAL_BRIDGE_EXPORT metal_result metal_unmap_buffer(
+    metal_buffer* buffer);
+
+METAL_BRIDGE_EXPORT metal_result metal_flush_buffer(
+    metal_buffer* buffer,
+    uint64_t offset,
+    uint64_t size);
+
 // TODO: Phase 4
-// - metal_create_buffer / metal_map_buffer / metal_unmap_buffer
 // - metal_create_texture / metal_upload_texture / metal_readback_texture
 // - metal_create_sampler
 // - metal_compile_program / metal_create_render_pipeline / metal_create_compute_pipeline

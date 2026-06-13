@@ -34,6 +34,7 @@ endif()
 set(METAL_BRIDGE_PUBLIC_HEADERS
     include/metal_bridge.h
     include/metal_limits.h
+    include/metal_internal.h
 )
 
 set(METAL_BRIDGE_SOURCES
@@ -102,4 +103,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_device COMMAND test_device)
+
+    add_executable(test_buffer
+        tests/test_buffer.cpp
+    )
+    target_link_libraries(test_buffer PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_buffer PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_buffer COMMAND test_buffer)
 endif()

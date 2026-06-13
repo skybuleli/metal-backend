@@ -152,6 +152,19 @@ test_device/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_device.dir/build.make CMakeFiles/test_device.dir/build
 .PHONY : test_device/fast
 
+#=============================================================================
+# Target rules for targets named test_buffer
+
+# Build rule for target.
+test_buffer: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_buffer
+.PHONY : test_buffer
+
+# fast build rule for target.
+test_buffer/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_buffer.dir/build.make CMakeFiles/test_buffer.dir/build
+.PHONY : test_buffer/fast
+
 src/CommandMapper.o: src/CommandMapper.cpp.o
 .PHONY : src/CommandMapper.o
 
@@ -320,6 +333,30 @@ src/ShaderCompiler.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/metal_bridge.dir/build.make CMakeFiles/metal_bridge.dir/src/ShaderCompiler.cpp.s
 .PHONY : src/ShaderCompiler.cpp.s
 
+tests/test_buffer.o: tests/test_buffer.cpp.o
+.PHONY : tests/test_buffer.o
+
+# target to build an object file
+tests/test_buffer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_buffer.dir/build.make CMakeFiles/test_buffer.dir/tests/test_buffer.cpp.o
+.PHONY : tests/test_buffer.cpp.o
+
+tests/test_buffer.i: tests/test_buffer.cpp.i
+.PHONY : tests/test_buffer.i
+
+# target to preprocess a source file
+tests/test_buffer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_buffer.dir/build.make CMakeFiles/test_buffer.dir/tests/test_buffer.cpp.i
+.PHONY : tests/test_buffer.cpp.i
+
+tests/test_buffer.s: tests/test_buffer.cpp.s
+.PHONY : tests/test_buffer.s
+
+# target to generate assembly for a file
+tests/test_buffer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_buffer.dir/build.make CMakeFiles/test_buffer.dir/tests/test_buffer.cpp.s
+.PHONY : tests/test_buffer.cpp.s
+
 tests/test_device.o: tests/test_device.cpp.o
 .PHONY : tests/test_device.o
 
@@ -354,6 +391,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... metal_bridge"
+	@echo "... test_buffer"
 	@echo "... test_device"
 	@echo "... src/CommandMapper.o"
 	@echo "... src/CommandMapper.i"
@@ -376,6 +414,9 @@ help:
 	@echo "... src/ShaderCompiler.o"
 	@echo "... src/ShaderCompiler.i"
 	@echo "... src/ShaderCompiler.s"
+	@echo "... tests/test_buffer.o"
+	@echo "... tests/test_buffer.i"
+	@echo "... tests/test_buffer.s"
 	@echo "... tests/test_device.o"
 	@echo "... tests/test_device.i"
 	@echo "... tests/test_device.s"

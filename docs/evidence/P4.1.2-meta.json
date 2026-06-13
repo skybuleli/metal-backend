@@ -1,0 +1,30 @@
+{
+  "task": "P4.1.2",
+  "phase": "Phase 4",
+  "name": "MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared)",
+  "implementation": [
+    "src/libmetal_bridge/src/MetalBuffer.cpp",
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/include/metal_internal.h",
+    "src/libmetal_bridge/src/MetalDevice.cpp",
+    "src/libmetal_bridge/CMakeLists.txt"
+  ],
+  "csharp_binding": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs"
+  ],
+  "tests": [
+    "src/libmetal_bridge/tests/test_buffer.cpp"
+  ],
+  "test_results": "22/22 tests passed (203 assertions: 11 device + 11 buffer)",
+  "build": "libmetal_bridge.a + test_device + test_buffer",
+  "key_design": [
+    "metal_internal.h 共享结构体定义（解决 opaque 类型访问问题）",
+    "METAL_HANDLE_HEADER 宏移到 metal_bridge.h（跨文件共享）",
+    "metal_buffer_info struct (size + storage_mode)",
+    "metal_release 添加 METAL_HANDLE_TYPE_BUFFER 分支",
+    "6 个 C ABI 函数：create/create_with_bytes/get_info/map/unmap/flush",
+    "C# MetalNative.cs 添加 6 个 P/Invoke 声明",
+    "存储模式策略由 C# 调用方自行选择（通过 metal_get_device_caps 查询 UMA）"
+  ],
+  "next": "P4.1.3 — MetalTexture: Maxwell→MTLPixelFormat 映射表"
+}

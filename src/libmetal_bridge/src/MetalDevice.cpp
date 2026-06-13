@@ -9,48 +9,12 @@
 
 #include "metal_bridge.h"
 #include "metal_limits.h"
-
-#include <Foundation/Foundation.hpp>
-#include <Metal/Metal.hpp>
+#include "metal_internal.h"
 
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
 #include <new>
-
-// ════════════════════════════════════════════════════════════════════
-// 内部结构体定义（type tag + 实际 Metal 对象）
-// ════════════════════════════════════════════════════════════════════
-
-static constexpr size_t kErrorBufSize = 256;
-
-/// 所有 Handle 类型内部结构体的公共前缀
-/// 确保 metal_handle_base 位于偏移 0，以便 metal_release 读取 type tag
-#define METAL_HANDLE_HEADER \
-    metal_handle_base base;
-
-/// metal_device 内部实现
-struct metal_device
-{
-    METAL_HANDLE_HEADER
-    MTL::Device* device;              // Metal 设备对象
-    char error_buf[kErrorBufSize];    // 最后错误消息
-    metal_device_caps caps;           // 缓存的能力查询结果
-    bool caps_populated;              // caps 是否已填充
-};
-
-static_assert(offsetof(struct metal_device, device) >= sizeof(metal_handle_base),
-    "metal_device.base 必须在最前面");
-
-/// metal_queue 内部实现
-struct metal_queue
-{
-    METAL_HANDLE_HEADER
-    MTL::CommandQueue* queue;         // Metal 命令队列
-};
-
-static_assert(offsetof(struct metal_queue, queue) >= sizeof(metal_handle_base),
-    "metal_queue.base 必须在最前面");
 
 // ════════════════════════════════════════════════════════════════════
 // 内部辅助函数
@@ -399,6 +363,17 @@ void metal_release(void* handle)
             q->queue = nullptr;
         }
         delete q;
+        break;
+    }
+    case METAL_HANDLE_TYPE_BUFFER:
+    {
+        metal_buffer* buf = static_cast<metal_buffer*>(handle);
+        if (buf->buffer != nullptr)
+        {
+            buf->buffer->release();
+            buf->buffer = nullptr;
+        }
+        delete buf;
         break;
     }
     default:
