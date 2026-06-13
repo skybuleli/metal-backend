@@ -1,14 +1,14 @@
-# 下一任务 — P4.1.1 MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询
+# 下一任务 — P4.1.2 MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared)
 
-> 生成时间：2026-06-13 14:31:26
+> 生成时间：2026-06-13 14:47:48
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.1.1 |
-| 任务名称 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 |
+| 任务 ID | P4.1.2 |
+| 任务名称 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.1.1 → ✅
+- 更新 PROGRESS.md：P4.1.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

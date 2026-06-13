@@ -21,6 +21,34 @@ extern "C" {
 #define METAL_BRIDGE_EXPORT __attribute__((visibility("default")))
 #endif
 
+// ── Opaque handle type tag：统一放在每个内部结构体的头部 ──
+typedef enum metal_handle_type
+{
+    METAL_HANDLE_TYPE_DEVICE = 1,
+    METAL_HANDLE_TYPE_QUEUE = 2,
+    METAL_HANDLE_TYPE_BUFFER = 3,
+    METAL_HANDLE_TYPE_TEXTURE = 4,
+    METAL_HANDLE_TYPE_SAMPLER = 5,
+    METAL_HANDLE_TYPE_LIBRARY = 6,
+    METAL_HANDLE_TYPE_SHADER_COMPILER = 7,
+    METAL_HANDLE_TYPE_RENDER_PIPELINE = 8,
+    METAL_HANDLE_TYPE_COMPUTE_PIPELINE = 9,
+    METAL_HANDLE_TYPE_COMMAND_BUFFER = 10,
+    METAL_HANDLE_TYPE_RENDER_ENCODER = 11,
+    METAL_HANDLE_TYPE_COMPUTE_ENCODER = 12,
+    METAL_HANDLE_TYPE_BLIT_ENCODER = 13,
+    METAL_HANDLE_TYPE_PRESENTER = 14,
+    METAL_HANDLE_TYPE_FENCE = 15,
+    METAL_HANDLE_TYPE_SHARED_EVENT = 16,
+} metal_handle_type;
+
+// ── 所有内部结构体的公共头部：type tag + ABI 版本校验 ──
+typedef struct metal_handle_base
+{
+    metal_handle_type type;
+    uint32_t abi_version;
+} metal_handle_base;
+
 // ── Opaque handle：C# 侧统一以 nint/IntPtr 持有 ──
 typedef struct metal_device metal_device;
 typedef struct metal_queue metal_queue;
@@ -88,6 +116,37 @@ typedef struct metal_handle_info
     uint32_t reserved;
 } metal_handle_info;
 
+// ── 设备能力查询：在 C ABI 边界用纯 C 类型，不暴露 metal-cpp 枚举 ──
+typedef struct metal_device_caps
+{
+    /// GPU 名称，例如 "Apple M1"
+    char device_name[64];
+    /// 是否使用统一内存架构（UMA）
+    bool has_unified_memory;
+    /// 设备注册 ID（registryID）
+    uint64_t registry_id;
+    /// 最大缓冲区长度（字节）
+    uint64_t max_buffer_length;
+    /// 各维度最大线程组线程数
+    uint32_t max_threads_per_threadgroup_x;
+    uint32_t max_threads_per_threadgroup_y;
+    uint32_t max_threads_per_threadgroup_z;
+    /// 最大线程组共享内存大小（字节）
+    uint32_t max_threadgroup_memory;
+    /// 最大参数缓冲采样器数
+    uint32_t max_argument_buffer_sampler_count;
+    /// 是否支持 Apple GPU Family 7（M1）
+    bool supports_apple7;
+    /// 是否支持 Mac GPU Family 1
+    bool supports_mac1;
+    /// 最大颜色附件数
+    uint32_t max_color_attachments;
+    /// 最大视口数
+    uint32_t max_viewports;
+    /// 保留字段（对齐到 128 字节）
+    uint32_t reserved[8];
+} metal_device_caps;
+
 // ── 生命周期函数：全部模块共用 release，避免每类对象单独暴露销毁入口 ──
 METAL_BRIDGE_EXPORT uint32_t metal_bridge_abi_version(void);
 METAL_BRIDGE_EXPORT void metal_release(void* handle);
@@ -95,11 +154,14 @@ METAL_BRIDGE_EXPORT void metal_release(void* handle);
 // ── 错误访问：先收口统一错误读取方式，具体线程模型后续再细化 ──
 METAL_BRIDGE_EXPORT const char* metal_get_last_error_message(void);
 
-// ── 设备入口：Phase 4 继续扩展 descriptor 和能力查询 ──
+// ── 设备入口 ──
 METAL_BRIDGE_EXPORT metal_result metal_create_device(metal_device** out_device);
 METAL_BRIDGE_EXPORT metal_result metal_get_device_info(
     metal_device* device,
     metal_handle_info* out_info);
+METAL_BRIDGE_EXPORT metal_result metal_get_device_caps(
+    metal_device* device,
+    metal_device_caps* out_caps);
 
 // ── 队列入口：Phase 4.4 将在此基础上补 command buffer / sync / present ──
 METAL_BRIDGE_EXPORT metal_result metal_create_queue(

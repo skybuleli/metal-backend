@@ -5,6 +5,25 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ── 自动获取 macOS SDK 路径（metal-cpp 头文件依赖 SDK 中的 <cstdint>）──
+execute_process(COMMAND xcrun --sdk macosx --show-sdk-path
+    OUTPUT_VARIABLE SDKROOT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET)
+if(SDKROOT)
+    set(CMAKE_OSX_SYSROOT "${SDKROOT}")
+    message(STATUS "macOS SDK: ${SDKROOT}")
+else()
+    message(WARNING "无法自动获取 macOS SDK 路径，编译可能失败")
+endif()
+
+# ── C++ 标准库头文件路径（CLT 环境中 -isysroot 不自动包含 <c++/v1>）──
+# D1 Makefile 同样采用 -isysroot + -I<SDK>/usr/include/c++/v1 双保险
+if(SDKROOT)
+    set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES "${SDKROOT}/usr/include/c++/v1")
+    message(STATUS "C++ 头文件: ${SDKROOT}/usr/include/c++/v1")
+endif()
+
 # ── metal-cpp 路径（默认从 ~/GraphicsExperiments/third_party/metal-cpp 查找）──
 # 可通过 -DMETAL_CPP_DIR=... 覆盖
 if(NOT METAL_CPP_DIR)
@@ -37,12 +56,18 @@ target_include_directories(metal_bridge
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# ── 系统框架：Metal / Foundation / QuartzCore ──
+# ── 系统框架：用 find_library 获取框架路径 ──
+find_library(METAL_FRAMEWORK Metal REQUIRED)
+find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
+
+mark_as_advanced(METAL_FRAMEWORK FOUNDATION_FRAMEWORK QUARTZCORE_FRAMEWORK)
+
 target_link_libraries(metal_bridge
     PUBLIC
-        -framework Metal
-        -framework Foundation
-        -framework QuartzCore
+        "${METAL_FRAMEWORK}"
+        "${FOUNDATION_FRAMEWORK}"
+        "${QUARTZCORE_FRAMEWORK}"
 )
 
 # ── metal-cpp 私有头文件路径（不对外暴露）──
@@ -59,10 +84,22 @@ else()
     target_compile_definitions(metal_bridge PRIVATE METAL_CPP_FOUND=0)
 endif()
 
-# ── 测试目标（后续递增）──
+# ── Catch2 测试框架 ──
 option(BUILD_TESTS "构建单元测试" OFF)
 if(BUILD_TESTS)
-    add_executable(test_device tests/test_device.cpp)
-    target_link_libraries(test_device PRIVATE metal_bridge)
-    target_include_directories(test_device PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    enable_testing()
+    find_package(Catch2 REQUIRED)
+
+    add_executable(test_device
+        tests/test_device.cpp
+    )
+    target_link_libraries(test_device PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_device PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_device COMMAND test_device)
 endif()

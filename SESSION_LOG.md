@@ -669,3 +669,21 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前资源对象仅保留托管占位状态，不涉及真实 `MTLBuffer` / `MTLTexture` / `MTLSamplerState` 创建；这些留给 Phase 4 设备与资源管理任务
+
+### 2026-06-13 下午 | P4.1.0 固化 Metal 硬件限制常量与资源对齐策略 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 已创建 `metal_limits.h`，固化 Metal 对 Apple GPU Family 7 (M1) 的硬件限制常量（Buffer/Texture/Sampler/Compute/Viewport 上限）、对齐字节要求（256B/64B）和存储模式选择策略（UMA→Shared / 离散→Managed/Private / MSAA→Memoryless），并更新 CMakeLists.txt 加入 Metal 框架依赖和 metal-cpp 路径
+- **变更**:
+  - 新增 `src/libmetal_bridge/include/metal_limits.h`，9 类 30+ 硬件限制常量 + 对齐辅助宏 + `metal_validate_limits()` 运行时校验声明
+  - 更新 `src/libmetal_bridge/include/metal_bridge.h`，添加 `#include "metal_limits.h"`
+  - 更新 `src/libmetal_bridge/src/MetalDevice.cpp`，实现 `metal_validate_limits()` 运行时校验 + P3 遗留 stub 函数填充
+  - 更新 `src/libmetal_bridge/CMakeLists.txt`，加入 Metal/Foundation/QuartzCore 框架链接、metal-cpp 路径配置（`$HOME/GraphicsExperiments/third_party/metal-cpp`）、新头文件注册
+  - 新增 `docs/evidence/P4.1.0-meta.json`
+- **验证**:
+  - `cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .` → `libmetal_bridge.a` 构建通过
+- **证据**:
+  - `docs/evidence/P4.1.0-meta.json`
+  - `src/libmetal_bridge/build/libmetal_bridge.a`
+- **提交**: `a4a18ea feat(metal): P4.1.0 固化 Metal 硬件限制常量与资源对齐策略 [done]`
+- **下一任务**: P4.1.1 — MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询

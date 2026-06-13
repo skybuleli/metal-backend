@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T14:31:26+08:00
+# 最后更新: 2026-06-13T14:47:47+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 58/144 任务 (40.3%)
+# 完成度: 59/144 任务 (41.0%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -110,7 +110,7 @@
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-13T14:10:00+08:00 | src/libmetal_bridge/include/metal_limits.h + docs/evidence/P4.1.0-meta.json + src/libmetal_bridge/build/libmetal_bridge.a |
-| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ⬜ | — | — |
+| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ✅ | 2026-06-13T15:40:00+08:00 | src/libmetal_bridge/src/MetalDevice.cpp + src/libmetal_bridge/tests/test_device.cpp + docs/evidence/P4.1.1-meta.json：11/11 Catch2 测试通过，libmetal_bridge.a 构建通过 |
 | P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ⬜ | — | — |
 | P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
 | P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 58 (40.3%)
+- 已完成: 59 (41.0%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 86
+- 待开始: 85
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.1.1 — MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询
+- 下一任务: P4.1.2 — MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared)
