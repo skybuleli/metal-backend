@@ -58,9 +58,18 @@ libmetal_bridge/
 ## 与 Phase 3 任务的关系
 
 - `P3.1a`：确定模块边界与 C ABI/opaque handle 方案
-- `P3.1b`：确定 `MetalShaderCompiler` 单例与 workaround 位掩码
+- `P3.1b`：确定 `MetalShaderCompiler` 单例、默认配置与 workaround 位掩码
 - `P3.4`：`MetalNative.cs` 按本头文件声明 P/Invoke
 - `P3.7-P3.9`：再逐步补 C# 侧包装类型与 stub
+
+## ShaderCompiler 约束（P3.1b）
+
+- 默认按 `metal_device` 维度复用编译器实例
+- 默认启用：
+  - `METAL_WA_COMPILER_SINGLETON`
+  - `METAL_WA_LANG_VERSION_3_2`
+- 其他 workaround 先固定命名与 bit 位，具体行为在 Phase 4.2 再实现
+- 编译器配置通过 `metal_shader_compiler_config` 传递，不在 Phase 3 暴露 Apple 私有枚举
 
 ## 技术栈
 

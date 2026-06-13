@@ -537,3 +537,19 @@
   - `cmake --build /tmp/metal_bridge_p31a` → 成功生成 `libmetal_bridge.a`
 - **注意事项**:
   - 当前 `.cpp` 仍是占位文件，因此 `ranlib` 报告 “has no symbols” 警告；这不阻塞 `P3.1a`，属于 Phase 4 实现前的正常状态
+
+### 2026-06-13 中午 | P3.1b 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已为 `MetalShaderCompiler` 固定单例复用策略、workaround bit 位、默认配置结构和基础配置接口，后续 `MetalNative.cs` / `MetalShaderCompiler.cs` 可以按稳定配置面继续实现
+- **变更**:
+  - 更新 `src/libmetal_bridge/include/metal_bridge.h`，新增 `metal_workaround_flags`、`metal_shader_compiler_config` 以及 compiler 配置相关函数声明
+  - 重写 `src/libmetal_bridge/src/ShaderCompiler.cpp` 注释，明确其在 Phase 3 只承担生命周期与配置骨架
+  - 更新 `src/libmetal_bridge/README.md`，补充 ShaderCompiler 默认策略与 workaround 约束
+  - 新增 `docs/p3-shader-compiler-design.md`，记录为什么默认按 device 维度单例复用、哪些 workaround 当前固定、哪些实现留到 Phase 4.2
+  - 新增 `docs/evidence/P3.1b-shader-compiler-design.txt`，记录 CMake configure/build 验证结果
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B /tmp/metal_bridge_p31b`
+  - `cmake --build /tmp/metal_bridge_p31b` → 成功生成 `libmetal_bridge.a`
+- **注意事项**:
+  - 当前仍未实现真实 compiler 哈希表、环境变量解析和 Slang/MSC 调用；这些故意留给 `P3.8` 与 `P4.2.x`

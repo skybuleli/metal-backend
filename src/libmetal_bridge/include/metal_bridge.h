@@ -58,6 +58,28 @@ typedef enum metal_storage_mode
     METAL_STORAGE_MODE_MEMORYLESS = 3,
 } metal_storage_mode;
 
+// ── Workaround 位掩码：先固定开关名字与位分配，避免后续日志/配置漂移 ──
+typedef enum metal_workaround_flags
+{
+    METAL_WA_COMPILER_SINGLETON = 1u << 0,
+    METAL_WA_LANG_VERSION_3_2 = 1u << 1,
+    METAL_WA_DISCARD_GUARD = 1u << 2,
+    METAL_WA_HELPER_INVOCATION = 1u << 3,
+    METAL_WA_SAMPLE_MASK = 1u << 4,
+    METAL_WA_TESS_TO_COMPUTE = 1u << 5,
+    METAL_WA_TEXTURE_FORMAT = 1u << 6,
+} metal_workaround_flags;
+
+// ── 编译器配置：C# 侧按值传递，避免复杂 descriptor 提前冻结 ──
+typedef struct metal_shader_compiler_config
+{
+    uint32_t abi_version;
+    uint32_t enabled_workarounds;
+    uint32_t disabled_workarounds;
+    uint32_t metal_language_version;
+    uint32_t reserved;
+} metal_shader_compiler_config;
+
 // ── 资源句柄元信息：供 C# 侧做安全校验与日志记录 ──
 typedef struct metal_handle_info
 {
@@ -87,6 +109,13 @@ METAL_BRIDGE_EXPORT metal_result metal_create_queue(
 METAL_BRIDGE_EXPORT metal_result metal_acquire_shader_compiler(
     metal_device* device,
     metal_shader_compiler** out_compiler);
+METAL_BRIDGE_EXPORT metal_result metal_get_default_shader_compiler_config(
+    metal_shader_compiler_config* out_config);
+METAL_BRIDGE_EXPORT metal_result metal_configure_shader_compiler(
+    metal_shader_compiler* compiler,
+    const metal_shader_compiler_config* config);
+METAL_BRIDGE_EXPORT uint32_t metal_shader_compiler_get_workarounds(
+    metal_shader_compiler* compiler);
 
 // TODO: Phase 4
 // - metal_create_buffer / metal_map_buffer / metal_unmap_buffer

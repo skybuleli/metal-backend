@@ -1,0 +1,35 @@
+== cmake configure ==
+-- The CXX compiler identification is AppleClang 21.0.0.21000099
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /Library/Developer/CommandLineTools/usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/metal_bridge_p31b
+
+== cmake build ==
+[ 12%] Building CXX object CMakeFiles/metal_bridge.dir/src/MetalDevice.cpp.o
+[ 25%] Building CXX object CMakeFiles/metal_bridge.dir/src/MetalQueue.cpp.o
+[ 37%] Building CXX object CMakeFiles/metal_bridge.dir/src/MetalBuffer.cpp.o
+[ 50%] Building CXX object CMakeFiles/metal_bridge.dir/src/MetalTexture.cpp.o
+[ 62%] Building CXX object CMakeFiles/metal_bridge.dir/src/ShaderCompiler.cpp.o
+[ 75%] Building CXX object CMakeFiles/metal_bridge.dir/src/CommandMapper.cpp.o
+[ 87%] Building CXX object CMakeFiles/metal_bridge.dir/src/Presenter.cpp.o
+[100%] Linking CXX static library libmetal_bridge.a
+ranlib: warning: 'libmetal_bridge.a(MetalDevice.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalQueue.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalBuffer.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalTexture.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(ShaderCompiler.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(CommandMapper.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(Presenter.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalDevice.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalQueue.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalBuffer.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(MetalTexture.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(ShaderCompiler.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(CommandMapper.cpp.o)' has no symbols
+ranlib: warning: 'libmetal_bridge.a(Presenter.cpp.o)' has no symbols
+[100%] Built target metal_bridge

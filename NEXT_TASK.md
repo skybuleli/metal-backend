@@ -1,14 +1,14 @@
-# 下一任务 — P3.1b 收口 MetalShaderCompiler 单例 + workaround 位掩码设计
+# 下一任务 — P3.2 创建 Ryujinx.Graphics.Metal 项目 + .csproj
 
-> 生成时间：2026-06-13 12:39:13
+> 生成时间：2026-06-13 12:50:16
 > 所属阶段：Phase 3 — Ryubing Fork 与 GAL 集成
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P3.1b |
-| 任务名称 | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 |
+| 任务 ID | P3.2 |
+| 任务名称 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P3.1b → ✅
+- 更新 PROGRESS.md：P3.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
