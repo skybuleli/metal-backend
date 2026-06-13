@@ -654,3 +654,18 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前仍未实现真实 `Slang → DXIL → MSC → metallib` 编译流程；`MetalShaderCompiler` 现阶段只收口生命周期、配置与占位程序对象，具体编译逻辑留给 Phase 4.2
+
+### 2026-06-13 下午 | P3.9 创建 MetalBuffer/Texture/Sampler stubs | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已为 Metal 后端补齐最小资源类型骨架，并让 `MetalRenderer` 的 buffer/texture/sampler 创建路径不再悬空
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs`
+  - 实现 `MetalBufferPool`，收口 `BufferHandle` 分配、删除、读写与 sparse/imported 占位逻辑
+  - 实现 `MetalTexture`、`MetalSampler`、`MetalTextureArray`、`MetalImageArray` 的最小 stub
+  - 更新 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`，接入资源创建、删除与 buffer 数据访问入口
+  - 生成证据日志 `docs/evidence/P3.9-metal-resources-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前资源对象仅保留托管占位状态，不涉及真实 `MTLBuffer` / `MTLTexture` / `MTLSamplerState` 创建；这些留给 Phase 4 设备与资源管理任务

@@ -1,4 +1,5 @@
 using Ryujinx.Common.Configuration;
+using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader.Translation;
 using System;
@@ -9,8 +10,11 @@ namespace Ryujinx.Graphics.Metal
     [SupportedOSPlatform("macos")]
     public sealed class MetalRenderer : IRenderer
     {
+        private readonly MetalBufferPool _buffers;
         private readonly MetalShaderCompiler _shaderCompiler;
+        private readonly MetalImageArray _nullImageArray;
         private readonly MetalPipeline _pipeline;
+        private readonly MetalTextureArray _nullTextureArray;
         private Action<Action> _interruptAction;
         private uint _programCount;
 
@@ -22,8 +26,11 @@ namespace Ryujinx.Graphics.Metal
 
         public MetalRenderer()
         {
+            _buffers = new MetalBufferPool();
             _shaderCompiler = new MetalShaderCompiler();
             _pipeline = new MetalPipeline();
+            _nullTextureArray = new MetalTextureArray(0, false);
+            _nullImageArray = new MetalImageArray(0, false);
         }
 
         public IWindow Window => throw new NotSupportedException("P3.7 之后再接入 Metal 窗口与 presenter。");
@@ -37,22 +44,22 @@ namespace Ryujinx.Graphics.Metal
 
         public BufferHandle CreateBuffer(int size, BufferAccess access = BufferAccess.Default)
         {
-            throw new NotSupportedException();
+            return _buffers.Create(size, access);
         }
 
         public BufferHandle CreateBuffer(nint pointer, int size)
         {
-            throw new NotSupportedException();
+            return _buffers.CreateImported(pointer, size);
         }
 
         public BufferHandle CreateBufferSparse(ReadOnlySpan<BufferRange> storageBuffers)
         {
-            throw new NotSupportedException();
+            return _buffers.CreateSparse(storageBuffers);
         }
 
         public IImageArray CreateImageArray(int size, bool isBuffer)
         {
-            throw new NotSupportedException();
+            return new MetalImageArray(size, isBuffer);
         }
 
         public IProgram CreateProgram(ShaderSource[] shaders, ShaderInfo info)
@@ -63,17 +70,17 @@ namespace Ryujinx.Graphics.Metal
 
         public ISampler CreateSampler(SamplerCreateInfo info)
         {
-            throw new NotSupportedException();
+            return new MetalSampler(info);
         }
 
         public ITexture CreateTexture(TextureCreateInfo info)
         {
-            throw new NotSupportedException();
+            return new MetalTexture(info);
         }
 
         public ITextureArray CreateTextureArray(int size, bool isBuffer)
         {
-            throw new NotSupportedException();
+            return new MetalTextureArray(size, isBuffer);
         }
 
         public bool PrepareHostMapping(nint address, ulong size)
@@ -87,17 +94,19 @@ namespace Ryujinx.Graphics.Metal
 
         public void DeleteBuffer(BufferHandle buffer)
         {
-            throw new NotSupportedException();
+            _buffers.Delete(buffer);
         }
 
         public void Dispose()
         {
+            _nullImageArray.Dispose();
+            _nullTextureArray.Dispose();
             _shaderCompiler.Dispose();
         }
 
         public PinnedSpan<byte> GetBufferData(BufferHandle buffer, int offset, int size)
         {
-            throw new NotSupportedException();
+            return _buffers.GetData(buffer, offset, size);
         }
 
         public Capabilities GetCapabilities()
@@ -145,7 +154,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetBufferData(BufferHandle buffer, int offset, ReadOnlySpan<byte> data)
         {
-            throw new NotSupportedException();
+            _buffers.SetData(buffer, offset, data);
         }
 
         public void SetInterruptAction(Action<Action> interruptAction)
