@@ -1,0 +1,21 @@
+{
+  "task": "P4.3.3",
+  "phase": "Phase 4",
+  "name": "SetUniformBuffers: MTLBuffer 绑定",
+  "implementation": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs"
+  ],
+  "key_design": [
+    "MetalBufferPool 新增 TryGet(BufferHandle) 能力，用于从 GAL 句柄解析原生 MetalBuffer",
+    "MetalPipeline 构造时接入 BufferPool，使 SetUniformBuffers 能解析并缓存 native MTLBuffer 绑定状态",
+    "SetUniformBuffers 对 binding 索引做 31 槽上限保护，对 offset/size 做边界裁剪，避免后续 draw 访问越界",
+    "新增 TryGetUniformBufferBinding，供后续 Draw/DrawIndexed 将缓存的 uniform buffer 状态下发到 render encoder"
+  ],
+  "verification": [
+    "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj"
+  ],
+  "build": "Ryujinx.Graphics.Metal 构建通过（82 个 CA1416 平台警告，0 错误）",
+  "next": "P4.3.4 — SetTextureAndSampler: 纹理+采样器绑定"
+}

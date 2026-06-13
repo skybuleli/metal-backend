@@ -826,3 +826,19 @@
   - Metal 顶点属性/缓冲槽位按 31 上限截断，避免 native 越界
   - `R8/R16/R32` 标量/向量、normalized、常见 packed/BGRA 顶点格式已映射；不支持的 GAL 顶点格式当前会跳过，等待后续按真实游戏需求补齐
 - **下一任务**: P4.3.3 — SetUniformBuffers: MTLBuffer 绑定
+
+### 2026-06-13 | P4.3.3 SetUniformBuffers — MTLBuffer 绑定 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 完成 uniform buffer 绑定状态缓存，打通 `BufferHandle` → 原生 `MTLBuffer` 句柄解析，为后续 `Draw/DrawIndexed` 下发 encoder 绑定做准备
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs`：`MetalBufferPool` 新增 `TryGet(BufferHandle)`，支持解析原生 `MetalBuffer`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`：`MetalPipeline` 构造注入 `MetalBufferPool`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：实现 `SetUniformBuffers`，缓存 binding/handle/offset/size，做槽位上限与范围裁剪，并新增 `TryGetUniformBufferBinding`
+  - `docs/evidence/P4.3.3-meta.json`：补充实现与验证证据
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（82 个 CA1416 平台警告，0 错误）
+- **关键说明**:
+  - 当前阶段聚焦“绑定状态缓存”而非真正 encoder 下发；真实 `setVertexBuffer` / `setFragmentBuffer` 调用将在 `P4.3.6 Draw/DrawIndexed` 中消费这些缓存状态
+  - 空句柄、越界 offset、超长 size 都会被安全清空或裁剪，避免后续 draw 访问非法范围
+- **下一任务**: P4.3.4 — SetTextureAndSampler: 纹理+采样器绑定

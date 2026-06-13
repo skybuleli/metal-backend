@@ -150,6 +150,11 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
+        internal bool TryGet(BufferHandle buffer, out MetalBuffer metalBuffer)
+        {
+            return _buffers.TryGetValue((int)buffer, out metalBuffer);
+        }
+
         public PinnedSpan<byte> GetData(BufferHandle buffer, int offset, int size)
         {
             if (!_buffers.TryGetValue((int)buffer, out MetalBuffer metalBuf))

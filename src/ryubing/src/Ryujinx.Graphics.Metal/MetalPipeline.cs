@@ -9,12 +9,15 @@ namespace Ryujinx.Graphics.Metal
     {
         private const int MaxVertexAttributes = 31;
         private const int MaxVertexBufferBindings = 31;
+        private const int MaxUniformBufferBindings = 31;
 
         private IProgram _program;
         private nint _pipelineHandle;
         private readonly nint _deviceHandle;
+        private readonly MetalBufferPool _buffers;
         private readonly VertexAttribDescriptor[] _vertexAttribs;
         private readonly VertexBufferDescriptor[] _vertexBuffers;
+        private readonly MetalBufferBinding[] _uniformBuffers;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
 
@@ -23,12 +26,14 @@ namespace Ryujinx.Graphics.Metal
         /// </summary>
         internal nint PipelineHandle => _pipelineHandle;
 
-        public MetalPipeline(nint deviceHandle)
+        public MetalPipeline(nint deviceHandle, MetalBufferPool buffers)
         {
             _deviceHandle = deviceHandle;
+            _buffers = buffers;
             _pipelineHandle = nint.Zero;
             _vertexAttribs = new VertexAttribDescriptor[MaxVertexAttributes];
             _vertexBuffers = new VertexBufferDescriptor[MaxVertexBufferBindings];
+            _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
         }
 
         public void Barrier()
@@ -332,6 +337,46 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetUniformBuffers(ReadOnlySpan<BufferAssignment> buffers)
         {
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                BufferAssignment assignment = buffers[i];
+                int binding = assignment.Binding;
+
+                if ((uint)binding >= MaxUniformBufferBindings)
+                {
+                    continue;
+                }
+
+                BufferRange range = assignment.Range;
+
+                if (range.Handle == BufferHandle.Null || range.Size <= 0)
+                {
+                    _uniformBuffers[binding] = default;
+                    continue;
+                }
+
+                if (!_buffers.TryGet(range.Handle, out MetalBuffer metalBuffer))
+                {
+                    _uniformBuffers[binding] = default;
+                    continue;
+                }
+
+                int safeOffset = Math.Clamp(range.Offset, 0, (int)metalBuffer.Size);
+                int safeSize = Math.Clamp(range.Size, 0, (int)metalBuffer.Size - safeOffset);
+
+                if (safeSize <= 0)
+                {
+                    _uniformBuffers[binding] = default;
+                    continue;
+                }
+
+                _uniformBuffers[binding] = new MetalBufferBinding
+                {
+                    Handle = metalBuffer.Handle,
+                    Offset = (ulong)safeOffset,
+                    Size = (ulong)safeSize,
+                };
+            }
         }
 
         public void SetUserClipDistance(int index, bool enableClip)
@@ -561,6 +606,34 @@ namespace Ryujinx.Graphics.Metal
             };
 
             return metalFormat != MetalVertexFormat.Invalid;
+        }
+
+        /// <summary>
+        /// 获取指定 binding 上当前缓存的 uniform buffer 绑定。
+        /// 供后续 Draw/DrawIndexed 将状态批量下发到 render encoder 使用。
+        /// </summary>
+        internal bool TryGetUniformBufferBinding(int binding, out nint handle, out ulong offset, out ulong size)
+        {
+            if ((uint)binding >= MaxUniformBufferBindings)
+            {
+                handle = nint.Zero;
+                offset = 0;
+                size = 0;
+                return false;
+            }
+
+            MetalBufferBinding bindingState = _uniformBuffers[binding];
+            handle = bindingState.Handle;
+            offset = bindingState.Offset;
+            size = bindingState.Size;
+            return handle != nint.Zero && size != 0;
+        }
+
+        private struct MetalBufferBinding
+        {
+            public nint Handle;
+            public ulong Offset;
+            public ulong Size;
         }
     }
 }
