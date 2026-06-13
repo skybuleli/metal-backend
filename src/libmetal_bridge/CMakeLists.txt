@@ -73,6 +73,29 @@ target_link_libraries(metal_bridge
         "${QUARTZCORE_FRAMEWORK}"
 )
 
+if(SLANG_LIB)
+    target_link_libraries(metal_bridge PRIVATE "${SLANG_LIB}")
+    target_include_directories(metal_bridge PRIVATE "${SLANG_INCLUDE_DIR}")
+    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=1)
+else()
+    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=0)
+endif()
+
+# ── Slang 着色器编译器 ──
+find_library(SLANG_LIB slang HINTS /usr/local/lib)
+if(SLANG_LIB)
+    message(STATUS "Slang 库: ${SLANG_LIB}")
+else()
+    message(WARNING "未找到 libslang.dylib，P4.2.2 着色器编译将不可用")
+endif()
+
+find_path(SLANG_INCLUDE_DIR slang.h HINTS /usr/local/include/slang)
+if(SLANG_INCLUDE_DIR)
+    message(STATUS "Slang 头文件: ${SLANG_INCLUDE_DIR}")
+else()
+    message(WARNING "未找到 slang.h，P4.2.2 着色器编译将不可用")
+endif()
+
 # ── metal-cpp 私有头文件路径（不对外暴露）──
 if(EXISTS "${METAL_CPP_DIR}")
     target_include_directories(metal_bridge
