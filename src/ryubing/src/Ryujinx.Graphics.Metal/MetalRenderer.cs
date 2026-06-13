@@ -7,13 +7,19 @@ namespace Ryujinx.Graphics.Metal
 {
     public sealed class MetalRenderer : IRenderer
     {
+        private readonly MetalPipeline _pipeline;
         private Action<Action> _interruptAction;
 
         public event EventHandler<ScreenCaptureImageInfo> ScreenCaptured;
 
         public bool PreferThreading => false;
 
-        public IPipeline Pipeline => throw new NotSupportedException("P3.6 将补齐 MetalPipeline stub。");
+        public IPipeline Pipeline => _pipeline;
+
+        public MetalRenderer()
+        {
+            _pipeline = new MetalPipeline();
+        }
 
         public IWindow Window => throw new NotSupportedException("P3.7 之后再接入 Metal 窗口与 presenter。");
 

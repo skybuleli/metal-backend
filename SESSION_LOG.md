@@ -609,3 +609,17 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - `Pipeline` 和 `Window` 目前仍显式抛出未实现异常，等待 `P3.6` 与 `P3.7` 分别补齐 `MetalPipeline` 和设备/展示层
+
+### 2026-06-13 下午 | P3.6 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已新增 `MetalPipeline` 占位实现，覆盖真实 `IPipeline` 的全部方法签名，并已接入 `MetalRenderer.Pipeline`
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`
+  - 为 `IPipeline` 全量方法提供 stub/no-op/显式默认返回
+  - 更新 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`，在构造函数中持有并返回 `MetalPipeline`
+  - 生成证据日志 `docs/evidence/P3.6-metal-pipeline-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前所有状态设置、绘制、同步与条件渲染入口都只保留签名与占位行为；真实 Metal API 映射仍留给 Phase 4/5
