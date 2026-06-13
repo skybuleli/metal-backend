@@ -675,6 +675,21 @@ typedef struct metal_render_pipeline_descriptor
     uint32_t reserved[2];
 } metal_render_pipeline_descriptor;
 
+typedef enum metal_primitive_type
+{
+    METAL_PRIMITIVE_TYPE_POINT = 0,
+    METAL_PRIMITIVE_TYPE_LINE = 1,
+    METAL_PRIMITIVE_TYPE_LINE_STRIP = 2,
+    METAL_PRIMITIVE_TYPE_TRIANGLE = 3,
+    METAL_PRIMITIVE_TYPE_TRIANGLE_STRIP = 4,
+} metal_primitive_type;
+
+typedef enum metal_index_type
+{
+    METAL_INDEX_TYPE_UINT16 = 0,
+    METAL_INDEX_TYPE_UINT32 = 1,
+} metal_index_type;
+
 /// 创建渲染管线状态
 /// @param device     Metal 设备句柄
 /// @param descriptor 渲染管线描述符
@@ -684,9 +699,68 @@ METAL_BRIDGE_EXPORT metal_result metal_create_render_pipeline(
     const metal_render_pipeline_descriptor* descriptor,
     metal_render_pipeline** out_pipeline);
 
-// TODO: Phase 4.3+
-// - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
-// - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口
+/// 创建命令缓冲区
+METAL_BRIDGE_EXPORT metal_result metal_begin_command_buffer(
+    metal_queue* queue,
+    metal_command_buffer** out_command_buffer);
+
+/// 基于内部临时 1x1 颜色附件开始一次最小 render encoding。
+/// 当前仅用于 P4.3.6 打通 Draw/DrawIndexed 链路；
+/// 后续 P4.3.7 将由真实的 SetRenderTargets 提供 MTLRenderPassDescriptor。
+METAL_BRIDGE_EXPORT metal_result metal_begin_render_encoding(
+    metal_command_buffer* command_buffer,
+    metal_render_pipeline* pipeline,
+    metal_render_encoder** out_render_encoder);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_vertex_buffer(
+    metal_render_encoder* encoder,
+    uint32_t index,
+    metal_buffer* buffer,
+    uint64_t offset);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_fragment_buffer(
+    metal_render_encoder* encoder,
+    uint32_t index,
+    metal_buffer* buffer,
+    uint64_t offset);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_fragment_texture(
+    metal_render_encoder* encoder,
+    uint32_t index,
+    metal_texture* texture);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_fragment_sampler(
+    metal_render_encoder* encoder,
+    uint32_t index,
+    metal_sampler* sampler);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_primitives(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    uint32_t vertex_start,
+    uint32_t vertex_count,
+    uint32_t instance_count,
+    uint32_t base_instance);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_indexed_primitives(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    uint32_t index_count,
+    metal_index_type index_type,
+    metal_buffer* index_buffer,
+    uint64_t index_buffer_offset,
+    uint32_t instance_count,
+    int32_t base_vertex,
+    uint32_t base_instance);
+
+METAL_BRIDGE_EXPORT metal_result metal_end_render_encoding(
+    metal_render_encoder* encoder);
+
+METAL_BRIDGE_EXPORT metal_result metal_commit_command_buffer(
+    metal_command_buffer* command_buffer);
+
+METAL_BRIDGE_EXPORT metal_result metal_wait_command_buffer(
+    metal_command_buffer* command_buffer);
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,16 @@
 
 ---
 
+## 2026-06-13 | P4.2.2 Slang API P/Invoke — Slang 原生语法→DXIL | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 用 Slang C API 直接编译 DXIL，保留 CLI 作为回退路径
+- **关键发现**:
+  - `SlangResult`/`SlangProfileID` 是全局类型
+  - profile 需要通过新建 `ISession` 切换
+
+---
+
 ## 2026-06-13 | P4.2.0 MSC/Metal 着色器能力验证矩阵 — 4 维度 35/35 全部通过 | ✅ 完成
 
 - **Agent**: Codex (Buffy)

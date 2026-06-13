@@ -22,19 +22,11 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 4 — 核心 Metal 后端实现
-- 当前进度：76/144 任务完成
-- 下一任务：P4.3.6 — Draw/DrawIndexed: MTLRenderCommandEncoder 绘制
+- 当前进度：77/144 任务完成
+- 下一任务：P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
-
-### 2026-06-13 | P4.2.2 Slang API P/Invoke — Slang 原生语法→DXIL | ✅ 完成
-
-- **Agent**: Codex (Buffy)
-- **结果**: ✅ 用 Slang C API 直接编译 DXIL，保留 CLI 作为回退路径
-- **关键发现**:
-  - `SlangResult`/`SlangProfileID` 是全局类型
-  - profile 需要通过新建 `ISession` 切换
 
 ### 2026-06-13 | P4.3.2 SetVertexBuffers/SetVertexAttribs — 顶点布局映射 | ✅ 完成
 
@@ -64,3 +56,21 @@
   - `python3 tools/gen_next_task.py` ✅
   - `python3 tools/verify_progress.py` ✅（76/144 任务完成）
 - **下一任务**: P4.3.6 — Draw/DrawIndexed: MTLRenderCommandEncoder 绘制
+
+### 2026-06-14 | P4.3.6 Draw/DrawIndexed — MTLRenderCommandEncoder 绘制 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 打通最小 render draw 链路：`queue -> command buffer -> render encoder -> draw -> commit/wait`
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h` / `include/metal_internal.h`：新增 command buffer / render encoder / draw C ABI 与内部句柄结构
+  - `src/libmetal_bridge/src/MetalCommandBuffer.cpp`：实现最小 command buffer、内部临时 `1x1 BGRA8Unorm` 颜色附件、render encoder 绑定与 `Draw/DrawIndexed`
+  - `src/libmetal_bridge/src/MetalDevice.cpp`：补 `metal_release` 对 command buffer / render encoder 的释放分发
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：补齐 draw ABI P/Invoke 与 primitive/index 枚举
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs` / `MetalPipeline.cs`：接入 queue 句柄、primitive/index/vertex buffer 查询与当前绑定状态下发
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B build/libmetal_bridge && cmake --build build/libmetal_bridge --target metal_bridge -j4` ✅
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（107 个既有 CA1416 平台警告，0 错误）
+- **说明**:
+  - 当前 render encoder 使用内部临时 `1x1` 颜色附件，仅用于打通 `P4.3.6` 的真实 draw 路径
+  - 下一任务 `P4.3.7` 将把该临时附件替换为 `SetRenderTargets` 驱动的真实 `MTLRenderPassDescriptor`
+- **下一任务**: P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor

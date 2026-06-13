@@ -389,6 +389,33 @@ void metal_release(void* handle)
         delete pipeline;
         break;
     }
+    case METAL_HANDLE_TYPE_COMMAND_BUFFER:
+    {
+        metal_command_buffer* command_buffer = static_cast<metal_command_buffer*>(handle);
+        if (command_buffer->command_buffer != nullptr)
+        {
+            command_buffer->command_buffer->release();
+            command_buffer->command_buffer = nullptr;
+        }
+        delete command_buffer;
+        break;
+    }
+    case METAL_HANDLE_TYPE_RENDER_ENCODER:
+    {
+        metal_render_encoder* encoder = static_cast<metal_render_encoder*>(handle);
+        if (encoder->encoder != nullptr)
+        {
+            encoder->encoder->release();
+            encoder->encoder = nullptr;
+        }
+        if (encoder->color_target != nullptr)
+        {
+            encoder->color_target->release();
+            encoder->color_target = nullptr;
+        }
+        delete encoder;
+        break;
+    }
     default:
         // 未知 type tag：不做任何操作
         // 这是一个防御性检查，防止未注册的 handle 类型被错误释放

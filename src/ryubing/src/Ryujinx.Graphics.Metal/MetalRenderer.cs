@@ -19,6 +19,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalDevice _device;
         private readonly bool _hasUnifiedMemory;
         private readonly MetalStorageMode _defaultStorageMode;
+        private readonly nint _queueHandle;
         private Action<Action> _interruptAction;
         private uint _programCount;
 
@@ -39,10 +40,17 @@ namespace Ryujinx.Graphics.Metal
                 ? MetalStorageMode.Shared
                 : MetalStorageMode.Managed;
 
+            MetalResult queueResult = MetalNative.CreateQueue(_device.Handle, out nint queueHandle);
+            if (queueResult != MetalResult.Ok)
+            {
+                throw new InvalidOperationException($"CreateQueue 失败：{queueResult}");
+            }
+
+            _queueHandle = queueHandle;
             _buffers = new MetalBufferPool(_device.Handle, _defaultStorageMode);
             _shaderCompiler = new MetalShaderCompiler();
             _shaderCompiler.AttachDevice(_device); // 绑定设备，初始化编译器句柄
-            _pipeline = new MetalPipeline(_device.Handle, _buffers);
+            _pipeline = new MetalPipeline(_device.Handle, _queueHandle, _buffers);
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
             _window = new MetalWindow();
@@ -119,6 +127,10 @@ namespace Ryujinx.Graphics.Metal
             _nullImageArray.Dispose();
             _nullTextureArray.Dispose();
             _shaderCompiler.Dispose();
+            if (_queueHandle != nint.Zero)
+            {
+                MetalNative.Release(_queueHandle);
+            }
             _device.Dispose();
         }
 

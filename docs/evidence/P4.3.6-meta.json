@@ -1,0 +1,27 @@
+{
+  "task": "P4.3.6",
+  "phase": "Phase 4",
+  "name": "Draw/DrawIndexed: MTLRenderCommandEncoder 绘制",
+  "implementation": [
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/include/metal_internal.h",
+    "src/libmetal_bridge/src/MetalCommandBuffer.cpp",
+    "src/libmetal_bridge/src/MetalDevice.cpp",
+    "src/libmetal_bridge/CMakeLists.txt",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs"
+  ],
+  "key_design": [
+    "新增最小 command buffer / render encoder / draw C ABI，建立 queue -> command buffer -> render encoder -> draw -> commit/wait 的真实调用路径",
+    "在 SetRenderTargets 尚未实现前，native 侧内部创建临时 1x1 BGRA8Unorm 颜色附件，仅用于打通 P4.3.6 的 encoder 与 draw 链路",
+    "MetalPipeline 复用已缓存的 vertex/uniform/storage/texture/sampler 状态，把绑定统一下发到 render encoder",
+    "补齐 primitive topology、index buffer 和 vertex buffer 查询入口，为后续真实 render target 与状态设置任务复用"
+  ],
+  "verification": [
+    "cmake -S src/libmetal_bridge -B build/libmetal_bridge && cmake --build build/libmetal_bridge --target metal_bridge -j4",
+    "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj"
+  ],
+  "build": "libmetal_bridge.a 构建通过；Ryujinx.Graphics.Metal 构建通过（107 个 CA1416 平台警告，0 错误）",
+  "next": "P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor"
+}

@@ -43,6 +43,7 @@ set(METAL_BRIDGE_SOURCES
     src/MetalBuffer.cpp
     src/MetalTexture.cpp
     src/MetalPipeline.cpp
+    src/MetalCommandBuffer.cpp
     src/ShaderCompiler.cpp
     src/CommandMapper.cpp
     src/Presenter.cpp

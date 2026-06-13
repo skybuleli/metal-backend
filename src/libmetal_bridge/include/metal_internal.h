@@ -128,3 +128,24 @@ struct metal_render_pipeline
 static_assert(offsetof(struct metal_render_pipeline, pipeline_state) >= sizeof(metal_handle_base),
     "metal_render_pipeline.base 必须在最前面");
 
+/// metal_command_buffer 内部实现（P4.3.6）
+struct metal_command_buffer
+{
+    METAL_HANDLE_HEADER
+    MTL::CommandBuffer* command_buffer;        // Metal 命令缓冲区
+};
+
+static_assert(offsetof(struct metal_command_buffer, command_buffer) >= sizeof(metal_handle_base),
+    "metal_command_buffer.base 必须在最前面");
+
+/// metal_render_encoder 内部实现（P4.3.6）
+struct metal_render_encoder
+{
+    METAL_HANDLE_HEADER
+    metal_command_buffer* owner;              // 所属命令缓冲区
+    MTL::RenderCommandEncoder* encoder;       // Metal 渲染编码器
+    MTL::Texture* color_target;               // 当前最小链路使用的临时颜色附件
+};
+
+static_assert(offsetof(struct metal_render_encoder, encoder) >= sizeof(metal_handle_base),
+    "metal_render_encoder.base 必须在最前面");

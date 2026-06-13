@@ -17,12 +17,15 @@ namespace Ryujinx.Graphics.Metal
         private IProgram _program;
         private nint _pipelineHandle;
         private readonly nint _deviceHandle;
+        private readonly nint _queueHandle;
         private readonly MetalBufferPool _buffers;
         private readonly VertexAttribDescriptor[] _vertexAttribs;
         private readonly VertexBufferDescriptor[] _vertexBuffers;
         private readonly MetalBufferBinding[] _uniformBuffers;
         private readonly MetalStorageBufferBinding[] _storageBuffers;
         private readonly MetalTextureBinding[,] _textureBindings;
+        private PrimitiveTopology _primitiveTopology;
+        private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
 
@@ -31,9 +34,10 @@ namespace Ryujinx.Graphics.Metal
         /// </summary>
         internal nint PipelineHandle => _pipelineHandle;
 
-        public MetalPipeline(nint deviceHandle, MetalBufferPool buffers)
+        public MetalPipeline(nint deviceHandle, nint queueHandle, MetalBufferPool buffers)
         {
             _deviceHandle = deviceHandle;
+            _queueHandle = queueHandle;
             _buffers = buffers;
             _pipelineHandle = nint.Zero;
             _vertexAttribs = new VertexAttribDescriptor[MaxVertexAttributes];
@@ -41,6 +45,8 @@ namespace Ryujinx.Graphics.Metal
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
             _storageBuffers = new MetalStorageBufferBinding[MaxStorageBufferBindings];
             _textureBindings = new MetalTextureBinding[MaxShaderStages, MaxTextureBindings];
+            _primitiveTopology = PrimitiveTopology.Triangles;
+            _indexBuffer = default;
         }
 
         public void Barrier()
@@ -77,10 +83,69 @@ namespace Ryujinx.Graphics.Metal
 
         public void Draw(int vertexCount, int instanceCount, int firstVertex, int firstInstance)
         {
+            if (vertexCount <= 0 || instanceCount <= 0)
+            {
+                return;
+            }
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                MetalResult result = MetalNative.RenderEncoderDrawPrimitives(
+                    renderEncoder,
+                    ConvertPrimitiveTopology(_primitiveTopology),
+                    (uint)Math.Max(firstVertex, 0),
+                    (uint)vertexCount,
+                    (uint)instanceCount,
+                    (uint)Math.Max(firstInstance, 0));
+                ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawPrimitives));
+            });
         }
 
         public void DrawIndexed(int indexCount, int instanceCount, int firstIndex, int firstVertex, int firstInstance)
         {
+            if (indexCount <= 0 || instanceCount <= 0)
+            {
+                return;
+            }
+
+            if (!TryGetIndexBufferBinding(out nint indexHandle, out ulong indexOffset, out ulong indexSize, out IndexType indexType))
+            {
+                return;
+            }
+
+            uint indexSizeBytes = indexType switch
+            {
+                IndexType.UShort => 2u,
+                IndexType.UInt => 4u,
+                _ => 0u,
+            };
+
+            if (indexSizeBytes == 0)
+            {
+                return;
+            }
+
+            ulong drawOffset = indexOffset + ((ulong)Math.Max(firstIndex, 0) * indexSizeBytes);
+            ulong requiredBytes = (ulong)indexCount * indexSizeBytes;
+            if (drawOffset < indexOffset || drawOffset + requiredBytes > indexOffset + indexSize)
+            {
+                return;
+            }
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                MetalResult result = MetalNative.RenderEncoderDrawIndexedPrimitives(
+                    renderEncoder,
+                    ConvertPrimitiveTopology(_primitiveTopology),
+                    (uint)indexCount,
+                    ConvertIndexType(indexType),
+                    indexHandle,
+                    drawOffset,
+                    (uint)instanceCount,
+                    firstVertex,
+                    (uint)Math.Max(firstInstance, 0));
+                ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawIndexedPrimitives));
+            });
         }
 
         public void DrawIndexedIndirect(BufferRange indirectBuffer)
@@ -161,6 +226,34 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetIndexBuffer(BufferRange buffer, IndexType type)
         {
+            if (buffer.Handle == BufferHandle.Null || buffer.Size <= 0)
+            {
+                _indexBuffer = default;
+                return;
+            }
+
+            if (!_buffers.TryGet(buffer.Handle, out MetalBuffer metalBuffer))
+            {
+                _indexBuffer = default;
+                return;
+            }
+
+            int safeOffset = Math.Clamp(buffer.Offset, 0, (int)metalBuffer.Size);
+            int safeSize = Math.Clamp(buffer.Size, 0, (int)metalBuffer.Size - safeOffset);
+
+            if (safeSize <= 0)
+            {
+                _indexBuffer = default;
+                return;
+            }
+
+            _indexBuffer = new MetalIndexBufferBinding
+            {
+                Handle = metalBuffer.Handle,
+                Offset = (ulong)safeOffset,
+                Size = (ulong)safeSize,
+                Type = type,
+            };
         }
 
         public void SetLineParameters(float width, bool smooth)
@@ -193,6 +286,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetPrimitiveTopology(PrimitiveTopology topology)
         {
+            _primitiveTopology = topology;
         }
 
         public void SetProgram(IProgram program)
@@ -552,6 +646,142 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
+        private void ExecuteRenderDraw(Action<nint> drawAction)
+        {
+            if (_pipelineHandle == nint.Zero || _queueHandle == nint.Zero || drawAction == null)
+            {
+                return;
+            }
+
+            MetalResult result = MetalNative.BeginCommandBuffer(_queueHandle, out nint commandBuffer);
+            if (result != MetalResult.Ok || commandBuffer == nint.Zero)
+            {
+                ThrowIfFailed(result, nameof(MetalNative.BeginCommandBuffer));
+                return;
+            }
+
+            nint renderEncoder = nint.Zero;
+
+            try
+            {
+                result = MetalNative.BeginRenderEncoding(commandBuffer, _pipelineHandle, out renderEncoder);
+                if (result != MetalResult.Ok || renderEncoder == nint.Zero)
+                {
+                    ThrowIfFailed(result, nameof(MetalNative.BeginRenderEncoding));
+                    return;
+                }
+
+                BindRenderResources(renderEncoder);
+                drawAction(renderEncoder);
+
+                result = MetalNative.EndRenderEncoding(renderEncoder);
+                ThrowIfFailed(result, nameof(MetalNative.EndRenderEncoding));
+
+                result = MetalNative.CommitCommandBuffer(commandBuffer);
+                ThrowIfFailed(result, nameof(MetalNative.CommitCommandBuffer));
+
+                result = MetalNative.WaitCommandBuffer(commandBuffer);
+                ThrowIfFailed(result, nameof(MetalNative.WaitCommandBuffer));
+            }
+            finally
+            {
+                if (renderEncoder != nint.Zero)
+                {
+                    MetalNative.Release(renderEncoder);
+                }
+
+                MetalNative.Release(commandBuffer);
+            }
+        }
+
+        private void BindRenderResources(nint renderEncoder)
+        {
+            for (int binding = 0; binding < _vertexBufferCount; binding++)
+            {
+                if (!TryGetVertexBufferBinding(binding, out nint handle, out ulong offset, out _, out _, out _))
+                {
+                    continue;
+                }
+
+                MetalResult result = MetalNative.RenderEncoderSetVertexBuffer(
+                    renderEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(result, nameof(MetalNative.RenderEncoderSetVertexBuffer));
+            }
+
+            for (int binding = 0; binding < MaxUniformBufferBindings; binding++)
+            {
+                if (!TryGetUniformBufferBinding(binding, out nint handle, out ulong offset, out _))
+                {
+                    continue;
+                }
+
+                MetalResult vertexResult = MetalNative.RenderEncoderSetVertexBuffer(
+                    renderEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(vertexResult, nameof(MetalNative.RenderEncoderSetVertexBuffer));
+
+                MetalResult fragmentResult = MetalNative.RenderEncoderSetFragmentBuffer(
+                    renderEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(fragmentResult, nameof(MetalNative.RenderEncoderSetFragmentBuffer));
+            }
+
+            for (int binding = 0; binding < MaxStorageBufferBindings; binding++)
+            {
+                if (!TryGetStorageBufferBinding(binding, out nint handle, out ulong offset, out _, out _))
+                {
+                    continue;
+                }
+
+                MetalResult vertexResult = MetalNative.RenderEncoderSetVertexBuffer(
+                    renderEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(vertexResult, nameof(MetalNative.RenderEncoderSetVertexBuffer));
+
+                MetalResult fragmentResult = MetalNative.RenderEncoderSetFragmentBuffer(
+                    renderEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(fragmentResult, nameof(MetalNative.RenderEncoderSetFragmentBuffer));
+            }
+
+            for (int binding = 0; binding < MaxTextureBindings; binding++)
+            {
+                if (!TryGetTextureBinding(ShaderStage.Fragment, binding, out nint textureHandle, out nint samplerHandle))
+                {
+                    continue;
+                }
+
+                if (textureHandle != nint.Zero)
+                {
+                    MetalResult textureResult = MetalNative.RenderEncoderSetFragmentTexture(
+                        renderEncoder,
+                        (uint)binding,
+                        textureHandle);
+                    ThrowIfFailed(textureResult, nameof(MetalNative.RenderEncoderSetFragmentTexture));
+                }
+
+                if (samplerHandle != nint.Zero)
+                {
+                    MetalResult samplerResult = MetalNative.RenderEncoderSetFragmentSampler(
+                        renderEncoder,
+                        (uint)binding,
+                        samplerHandle);
+                    ThrowIfFailed(samplerResult, nameof(MetalNative.RenderEncoderSetFragmentSampler));
+                }
+            }
+        }
+
         private void PopulateVertexLayout(ref MetalRenderPipelineDescriptor descriptor)
         {
             int attrCount = _vertexAttribCount;
@@ -677,6 +907,35 @@ namespace Ryujinx.Graphics.Metal
             return metalFormat != MetalVertexFormat.Invalid;
         }
 
+        private static MetalPrimitiveType ConvertPrimitiveTopology(PrimitiveTopology topology)
+        {
+            return topology switch
+            {
+                PrimitiveTopology.Points => MetalPrimitiveType.Point,
+                PrimitiveTopology.Lines => MetalPrimitiveType.Line,
+                PrimitiveTopology.LineStrip => MetalPrimitiveType.LineStrip,
+                PrimitiveTopology.TriangleStrip => MetalPrimitiveType.TriangleStrip,
+                _ => MetalPrimitiveType.Triangle,
+            };
+        }
+
+        private static MetalIndexType ConvertIndexType(IndexType indexType)
+        {
+            return indexType switch
+            {
+                IndexType.UInt => MetalIndexType.UInt32,
+                _ => MetalIndexType.UInt16,
+            };
+        }
+
+        private static void ThrowIfFailed(MetalResult result, string operation)
+        {
+            if (result != MetalResult.Ok)
+            {
+                throw new InvalidOperationException($"{operation} 失败：{result}");
+            }
+        }
+
         /// <summary>
         /// 获取指定 binding 上当前缓存的 uniform buffer 绑定。
         /// 供后续 Draw/DrawIndexed 将状态批量下发到 render encoder 使用。
@@ -712,6 +971,63 @@ namespace Ryujinx.Graphics.Metal
             textureHandle = bindingState.TextureHandle;
             samplerHandle = bindingState.SamplerHandle;
             return textureHandle != nint.Zero || samplerHandle != nint.Zero;
+        }
+
+        internal PrimitiveTopology PrimitiveTopology => _primitiveTopology;
+
+        internal bool TryGetIndexBufferBinding(out nint handle, out ulong offset, out ulong size, out IndexType type)
+        {
+            handle = _indexBuffer.Handle;
+            offset = _indexBuffer.Offset;
+            size = _indexBuffer.Size;
+            type = _indexBuffer.Type;
+            return handle != nint.Zero && size != 0;
+        }
+
+        internal bool TryGetVertexBufferBinding(int binding, out nint handle, out ulong offset, out ulong size, out uint stride, out uint stepRate)
+        {
+            if ((uint)binding >= _vertexBufferCount)
+            {
+                handle = nint.Zero;
+                offset = 0;
+                size = 0;
+                stride = 0;
+                stepRate = 0;
+                return false;
+            }
+
+            VertexBufferDescriptor bufferDescriptor = _vertexBuffers[binding];
+            BufferRange range = bufferDescriptor.Buffer;
+
+            if (range.Handle == BufferHandle.Null || range.Size <= 0 || !_buffers.TryGet(range.Handle, out MetalBuffer metalBuffer))
+            {
+                handle = nint.Zero;
+                offset = 0;
+                size = 0;
+                stride = 0;
+                stepRate = 0;
+                return false;
+            }
+
+            int safeOffset = Math.Clamp(range.Offset, 0, (int)metalBuffer.Size);
+            int safeSize = Math.Clamp(range.Size, 0, (int)metalBuffer.Size - safeOffset);
+
+            if (safeSize <= 0)
+            {
+                handle = nint.Zero;
+                offset = 0;
+                size = 0;
+                stride = 0;
+                stepRate = 0;
+                return false;
+            }
+
+            handle = metalBuffer.Handle;
+            offset = (ulong)safeOffset;
+            size = (ulong)safeSize;
+            stride = (uint)Math.Max(bufferDescriptor.Stride, 0);
+            stepRate = (uint)Math.Max(bufferDescriptor.Divisor, 1);
+            return true;
         }
 
         /// <summary>
@@ -775,6 +1091,14 @@ namespace Ryujinx.Graphics.Metal
             public ulong Offset;
             public ulong Size;
             public bool Write;
+        }
+
+        private struct MetalIndexBufferBinding
+        {
+            public nint Handle;
+            public ulong Offset;
+            public ulong Size;
+            public IndexType Type;
         }
     }
 }
