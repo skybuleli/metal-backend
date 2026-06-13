@@ -1,0 +1,66 @@
+================================================
+ MSC/Metal 着色器能力验证矩阵（P4.2.0）
+ 时间: 2026-06-13 18:55:16
+================================================
+
+── 1. 纹理类型覆盖 ──
+  [shared_vert                   ] [0;32mOK[0m (    3212→    6044B, 1.88x)
+  [tex_basic_2d_frag             ] [0;32mOK[0m (    3836→    5368B, 1.39x)
+  [tex_2d_array_frag             ] [0;32mOK[0m (    3880→    5480B, 1.41x)
+  [tex_3d_vert                   ] [0;32mOK[0m (    3240→    6140B, 1.89x)
+  [tex_3d_frag                   ] [0;32mOK[0m (    3852→    5368B, 1.39x)
+  [tex_cube_vert                 ] [0;32mOK[0m (    3240→    6140B, 1.89x)
+  [tex_cube_frag                 ] [0;32mOK[0m (    3900→    5576B, 1.42x)
+
+── 2. 纹理格式覆盖 ──
+  [tex_r8_frag                   ] [0;32mOK[0m (    3748→    5368B, 1.43x)
+  [tex_rgba16f_frag              ] [0;32mOK[0m (    3836→    5368B, 1.39x)
+  [tex_depth_compare_frag        ] [0;32mOK[0m (    3804→    5384B, 1.41x)
+
+── 3. 采样器模式覆盖 ──
+  [tex_sampler_aniso_frag        ] [0;32mOK[0m (    3860→    5400B, 1.39x)
+  [tex_sampler_mipmap_frag       ] [0;32mOK[0m (    3860→    5400B, 1.39x)
+  [tex_border_color_frag         ] [0;32mOK[0m (    3880→    5416B, 1.39x)
+
+── 4. 纹理操作覆盖 ──
+  [tex_gather_frag               ] [0;32mOK[0m (    3844→    5368B, 1.39x)
+  [tex_gather_red_frag           ] [0;32mOK[0m (    3844→    5368B, 1.39x)
+  [tex_load_frag                 ] [0;32mOK[0m (    3268→    6028B, 1.84x)
+  [tex_load_frag                 ] [0;32mOK[0m (    3720→    5256B, 1.41x)
+
+── 5. 多纹理/多采样器绑定 ──
+  [tex_multi_bind_frag           ] [0;32mOK[0m (    4280→    5752B, 1.34x)
+  [tex_multi_sampler_frag        ] [0;32mOK[0m (    4028→    5528B, 1.37x)
+
+── 6. 计算着色器纹理操作 ──
+  [tex_compute_read              ] [0;32mOK[0m (    3720→    5284B, 1.42x)
+  [tex_compute_rw                ] [0;32mOK[0m (    3092→    5060B, 1.63x)
+
+── 7. 纹理偏导与梯度 ──
+  [tex_derivatives_frag          ] [0;32mOK[0m (    3984→    5608B, 1.40x)
+
+── 8. Discard 操作 ──
+  [discard_basic_frag            ] [0;32mOK[0m (    3992→    5640B, 1.41x)
+  [discard_clip_frag             ] [0;32mOK[0m (    4132→    5800B, 1.40x)
+  [discard_positional_frag       ] [0;32mOK[0m (    3224→    6044B, 1.87x)
+  [discard_positional_frag       ] [0;32mOK[0m (    3256→    5452B, 1.67x)
+  [discard_derivatives_frag      ] [0;32mOK[0m (    4312→    6152B, 1.42x)
+
+── 9. Subgroup/Wave 操作 ──
+  [wave_lane_index               ] [0;32mOK[0m (    2964→    4660B, 1.57x)
+  [wave_read_lane                ] [0;32mOK[0m (    3056→    4724B, 1.54x)
+  [wave_active_sum               ] [0;32mOK[0m (    3128→    4796B, 1.53x)
+  [wave_active_ballot            ] [0;32mOK[0m (    3260→    4844B, 1.48x)
+  [wave_active_minmax            ] [0;32mOK[0m (    3228→    4908B, 1.52x)
+  [wave_is_first_lane            ] [0;32mOK[0m (    2976→    4776B, 1.60x)
+  [wave_fragment_frag            ] [0;32mOK[0m (    4216→    6048B, 1.43x)
+
+── 10. Helper Invocation（隐式：导数触发 helper lanes）──
+  [helper_derivative_frag        ] [0;32mOK[0m (    4168→    5944B, 1.42x)
+
+================================================
+ 结果: [0;32m全部通过 (35/35)[0m
+ MSC/Metal 着色器能力验证 [0;32mPASS[0m
+================================================
+
+摘要: /var/folders/7x/7_mpqm1s0sg5mk4b710fmpjh0000gn/T/tmp.eMOC9dFHkH/results.json

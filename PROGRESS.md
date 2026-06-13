@@ -1,5 +1,5 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T18:49:49+08:00
+# 最后更新: 2026-06-13T18:55:47+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
 # 完成度: 65/144 任务 (45.1%)
 # 仓库: switch-metal-backend
@@ -120,7 +120,7 @@
 ### 4.2 着色器编译器集成
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T18:45:00+08:00 | tools/test_msc_texture_limits.sh：22/22 Path A 编译测试通过，覆盖 7 类纹理操作 (类型/格式/采样器/gather/多绑定/Compute/偏导)，证据 docs/evidence/P4.2.0-texture-run.txt |
+| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T19:00:00+08:00 | tools/test_msc_shader_limits.sh：35/35 Path A 编译测试通过，覆盖 4 维度 10 类 (纹理22 + discard5 + subgroup7 + helper1)，证据 docs/evidence/P4.2.0-shader-limits-run.txt。发现：SV_IsHelperInvocation 在 Slang DXIL 中不受支持 |
 | P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
 | P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
 | P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
