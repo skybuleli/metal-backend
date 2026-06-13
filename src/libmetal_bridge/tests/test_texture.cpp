@@ -2218,3 +2218,192 @@ TEST_CASE("metal_create_texture_view Cubemap 单 face 子视图上传回读", "[
     metal_release(view);
     metal_release(parent);
 }
+
+
+
+TEST_CASE("metal_create_texture_view 3D 纹理的 mip 子范围视图上传回读", "[texture][view][3d][mip]")
+{
+    DeviceGuard dev_guard;
+
+    // Metal 对 3D 纹理 newTextureView 的限制：
+    //   - 视图类型必须为 3D（不支持降维到 2D）
+    //   - sliceRange 必须为 {0, 1}（不支持深度切片子范围）
+    //   - 但 mip levelRange 子范围是支持的
+    // 本测试验证：mip 子范围视图在 3D 纹理上正常工作
+
+    constexpr uint32_t kBaseWidth = 8;
+    constexpr uint32_t kBaseHeight = 8;
+    constexpr uint32_t kDepth = 6;
+    constexpr uint32_t kTotalLevels = 3;  // 8x8 → 4x4 → 2x2
+
+    metal_texture* parent = nullptr;
+    metal_result result = metal_create_texture(
+        dev_guard.dev,
+        METAL_PIXEL_FORMAT_RGBA8_UNORM,
+        kBaseWidth, kBaseHeight, kDepth, kTotalLevels, 1,
+        METAL_TEXTURE_TYPE_3D,
+        METAL_TEXTURE_USAGE_SHADER_READ | METAL_TEXTURE_USAGE_RENDER_TARGET,
+        METAL_STORAGE_MODE_SHARED,
+        &parent);
+
+    if (result != METAL_RESULT_OK)
+    {
+        REQUIRE(result == METAL_RESULT_UNSUPPORTED);
+        return;
+    }
+    REQUIRE(parent != nullptr);
+
+    // 创建 mip 子范围视图：level 1-2（4x4 和 2x2）
+    // slice 范围必须为 {0, 1}（Metal 对 3D 纹理的限制）
+    metal_texture* view = nullptr;
+    result = metal_create_texture_view(
+        parent,
+        METAL_PIXEL_FORMAT_RGBA8_UNORM,
+        METAL_TEXTURE_TYPE_3D,    // 保持 3D 类型
+        0, 1,                      // first_layer=0, num_layers=1（唯一允许的范围）
+        1, 2,                      // first_level=1, num_levels=2
+        &view);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(view != nullptr);
+    REQUIRE(view != parent);
+
+    // 验证视图信息：4x4x6，3D 类型，2 级 mip
+    metal_texture_info view_info;
+    result = metal_texture_get_info(view, &view_info);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(view_info.width == 4);       // 从父 level=1 开始（8/2=4）
+    REQUIRE(view_info.height == 4);
+    REQUIRE(view_info.depth == kDepth / 2);  // 3D 纹理的 mip 级别会减半所有维度（含深度）
+    REQUIRE(view_info.levels == 2);      // 2 级 mip
+    REQUIRE(view_info.type == METAL_TEXTURE_TYPE_3D);
+    REQUIRE(view_info.pixel_format == METAL_PIXEL_FORMAT_RGBA8_UNORM);
+
+    // ═══════════════════════════════════════════════════════════════
+    // 阶段 1：上传到父纹理 level=1 → 从视图 level=0 回读
+    // 视图 level=0 对应父纹理 level=1（4x4）
+    // ═══════════════════════════════════════════════════════════════
+    constexpr uint32_t kL1Width = 4;
+    constexpr uint32_t kL1Height = 4;
+    constexpr uint32_t kL1RowBytes = kL1Width * 4;
+    constexpr uint32_t kL1SliceSize = kL1Height * kL1RowBytes;
+    uint8_t l1_data[kL1SliceSize];
+
+    // 父纹理 level=1 数据模式：R=x*64, G=y*64, B=200, A=255
+    for (uint32_t y = 0; y < kL1Height; ++y)
+        for (uint32_t x = 0; x < kL1Width; ++x)
+        {
+            uint32_t idx = (y * kL1Width + x) * 4;
+            l1_data[idx + 0] = static_cast<uint8_t>(x * 64);
+            l1_data[idx + 1] = static_cast<uint8_t>(y * 64);
+            l1_data[idx + 2] = 200;
+            l1_data[idx + 3] = 255;
+        }
+
+    metal_buffer* upload_buf = nullptr;
+    result = metal_create_buffer_with_bytes(
+        dev_guard.dev, l1_data, kL1SliceSize,
+        METAL_STORAGE_MODE_SHARED, &upload_buf);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    // 上传到父纹理 level=1（region_z=0，写入第 0 深度切片）
+    result = metal_texture_upload(
+        parent, upload_buf, 0,
+        0, 1,           // layer=0, level=1
+        0, 0, 0,        // region_z=0
+        kL1Width, kL1Height,
+        kL1RowBytes);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    // 通过视图回读 level=0（对应父纹理 level=1）
+    metal_buffer* readback_buf = nullptr;
+    result = metal_create_buffer(
+        dev_guard.dev, kL1SliceSize, METAL_STORAGE_MODE_SHARED, &readback_buf);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    result = metal_texture_readback(
+        view, readback_buf, 0,
+        0, 0,           // view layer=0, level=0
+        kL1RowBytes);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    void* mapped = nullptr;
+    result = metal_map_buffer(readback_buf, &mapped);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    const uint8_t* view_l0 = static_cast<const uint8_t*>(mapped);
+    // (0,0) → R=0, G=0, B=200
+    REQUIRE(view_l0[0] == 0);
+    REQUIRE(view_l0[1] == 0);
+    REQUIRE(view_l0[2] == 200);
+    REQUIRE(view_l0[3] == 255);
+
+    // (3,2) → R=3*64=192, G=2*64=128, B=200
+    uint32_t idx_3_2 = (2 * kL1Width + 3) * 4;
+    REQUIRE(view_l0[idx_3_2 + 0] == 192);
+    REQUIRE(view_l0[idx_3_2 + 1] == 128);
+    REQUIRE(view_l0[idx_3_2 + 2] == 200);
+
+    metal_unmap_buffer(readback_buf);
+    metal_release(readback_buf);
+    metal_release(upload_buf);
+
+    // ═══════════════════════════════════════════════════════════════
+    // 阶段 2：上传到视图 level=1 → 从父纹理 level=2 回读
+    // 视图 level=1 对应父纹理 level=2（2x2）
+    // ═══════════════════════════════════════════════════════════════
+    constexpr uint32_t kL2Width = 2;
+    constexpr uint32_t kL2Height = 2;
+    constexpr uint32_t kL2RowBytes = kL2Width * 4;
+    constexpr uint32_t kL2SliceSize = kL2Height * kL2RowBytes;
+    uint8_t view_l1_data[kL2SliceSize];
+
+    // 视图 level=1 数据：R=50, G=150, B=250, A=255
+    for (uint32_t i = 0; i < kL2SliceSize; i += 4)
+    {
+        view_l1_data[i + 0] = 50;
+        view_l1_data[i + 1] = 150;
+        view_l1_data[i + 2] = 250;
+        view_l1_data[i + 3] = 255;
+    }
+
+    metal_buffer* view_upload_buf = nullptr;
+    result = metal_create_buffer_with_bytes(
+        dev_guard.dev, view_l1_data, kL2SliceSize,
+        METAL_STORAGE_MODE_SHARED, &view_upload_buf);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    result = metal_texture_upload(
+        view, view_upload_buf, 0,
+        0, 1,           // view layer=0, level=1
+        0, 0, 0,
+        kL2Width, kL2Height,
+        kL2RowBytes);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    // 从父纹理回读 level=2（对应视图 level=1）
+    metal_buffer* parent_rb_buf = nullptr;
+    result = metal_create_buffer(
+        dev_guard.dev, kL2SliceSize, METAL_STORAGE_MODE_SHARED, &parent_rb_buf);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    result = metal_texture_readback(
+        parent, parent_rb_buf, 0,
+        0, 2,           // parent layer=0, level=2
+        kL2RowBytes);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    result = metal_map_buffer(parent_rb_buf, &mapped);
+    REQUIRE(result == METAL_RESULT_OK);
+
+    const uint8_t* parent_l2 = static_cast<const uint8_t*>(mapped);
+    REQUIRE(parent_l2[0] == 50);
+    REQUIRE(parent_l2[1] == 150);
+    REQUIRE(parent_l2[2] == 250);
+    REQUIRE(parent_l2[3] == 255);
+
+    metal_unmap_buffer(parent_rb_buf);
+    metal_release(parent_rb_buf);
+    metal_release(view_upload_buf);
+    metal_release(view);
+    metal_release(parent);
+}
