@@ -209,3 +209,35 @@
   - `real_*`、`kirby_*`、`large_*`、`final_*` 等近真实样本能暴露未初始化变量诊断
   - deko3d v1/v2 产物暴露 TEXCOORD overlap、tessellation/domain 语义被误判为 vertex 等后续修复方向
   - RyuSAK 不进入正式证据；bnsh-decoder 只在有合法 `.bnsh` 输入时采用
+
+---
+
+## 2026-06-12 凌晨 | P1.9 基准脚本交接规格准备 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 补齐 P1.9 文档输入，便于下一个会话直接实现基准脚本
+- **变更**:
+  - 新增 `docs/p1-bench-compile-spec.md`，定义 `must-pass / known-good / known-failure` 分桶、计时口径和输出字段
+  - 新增 `docs/p4-shader-risk-checklist.md`，把 P1 语料发现映射到 P4/P5 的阻塞点和延后项
+  - 更新 `docs/shader-corpus.md`，串起语料策略、P4 风险和 P1.9 规格
+- **说明**:
+  - 本次仅做交接文档准备，不变更 `PROGRESS.md` 任务状态
+  - 下一会话应直接进入 `P1.9 bench_compile.sh` 实现
+
+---
+
+## 2026-06-12 | 仓库重建与 P1.9 补提交 | ✅ 完成
+
+- **Agent**: MiMoCode
+- **结果**: ✅ 重建独立仓库 + 恢复丢失文件 + 更新进度
+- **变更**:
+  - 在 `~/metal-backend/` 初始化独立 git 仓库（替代 `~/` 级别的父仓库）
+  - 从父仓库旧提交 `84c1359` 恢复 `tools/bench_compile.sh`（24KB）和 `docs/evidence/bench-20260612-040600.json`
+  - 更新 `PROGRESS.md`：P1.9 → ✅，完成度 17/220 (7.7%)
+  - 重新生成 `NEXT_TASK.md`：下一任务 → P2.1
+- **验证**:
+  - `git status` 工作区干净
+  - `git log --oneline` 包含全部 22 个提交
+- **说明**:
+  - 之前 force push 覆盖了远程历史，已从父仓库 `metal-backend/main` 分支恢复
+  - 旧历史 20 个提交 + bench_compile.sh 补提交 + 进度更新 = 3 个新提交

@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T22:52:22+08:00
+# 最后更新: 2026-06-13T23:52:36+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 75/144 任务 (52.1%)
+# 完成度: 76/144 任务 (52.8%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -135,7 +135,7 @@
 | P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ✅ | 2026-06-13T23:24:00+08:00 | docs/evidence/P4.3.2-meta.json：扩展 render pipeline ABI 顶点布局描述符，native 创建 MTLVertexDescriptor，C# SetVertexAttribs/SetVertexBuffers 触发布局重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过 |
 | P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ✅ | 2026-06-13T23:36:00+08:00 | docs/evidence/P4.3.3-meta.json：MetalBufferPool 句柄解析 + MetalPipeline uniform buffer 状态缓存/裁剪/后续 draw 可复用绑定查询；Ryujinx.Graphics.Metal 构建通过 |
 | P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ✅ | 2026-06-13T23:50:00+08:00 | docs/evidence/P4.3.4-meta.json：实现 MetalTexture/texture view 句柄提取、按 ShaderStage+binding 缓存 texture/sampler 原生句柄，并提供后续 draw/dispatch 查询入口；Ryujinx.Graphics.Metal 构建通过 |
-| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ⬜ | — | — |
+| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ✅ | 2026-06-13T23:43:42+08:00 | docs/evidence/P4.3.5-meta.json：实现 storage buffer 句柄解析、offset/size 裁剪、读写标志缓存，并提供后续 draw/dispatch 可复用的绑定查询入口；Ryujinx.Graphics.Metal 构建通过（85 个既有 CA1416 警告，0 错误） |
 | P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ⬜ | — | — |
 | P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ⬜ | — | — |
 | P4.3.8 | ClearRenderTarget: 清屏操作 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 75 (52.1%)
+- 已完成: 76 (52.8%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 69
+- 待开始: 68
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.3.5 — SetStorageBuffers: Compute/Graphics 存储缓冲
+- 下一任务: P4.3.6 — Draw/DrawIndexed: MTLRenderCommandEncoder 绘制

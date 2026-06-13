@@ -1,14 +1,14 @@
-# 下一任务 — P4.3.5 SetStorageBuffers: Compute/Graphics 存储缓冲
+# 下一任务 — P4.3.6 Draw/DrawIndexed: MTLRenderCommandEncoder 绘制
 
-> 生成时间：2026-06-13 22:52:22
+> 生成时间：2026-06-13 23:52:36
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.3.5 |
-| 任务名称 | SetStorageBuffers: Compute/Graphics 存储缓冲 |
+| 任务 ID | P4.3.6 |
+| 任务名称 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.3.5 → ✅
+- 更新 PROGRESS.md：P4.3.6 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
