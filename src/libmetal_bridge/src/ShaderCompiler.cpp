@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cctype>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -981,6 +982,61 @@ metal_shader_compile_result metal_compile_shader(
             dxil_data.empty() ? nullptr : dxil_data.data(),
             dxil_data.size(),
             stage, entry_point, profile);
+    }
+
+    return result;
+}
+
+/// 通过缓存键直接加载 metallib 数据（P4.2.6）
+/// C# 侧已知缓存键时可直接调用，跳过整个编译管线。
+metal_shader_compile_result metal_load_program_binary(const char* cache_key)
+{
+    metal_shader_compile_result result = {};
+    result.result = METAL_RESULT_OK;
+    result.metallib_data = nullptr;
+    result.metallib_size = 0;
+
+    if (!cache_key || strlen(cache_key) != 64)
+    {
+        result.result = METAL_RESULT_INVALID_ARGUMENT;
+        snprintf(result.error_message, sizeof(result.error_message),
+                 "无效的缓存键：必须是 64 字符 SHA256 hex。");
+        return result;
+    }
+
+    // 校验缓存键是否为合法 hex
+    for (int i = 0; i < 64; i++)
+    {
+        if (!isxdigit((unsigned char)cache_key[i]))
+        {
+            result.result = METAL_RESULT_INVALID_ARGUMENT;
+            snprintf(result.error_message, sizeof(result.error_message),
+                     "缓存键包含无效十六进制字符：位置 %d。", i);
+            return result;
+        }
+    }
+
+    std::string root = get_cache_root();
+    std::vector<uint8_t> metallib;
+
+    if (load_from_cache(root, std::string(cache_key), metallib) && !metallib.empty())
+    {
+        result.metallib_size = metallib.size();
+        result.metallib_data = malloc(result.metallib_size);
+        if (result.metallib_data)
+        {
+            memcpy(result.metallib_data, metallib.data(), result.metallib_size);
+        }
+        else
+        {
+            result.result = METAL_RESULT_OUT_OF_MEMORY;
+        }
+    }
+    else
+    {
+        result.result = METAL_RESULT_COMPILE_FAILED;
+        snprintf(result.error_message, sizeof(result.error_message),
+                 "缓存未命中：键 %s 不存在。", cache_key);
     }
 
     return result;

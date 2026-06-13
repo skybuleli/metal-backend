@@ -1,14 +1,14 @@
-# 下一任务 — P4.2.6 LoadProgramBinary: 加载缓存 metallib
+# 下一任务 — P4.3.1 SetProgram → MTLRenderPipelineState 创建
 
-> 生成时间：2026-06-13 21:08:24
+> 生成时间：2026-06-13 21:19:55
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.2.6 |
-| 任务名称 | LoadProgramBinary: 加载缓存 metallib |
+| 任务 ID | P4.3.1 |
+| 任务名称 | SetProgram → MTLRenderPipelineState 创建 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.2.6 → ✅
+- 更新 PROGRESS.md：P4.3.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
