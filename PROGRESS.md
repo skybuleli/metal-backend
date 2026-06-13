@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T13:54:09+08:00
+# 最后更新: 2026-06-13T14:31:26+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 57/144 任务 (39.6%)
+# 完成度: 58/144 任务 (40.3%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -109,7 +109,7 @@
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ⬜ | — | — |
+| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-13T14:10:00+08:00 | src/libmetal_bridge/include/metal_limits.h + docs/evidence/P4.1.0-meta.json + src/libmetal_bridge/build/libmetal_bridge.a |
 | P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ⬜ | — | — |
 | P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ⬜ | — | — |
 | P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 57 (39.6%)
+- 已完成: 58 (40.3%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 87
+- 待开始: 86
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.1.0 — 固化 Metal 硬件限制常量与资源对齐策略
+- 下一任务: P4.1.1 — MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询

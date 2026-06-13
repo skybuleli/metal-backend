@@ -5,6 +5,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "metal_limits.h"
 
 #ifdef __cplusplus
 extern "C" {

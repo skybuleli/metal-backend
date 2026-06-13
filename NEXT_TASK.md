@@ -1,14 +1,14 @@
-# 下一任务 — P4.1.0 固化 Metal 硬件限制常量与资源对齐策略
+# 下一任务 — P4.1.1 MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询
 
-> 生成时间：2026-06-13 13:54:09
+> 生成时间：2026-06-13 14:31:26
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.1.0 |
-| 任务名称 | 固化 Metal 硬件限制常量与资源对齐策略 |
+| 任务 ID | P4.1.1 |
+| 任务名称 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.1.0 → ✅
+- 更新 PROGRESS.md：P4.1.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

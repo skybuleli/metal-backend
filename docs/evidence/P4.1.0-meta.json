@@ -1,0 +1,28 @@
+{
+  "task": "P4.1.0",
+  "phase": "Phase 4",
+  "name": "固化 Metal 硬件限制常量与资源对齐策略",
+  "files": [
+    "src/libmetal_bridge/include/metal_limits.h",
+    "src/libmetal_bridge/include/metal_bridge.h",
+    "src/libmetal_bridge/src/MetalDevice.cpp",
+    "src/libmetal_bridge/CMakeLists.txt"
+  ],
+  "constants": [
+    "METAL_MAX_BUFFERS_PER_STAGE=31",
+    "METAL_MAX_TEXTURES_PER_STAGE=128",
+    "METAL_MAX_SAMPLERS_PER_STAGE=16",
+    "METAL_MAX_COLOR_ATTACHMENTS=8",
+    "METAL_MAX_MSAA_SAMPLES=8",
+    "METAL_MAX_THREADS_PER_THREADGROUP=1024",
+    "METAL_MAX_THREADGROUP_MEMORY_BYTES=32768",
+    "METAL_MAX_VIEWPORTS=16",
+    "METAL_BUFFER_OFFSET_ALIGNMENT=256",
+    "METAL_CONSTANT_BUFFER_ALIGNMENT=256",
+    "METAL_TEXTURE_ROW_ALIGNMENT=64"
+  ],
+  "storage_strategy": "UMA→Shared / Discrete→Managed/Private / MSAA→Memoryless",
+  "build": "libmetal_bridge.a 构建通过",
+  "build_log": "src/libmetal_bridge/build/",
+  "next": "P4.1.1 — MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询"
+}
