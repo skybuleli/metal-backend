@@ -104,3 +104,17 @@ struct metal_heap
 static_assert(offsetof(struct metal_heap, heap) >= sizeof(metal_handle_base),
     "metal_heap.base 必须在最前面");
 
+/// metal_shader_compiler 内部实现
+/// 注意：使用 calloc 分配，metal_release 中通过专用函数释放
+struct metal_shader_compiler
+{
+    METAL_HANDLE_HEADER
+    metal_device* device;             // 关联的 Metal 设备句柄
+};
+
+static_assert(offsetof(struct metal_shader_compiler, device) >= sizeof(metal_handle_base),
+    "metal_shader_compiler.base 必须在最前面");
+
+// ── 编译器内部释放函数：由 metal_release 调用，处理 Slang 会话清理 ──
+void metal_shader_compiler_release(metal_shader_compiler* compiler);
+

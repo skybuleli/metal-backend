@@ -15,18 +15,18 @@
 #include <new>
 
 // ════════════════════════════════════════════════════════════════════
-// 内部辅助：存储模式 → MTLResourceOptions
+// 内部辅助：存储模式 → MTL::StorageMode（HeapDescriptor 使用）
 // ════════════════════════════════════════════════════════════════════
 
-static MTL::ResourceOptions to_resource_options(metal_storage_mode mode)
+static MTL::StorageMode to_mtl_storage_mode(metal_storage_mode mode)
 {
     switch (mode)
     {
-    case METAL_STORAGE_MODE_SHARED:    return MTL::ResourceStorageModeShared;
-    case METAL_STORAGE_MODE_MANAGED:   return MTL::ResourceStorageModeManaged;
-    case METAL_STORAGE_MODE_PRIVATE:   return MTL::ResourceStorageModePrivate;
-    case METAL_STORAGE_MODE_MEMORYLESS:return MTL::ResourceStorageModeMemoryless;
-    default:                           return MTL::ResourceStorageModePrivate;
+    case METAL_STORAGE_MODE_SHARED:    return MTL::StorageModeShared;
+    case METAL_STORAGE_MODE_MANAGED:   return MTL::StorageModeManaged;
+    case METAL_STORAGE_MODE_PRIVATE:   return MTL::StorageModePrivate;
+    case METAL_STORAGE_MODE_MEMORYLESS:return MTL::StorageModeMemoryless;
+    default:                           return MTL::StorageModePrivate;
     }
 }
 
@@ -57,7 +57,7 @@ metal_result metal_create_heap(
     }
 
     heap_desc->setSize(static_cast<NS::UInteger>(size));
-    heap_desc->setStorageMode(to_resource_options(mode));
+    heap_desc->setStorageMode(to_mtl_storage_mode(mode));
 
     // HeapType 使用 Automatic 让 Metal 自动管理放置策略
     // 在 Apple Silicon 上 Placement 和 Automatic 行为一致

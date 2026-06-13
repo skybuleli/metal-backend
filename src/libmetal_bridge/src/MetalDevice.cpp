@@ -280,49 +280,9 @@ metal_result metal_create_queue(
 }
 
 // ════════════════════════════════════════════════════════════════════
-// 编译器入口（stub，Phase 4.2 补全）
+// 注意：编译器相关函数（metal_acquire_shader_compiler 等）已移至
+// ShaderCompiler.cpp，此处不再重复定义。
 // ════════════════════════════════════════════════════════════════════
-
-metal_result metal_acquire_shader_compiler(
-    metal_device* device,
-    metal_shader_compiler** out_compiler)
-{
-    (void)device;
-    if (out_compiler == nullptr)
-        return METAL_RESULT_INVALID_ARGUMENT;
-    *out_compiler = nullptr;
-    return METAL_RESULT_UNSUPPORTED;
-}
-
-metal_result metal_get_default_shader_compiler_config(
-    metal_shader_compiler_config* out_config)
-{
-    if (out_config == nullptr)
-        return METAL_RESULT_INVALID_ARGUMENT;
-
-    out_config->abi_version = METAL_BRIDGE_ABI_VERSION;
-    out_config->enabled_workarounds = METAL_WA_COMPILER_SINGLETON | METAL_WA_LANG_VERSION_3_2;
-    out_config->disabled_workarounds = 0;
-    out_config->metal_language_version = 0x00030000u;
-    out_config->reserved = 0;
-    return METAL_RESULT_OK;
-}
-
-metal_result metal_configure_shader_compiler(
-    metal_shader_compiler* compiler,
-    const metal_shader_compiler_config* config)
-{
-    (void)compiler;
-    (void)config;
-    return METAL_RESULT_UNSUPPORTED;
-}
-
-uint32_t metal_shader_compiler_get_workarounds(
-    metal_shader_compiler* compiler)
-{
-    (void)compiler;
-    return 0u;
-}
 
 // ════════════════════════════════════════════════════════════════════
 // 公共函数：版本、释放、错误消息
@@ -407,6 +367,15 @@ void metal_release(void* handle)
             h->heap = nullptr;
         }
         delete h;
+        break;
+    }
+    case METAL_HANDLE_TYPE_SHADER_COMPILER:
+    {
+        metal_shader_compiler* compiler = static_cast<metal_shader_compiler*>(handle);
+        // 先清理 Slang 会话引用（release_global_session）
+        metal_shader_compiler_release(compiler);
+        // 编译器使用 calloc 分配，须用 free 释放
+        free(compiler);
         break;
     }
     default:
