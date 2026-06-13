@@ -580,3 +580,18 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前仍未添加任何 `.cs` 实现文件；P3.4 起再逐步接入 `MetalNative.cs` 与 `IRenderer`/`IPipeline` stub
+
+### 2026-06-13 下午 | P3.4 创建 MetalNative.cs (P/Invoke 声明) | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已新增 `MetalNative.cs`，将 `libmetal_bridge` 当前已冻结的 C ABI 完整映射到 C# 项目中
+- **变更**:
+  - 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`
+  - 声明 `MetalResult`、`MetalStorageMode`、`MetalWorkaroundFlags`
+  - 声明 `MetalShaderCompilerConfig`、`MetalHandleInfo`
+  - 声明 device / queue / shader compiler 相关 `LibraryImport` 入口
+  - 生成证据日志 `docs/evidence/P3.4-metal-native-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前仅建立 P/Invoke 声明层，尚未添加错误字符串解码、句柄封装或更高层托管对象；这些留给后续 `MetalRenderer` / `MetalDevice` 任务
