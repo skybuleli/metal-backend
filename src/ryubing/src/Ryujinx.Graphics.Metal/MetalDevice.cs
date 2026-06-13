@@ -8,16 +8,22 @@ namespace Ryujinx.Graphics.Metal
     internal sealed class MetalDevice : IDisposable
     {
         private nint _handle;
-        private readonly MetalHandleInfo _handleInfo;
+        private MetalHandleInfo _handleInfo;
+        private MetalDeviceCaps _caps;
 
         public nint Handle => _handle;
 
         public uint AbiVersion => _handleInfo.AbiVersion;
 
-        private MetalDevice(nint handle, MetalHandleInfo handleInfo)
+        public ref readonly MetalDeviceCaps Caps => ref _caps;
+
+        public bool HasUnifiedMemory => _caps.HasUnifiedMemory;
+
+        private MetalDevice(nint handle, MetalHandleInfo handleInfo, MetalDeviceCaps caps)
         {
             _handle = handle;
             _handleInfo = handleInfo;
+            _caps = caps;
         }
 
         public static MetalDevice Create()
@@ -44,7 +50,15 @@ namespace Ryujinx.Graphics.Metal
                 throw CreateException(nameof(MetalNative.GetDeviceInfo), result);
             }
 
-            return new MetalDevice(device, info);
+            MetalResult capsResult = MetalNative.GetDeviceCaps(device, out MetalDeviceCaps caps);
+
+            if (capsResult != MetalResult.Ok)
+            {
+                MetalNative.Release(device);
+                throw CreateException(nameof(MetalNative.GetDeviceCaps), capsResult);
+            }
+
+            return new MetalDevice(device, info, caps);
         }
 
         public void Dispose()
