@@ -545,6 +545,12 @@ METAL_BRIDGE_EXPORT void metal_free_shader_data(void* data);
 /// 清空磁盘着色器缓存（删除 ~/Library/Caches/SwitchMetal/ 下所有内容）
 METAL_BRIDGE_EXPORT metal_result metal_shader_cache_clear(void);
 
+/// 通过缓存键直接加载 metallib 数据（跳过编译管线）
+/// @param cache_key 64 字符 SHA256 hex 缓存键
+/// @return compile_result（metallib_data 通过 malloc 分配，用 metal_free_shader_data 释放）
+METAL_BRIDGE_EXPORT metal_shader_compile_result metal_load_program_binary(
+    const char* cache_key);
+
 // TODO: Phase 4.3+
 // - metal_begin_command_buffer / metal_commit_command_buffer / metal_wait_command_buffer
 // - metal_presenter_* / metal_sync_* / metal_encoder_* 系列接口
