@@ -1,0 +1,32 @@
+{
+  "task": "P4.1.4",
+  "phase": "Phase 4",
+  "name": "MetalSampler: 过滤/包裹/比较模式映射",
+  "implementation": [
+    "src/libmetal_bridge/src/MetalSampler.cpp",
+    "src/libmetal_bridge/include/metal_bridge.h"
+  ],
+  "tests": [
+    "src/libmetal_bridge/tests/test_sampler.cpp"
+  ],
+  "key_design": [
+    "枚举映射: min/mag filter → SamplerMinMagFilter (Nearest/Linear)",
+    "枚举映射: mip filter → SamplerMipFilter (NotMipmapped/Nearest/Linear)",
+    "枚举映射: address mode S/T/R → SamplerAddressMode (5种模式)",
+    "枚举映射: compare function → CompareFunction (8种)",
+    "MTL::SamplerDescriptor 全参数设置",
+    "anisotropy / LOD clamp / normalized_coordinates",
+    "opaque handle: metal_sampler → MTL::SamplerState",
+    "统一 metal_release 析构路径",
+    "空参数校验: 返回 METAL_RESULT_INVALID_ARGUMENT"
+  ],
+  "test_results": "8/8 Catch2 tests PASSED (覆盖默认/各向异性/阴影比较/边界颜色/MirrorClampToEdge/空参数/过滤器组合12种/生命周期)",
+  "build": "libmetal_bridge.a 构建通过",
+  "dependencies": [
+    "P4.1.1 MetalDevice",
+    "Catch2",
+    "macOS SDK (CLT)",
+    "metal-cpp"
+  ],
+  "next": "P4.1.5 — 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer"
+}

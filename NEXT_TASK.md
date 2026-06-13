@@ -1,14 +1,14 @@
-# 下一任务 — P4.1.4 MetalSampler: 过滤/包裹/比较模式映射
+# 下一任务 — P4.1.5 稀疏缓冲区 CreateBufferSparse
 
-> 生成时间：2026-06-13 17:08:51
+> 生成时间：2026-06-13 17:45:00
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.1.4 |
-| 任务名称 | MetalSampler: 过滤/包裹/比较模式映射 |
+| 任务 ID | P4.1.5 |
+| 任务名称 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
