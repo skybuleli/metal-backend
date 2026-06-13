@@ -266,7 +266,6 @@ metal_shader_compile_result metal_compile_shader(
             result.result = METAL_RESULT_COMPILE_FAILED;
             snprintf(result.error_message, sizeof(result.error_message),
                      "未找到入口点 '%s'（阶段不匹配或函数名错误）", entry_point);
-            module->release();
             compileSession->release();
             release_global_session();
             return result;
@@ -284,7 +283,7 @@ metal_shader_compile_result metal_compile_shader(
             snprintf(result.error_message, sizeof(result.error_message),
                      "Slang createCompositeComponentType 失败（%d）", (int)sr);
             entryPointComponent->release();
-            module->release();
+            // 不释放 module — session 管理其生命周期
             compileSession->release();
             release_global_session();
             return result;
@@ -299,8 +298,7 @@ metal_shader_compile_result metal_compile_shader(
             result.result = METAL_RESULT_COMPILE_FAILED;
             snprintf(result.error_message, sizeof(result.error_message),
                      "Slang link 失败（%d）", (int)sr);
-            composite->release();
-            module->release();
+            // 不释放 composite/module — session 管理其生命周期
             compileSession->release();
             release_global_session();
             return result;
@@ -314,9 +312,7 @@ metal_shader_compile_result metal_compile_shader(
             result.result = METAL_RESULT_COMPILE_FAILED;
             snprintf(result.error_message, sizeof(result.error_message),
                      "Slang getEntryPointCode 失败（%d）", (int)sr);
-            linkedProgram->release();
-            composite->release();
-            module->release();
+            // 不释放 linkedProgram/composite/module — session 管理其生命周期
             compileSession->release();
             release_global_session();
             return result;
@@ -333,9 +329,7 @@ metal_shader_compile_result metal_compile_shader(
         }
 
         dxilBlob->release();
-        linkedProgram->release();
-        composite->release();
-        module->release();
+        // 不手动释放 linkedProgram/composite/module — session 释放时自动清理
         compileSession->release();
         release_global_session();
     }

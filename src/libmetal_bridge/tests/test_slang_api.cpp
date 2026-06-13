@@ -6,6 +6,14 @@
 //   3. profile 查询正确性
 //   4. 多次重复编译无泄漏
 //
+// 生命周期规则（重要）：
+//   - Slang 内部按模块内容哈希索引 IModule，同一 ISession 中同时存在
+//     多个模块会触发内部断言失败（"The key already exists in Dictionary"）
+//   - 因此 每次编译创建独立的 ISession，编译完成后释放 session
+//   - 不手动释放 module/composite/linkedProgram — session 释放时自动清理
+//   - 手动释放 entryPoint（createCompositeComponentType 已 addRef 它）
+//   - 手动释放 dxilBlob（独立对象，session 不管理）
+//
 // 编译：
 //   SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
 //   CXX=$(xcrun --sdk macosx --find clang++)
@@ -77,32 +85,57 @@ static int g_fail = 0;
     } \
 } while(0)
 
-/// 编译单个着色器，返回 malloc 分配的 DXIL 字节（调用者 free）
-/// 流程：module → findEntryPointByName(IEntryPoint) → createCompositeComponentType → link → getEntryPointCode
+/// 编译单个着色器，每次创建独立的 ISession，返回 malloc 分配的 DXIL 字节。
+///
+/// 每次编译使用独立的 ISession，无 module 名冲突风险。
+/// 不手动释放 module/composite/linkedProgram — session 释放时自动清理。
 static unsigned char* compile_to_dxil(
-    slang::ISession* session,
+    slang::IGlobalSession* global_session,
     const char* source,
     const char* entry_point,
+    const char* profile_str,
     size_t* out_size,
     std::string* out_error)
 {
     *out_size = 0;
 
-    slang::IModule* module = session->loadModuleFromSourceString(
-        "test_module", ".", source, nullptr);
-    if (!module)
+    // 每次编译创建独立 ISession（避免模块字典冲突）
+    slang::TargetDesc targetDesc = {};
+    targetDesc.structureSize = sizeof(targetDesc);
+    targetDesc.format = SLANG_DXIL;
+    targetDesc.profile = global_session->findProfile(profile_str);
+
+    slang::SessionDesc sessionDesc = {};
+    sessionDesc.structureSize = sizeof(sessionDesc);
+    sessionDesc.targets = &targetDesc;
+    sessionDesc.targetCount = 1;
+
+    slang::ISession* session = nullptr;
+    SlangResult sr = global_session->createSession(sessionDesc, &session);
+    if (SLANG_FAILED(sr) || !session)
     {
-        if (out_error) *out_error = "loadModuleFromSourceString failed";
+        if (out_error) *out_error = "createSession failed";
         return nullptr;
     }
 
-    // 获取入口点 IComponentType
+    // 加载模块（模块名不冲突，因为每个 session 独立）
+    slang::IModule* module = session->loadModuleFromSourceString(
+        "shader_module", ".", source, nullptr);
+    if (!module)
+    {
+        if (out_error) *out_error = "loadModuleFromSourceString failed";
+        session->release();
+        return nullptr;
+    }
+    // 不释放 module — session 管理其生命周期
+
+    // 获取入口点
     slang::IEntryPoint* entryPoint = nullptr;
-    SlangResult sr = module->findEntryPointByName(entry_point, &entryPoint);
+    sr = module->findEntryPointByName(entry_point, &entryPoint);
     if (SLANG_FAILED(sr) || !entryPoint)
     {
         if (out_error) *out_error = std::string("entry point '") + entry_point + "' not found";
-        module->release();
+        session->release();
         return nullptr;
     }
 
@@ -114,10 +147,10 @@ static unsigned char* compile_to_dxil(
     {
         if (out_error) *out_error = "createCompositeComponentType failed";
         entryPoint->release();
-        module->release();
+        session->release();
         return nullptr;
     }
-    entryPoint->release();
+    entryPoint->release(); // composite 已 addRef，释放我们的引用
 
     // Link
     slang::IComponentType* linked = nullptr;
@@ -125,8 +158,8 @@ static unsigned char* compile_to_dxil(
     if (SLANG_FAILED(sr) || !linked)
     {
         if (out_error) *out_error = "link failed";
-        composite->release();
-        module->release();
+        // 不释放 composite — session 管理
+        session->release();
         return nullptr;
     }
 
@@ -136,9 +169,8 @@ static unsigned char* compile_to_dxil(
     if (SLANG_FAILED(sr) || !dxilBlob)
     {
         if (out_error) *out_error = "getEntryPointCode failed";
-        linked->release();
-        composite->release();
-        module->release();
+        // 不释放 linked/composite — session 管理
+        session->release();
         return nullptr;
     }
 
@@ -156,10 +188,9 @@ static unsigned char* compile_to_dxil(
         }
     }
 
+    // 释放 dxilBlob（独立对象）和 session（自动清理 module/composite/linked）
     dxilBlob->release();
-    linked->release();
-    composite->release();
-    module->release();
+    session->release();
     return result;
 }
 
@@ -195,31 +226,11 @@ int main()
     TEST("sm_6_0 != ps_6_0",   pSm60 != pPs60);
     TEST("ps_6_0 != cs_6_0",   pPs60 != pCs60);
 
-    // ── 创建 DXIL session ──
-    slang::TargetDesc targetDesc = {};
-    targetDesc.structureSize = sizeof(targetDesc);
-    targetDesc.format = SLANG_DXIL;
-    targetDesc.profile = pSm60;
-
-    slang::SessionDesc sessionDesc = {};
-    sessionDesc.structureSize = sizeof(sessionDesc);
-    sessionDesc.targets = &targetDesc;
-    sessionDesc.targetCount = 1;
-
-    slang::ISession* session = nullptr;
-    globalSession->createSession(sessionDesc, &session);
-    TEST("createSession", session != nullptr);
-    if (!session)
-    {
-        globalSession->release();
-        return 1;
-    }
-
     // ── 3. 顶点着色器 ──
     printf("\n── 3. 顶点着色器（sm_6_0）──\n");
     size_t vsSize = 0;
     std::string vsErr;
-    unsigned char* vsDxil = compile_to_dxil(session, kVertexShader, "main", &vsSize, &vsErr);
+    unsigned char* vsDxil = compile_to_dxil(globalSession, kVertexShader, "main", "sm_6_0", &vsSize, &vsErr);
     TEST("编译成功",    vsDxil != nullptr);
     TEST("DXIL 非空",   vsSize > 0);
     TEST("DXIL > 100B", vsSize > 100);
@@ -232,11 +243,11 @@ int main()
     }
     else printf("   错误: %s\n", vsErr.c_str());
 
-    // ── 4. 片段着色器 ──
+    // ── 4. 片段着色器（用独立 session + ps_6_0）──
     printf("\n── 4. 片段着色器（ps_6_0）──\n");
     size_t fsSize = 0;
     std::string fsErr;
-    unsigned char* fsDxil = compile_to_dxil(session, kFragmentShader, "main", &fsSize, &fsErr);
+    unsigned char* fsDxil = compile_to_dxil(globalSession, kFragmentShader, "main", "ps_6_0", &fsSize, &fsErr);
     TEST("编译成功",    fsDxil != nullptr);
     TEST("DXIL 非空",   fsSize > 0);
     TEST("DXIL > 100B", fsSize > 100);
@@ -249,11 +260,11 @@ int main()
     }
     else printf("   错误: %s\n", fsErr.c_str());
 
-    // ── 5. 计算着色器 ──
+    // ── 5. 计算着色器（用独立 session + cs_6_0）──
     printf("\n── 5. 计算着色器（cs_6_0）──\n");
     size_t csSize = 0;
     std::string csErr;
-    unsigned char* csDxil = compile_to_dxil(session, kComputeShader, "main", &csSize, &csErr);
+    unsigned char* csDxil = compile_to_dxil(globalSession, kComputeShader, "main", "cs_6_0", &csSize, &csErr);
     TEST("编译成功",    csDxil != nullptr);
     TEST("DXIL 非空",   csSize > 0);
     TEST("DXIL > 100B", csSize > 100);
@@ -267,22 +278,22 @@ int main()
     else printf("   错误: %s\n", csErr.c_str());
 
     // ── 6. 重复编译稳定性 ──
-    printf("\n── 6. 重复编译稳定性 ──\n");
+    printf("\n── 6. 重复编译稳定性（每次独立 session）──\n");
     bool allOk = true;
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < 10; i++)
     {
         size_t sz = 0;
         std::string err;
-        unsigned char* dxil = compile_to_dxil(session, kVertexShader, "main", &sz, &err);
+        unsigned char* dxil = compile_to_dxil(globalSession, kVertexShader, "main", "sm_6_0", &sz, &err);
         if (!dxil || sz == 0) { printf("   第 %d 次: FAIL (%s)\n", i + 1, err.c_str()); allOk = false; }
+        else printf("   第 %d 次: OK (%zu bytes)\n", i + 1, sz);
         free(dxil);
     }
-    TEST("3 次重复编译均成功", allOk);
+    TEST("10 次重复编译均成功", allOk);
 
     // ── 清理 ──
     printf("\n── 7. 清理 ──\n");
     free(vsDxil); free(fsDxil); free(csDxil);
-    session->release();
     globalSession->release();
     TEST("所有资源释放", true);
 

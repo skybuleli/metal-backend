@@ -97,14 +97,12 @@ EOF
     echo -n "  [slangc->DXIL] ... "
     if slangc "$TMPDIR/vs.slang" -target dxil -entry main -stage vertex -profile sm_6_0 \
         -o "$TMPDIR/vs.dxil" 2>/dev/null && [ -s "$TMPDIR/vs.dxil" ]; then
-        local dxil_size
         dxil_size=$(wc -c < "$TMPDIR/vs.dxil")
         echo -e "${GREEN}OK${NC} (${dxil_size} bytes)"
 
         echo -n "  [MSC->metallib] ... "
         if metal-shaderconverter "$TMPDIR/vs.dxil" -o "$TMPDIR/vs.metallib" 2>/dev/null \
             && [ -s "$TMPDIR/vs.metallib" ]; then
-            local metal_size
             metal_size=$(wc -c < "$TMPDIR/vs.metallib")
             echo -e "${GREEN}OK${NC} (${metal_size} bytes)"
         else
