@@ -704,3 +704,23 @@
   - `src/libmetal_bridge/build_test/test_device`（可执行）
 - **提交**: `f89d17e feat(metal): P4.1.1 MetalDevice GPU 选择 + 设备创建 + 能力查询 + Catch2 测试 [done]`
 - **下一任务**: P4.1.2 — MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared)
+
+### 2026-06-13 下午 | P4.1.2 MetalBuffer MTLStorageMode 策略 + 6 个 C ABI 函数 + Catch2 测试 | ✅ 完成
+
+- **Agent**: Codex (Buffy)
+- **结果**: ✅ 完整实现了 MetalBuffer 的 6 个 C ABI 函数（create/create_with_bytes/get_info/map/unmap/flush），含 Catch2 单元测试 11 个全部通过
+- **变更**:
+  - `metal_bridge.h`：新增 `METAL_HANDLE_HEADER` 宏（从 MetalDevice.cpp 移来，供所有 .cpp 文件共享）、`metal_buffer_info` 结构体、6 个 Buffer C ABI 函数声明
+  - `metal_internal.h`：**新建** — 共享内部结构体定义文件，解决 opaque 类型跨文件访问问题
+  - `MetalBuffer.cpp`：完整实现 — `metal_create_buffer` 调 `device->device->newBuffer()`、`metal_create_buffer_with_bytes` 带初始数据创建、`metal_buffer_get_info` 返回大小/模式、`metal_map_buffer` 返回 `contents()` CPU 指针、`metal_unmap_buffer` Managed 模式同步、`metal_flush_buffer` 部分范围同步
+  - `MetalDevice.cpp`：移除本地 `METAL_HANDLE_HEADER` 定义和结构体定义，改为 `#include "metal_internal.h"`；`metal_release` 增加 `METAL_HANDLE_TYPE_BUFFER` 分支
+  - `CMakeLists.txt`：新增 `metal_internal.h` 注册、`test_buffer` 测试目标
+  - `MetalNative.cs`：新增 6 个 Buffer P/Invoke 声明 + `MetalBufferInfo` 结构体
+  - `test_buffer.cpp`：11 个 Catch2 测试用例覆盖创建、带数据验证、信息查询、CPO 映射写入、unmap 无害、flush 无害、NULL 参数错误、多缓冲区、创建-释放循环、释放正确性
+- **验证**:
+  - `cmake .. -DBUILD_TESTS=ON && cmake --build . && ctest -V` → 22/22 tests PASSED（11 device + 11 buffer，203 断言）
+- **证据**:
+  - `docs/evidence/P4.1.2-meta.json`
+  - `src/libmetal_bridge/build_test/test_buffer`（可执行）
+- **提交**: `7018ae8 feat(metal): P4.1.2 MetalBuffer MTLStorageMode 策略 + 6 个 C ABI 函数 + Catch2 测试 [done]`
+- **下一任务**: P4.1.3 — MetalTexture: Maxwell→MTLPixelFormat 映射表

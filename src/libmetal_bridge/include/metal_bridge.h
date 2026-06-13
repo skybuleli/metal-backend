@@ -225,6 +225,19 @@ METAL_BRIDGE_EXPORT metal_result metal_flush_buffer(
     uint64_t offset,
     uint64_t size);
 
+// ── 缓冲区零拷贝包装（P4.1.2 补充）：包装已有的 CPU 内存指针 ──
+METAL_BRIDGE_EXPORT metal_result metal_create_buffer_from_pointer(
+    metal_device* device,
+    void* ptr,
+    uint64_t size,
+    metal_storage_mode mode,
+    metal_buffer** out_buffer);
+
+// ── 缓冲区 CPU 地址直接访问（UMA 优化，无需 map/unmap 配对）──
+METAL_BRIDGE_EXPORT metal_result metal_buffer_get_cpu_address(
+    metal_buffer* buffer,
+    void** out_ptr);
+
 // TODO: Phase 4
 // - metal_create_texture / metal_upload_texture / metal_readback_texture
 // - metal_create_sampler

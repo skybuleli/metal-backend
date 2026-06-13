@@ -88,7 +88,7 @@ metal_result metal_create_buffer(
     if (device == nullptr || out_buffer == nullptr)
         return METAL_RESULT_INVALID_ARGUMENT;
 
-    if (device->device == nullptr)  // 通过 metal_internal.h 可直接访问
+    if (device->device == nullptr)
         return METAL_RESULT_RUNTIME_ERROR;
 
     if (size == 0)
@@ -156,6 +156,48 @@ metal_result metal_create_buffer_with_bytes(
     return METAL_RESULT_OK;
 }
 
+/// 零拷贝包装已有 CPU 指针：不拷贝数据，直接让 Metal 使用外部内存
+metal_result metal_create_buffer_from_pointer(
+    metal_device* device,
+    void* ptr,
+    uint64_t size,
+    metal_storage_mode mode,
+    metal_buffer** out_buffer)
+{
+    if (device == nullptr || out_buffer == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (device->device == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    if (ptr == nullptr || size == 0)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // 确保大小向上对齐
+    size = METAL_ALIGN_UP(static_cast<size_t>(size), METAL_BUFFER_OFFSET_ALIGNMENT);
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+    MTL::ResourceOptions options = to_resource_options(mode);
+
+    // bytesNoCopy: 零拷贝包装，不转移指针所有权
+    // deallocator: nil — 调用方负责管理 ptr 的生命周期
+    MTL::Buffer* mtl_buffer = device->device->newBuffer(
+        ptr,
+        static_cast<NS::UInteger>(size),
+        options,
+        nullptr /* deallocator */);
+
+    metal_result result;
+    metal_buffer* buf = allocate_buffer_struct(mtl_buffer, size, mode, &result);
+    pool->release();
+
+    if (buf == nullptr)
+        return result;
+
+    *out_buffer = buf;
+    return METAL_RESULT_OK;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // 缓冲区信息查询
 // ════════════════════════════════════════════════════════════════════
@@ -179,6 +221,21 @@ metal_result metal_buffer_get_info(
 // ════════════════════════════════════════════════════════════════════
 // 缓冲区映射 / 解除映射
 // ════════════════════════════════════════════════════════════════════
+//
+// 同步方向约定（修复审查缺口 #2）：
+//
+//   CPU → GPU 同步（CPU 写数据 → GPU 读取）：
+//     写完后调用 metal_unmap_buffer() 或 metal_flush_buffer()，
+//     二者内部对 Managed 模式调用 didModifyRange 标记脏区域。
+//
+//   GPU → CPU 同步（GPU 写数据 → CPU 读取）：
+//     通过 MTLBlitCommandEncoder.synchronizeResource() 完成，
+//     属于 P4.4 CommandBuffer 模块范围，不在 Buffer 模块处理。
+//
+//   metal_map_buffer() 只负责返回 contents() 指针，
+//   不执行任何方向的同步操作。
+//
+// ════════════════════════════════════════════════════════════════════
 
 metal_result metal_map_buffer(
     metal_buffer* buffer,
@@ -201,20 +258,16 @@ metal_result metal_map_buffer(
         return METAL_RESULT_UNSUPPORTED;
     }
 
+    // 仅返回 contents() 指针，不做同步。
+    // 同步方向由调用方通过 unmap/flush（CPU→GPU）或 blit encoder（GPU→CPU）控制。
     *out_ptr = buffer->buffer->contents();
-
-    // Managed 模式需要在读取前同步
-    if (buffer->mode == METAL_STORAGE_MODE_MANAGED)
-    {
-        NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
-        buffer->buffer->didModifyRange(
-            NS::Range::Make(0, static_cast<NS::UInteger>(buffer->size)));
-        pool->release();
-    }
-
     return METAL_RESULT_OK;
 }
 
+/// CPU 写操作完成后解除映射
+/// Shared 模式：无操作（自动可见）
+/// Managed 模式：调用 didModifyRange 告知 GPU 脏区域（CPU→GPU 同步）
+/// Private/Memoryless：不可映射，不应到达此路径
 metal_result metal_unmap_buffer(
     metal_buffer* buffer)
 {
@@ -227,7 +280,8 @@ metal_result metal_unmap_buffer(
     if (buffer->buffer == nullptr)
         return METAL_RESULT_RUNTIME_ERROR;
 
-    // Shared 模式无需解除映射；Private/Memoryless 不可映射
+    // Shared 模式无需解除映射
+    // Private/Memoryless 不可映射
     // Managed 模式：CPU 写完后需要同步到 GPU
     if (buffer->mode == METAL_STORAGE_MODE_MANAGED)
     {
@@ -240,6 +294,7 @@ metal_result metal_unmap_buffer(
     return METAL_RESULT_OK;
 }
 
+/// 仅同步 Managed 缓冲区中指定的偏移范围（CPU→GPU 方向）
 metal_result metal_flush_buffer(
     metal_buffer* buffer,
     uint64_t offset,
@@ -278,5 +333,42 @@ metal_result metal_flush_buffer(
     buffer->buffer->didModifyRange(NS::Range::Make(flush_offset, flush_size));
     pool->release();
 
+    return METAL_RESULT_OK;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// UMA 优化的直接 CPU 地址访问
+// ════════════════════════════════════════════════════════════════════
+//
+// 在 UMA 设备（Apple Silicon）上，metal_buffer_get_cpu_address 返回
+// 的指针在整个 MTLBuffer 生命周期内恒定有效，不需要 map/unmap 配对
+// 调用。适合 uniform 缓冲等每帧高频更新场景。
+//
+// 在非 UMA 设备上，该指针可能在 GPU 操作后失效，调用方应继续使用
+// map/unmap 配对模式以确保正确同步。
+//
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_buffer_get_cpu_address(
+    metal_buffer* buffer,
+    void** out_ptr)
+{
+    if (buffer == nullptr || out_ptr == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (buffer->base.type != METAL_HANDLE_TYPE_BUFFER)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (buffer->buffer == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    if (buffer->mode == METAL_STORAGE_MODE_PRIVATE ||
+        buffer->mode == METAL_STORAGE_MODE_MEMORYLESS)
+    {
+        *out_ptr = nullptr;
+        return METAL_RESULT_UNSUPPORTED;
+    }
+
+    *out_ptr = buffer->buffer->contents();
     return METAL_RESULT_OK;
 }

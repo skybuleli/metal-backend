@@ -322,3 +322,136 @@ TEST_CASE("metal_release 正确释放缓冲区句柄", "[buffer][release]")
     REQUIRE(buf2 != nullptr);
     metal_release(buf2);
 }
+
+// ════════════════════════════════════════════════════════════════════
+// 审查缺口修复：新函数测试
+// ════════════════════════════════════════════════════════════════════
+
+TEST_CASE("metal_create_buffer_from_pointer 零拷贝包装有效指针", "[buffer][from_pointer]")
+{
+    DeviceGuard dev_guard;
+
+    // 准备一个已知内容的外部内存
+    uint8_t test_data[64];
+    for (int i = 0; i < 64; ++i)
+        test_data[i] = static_cast<uint8_t>(i);
+
+    metal_buffer* buf = nullptr;
+    metal_result result = metal_create_buffer_from_pointer(
+        dev_guard.dev, test_data, sizeof(test_data), METAL_STORAGE_MODE_SHARED, &buf);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(buf != nullptr);
+
+    // 验证：映射后内容应与源内存一致
+    void* mapped = nullptr;
+    result = metal_map_buffer(buf, &mapped);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(mapped != nullptr);
+
+    const uint8_t* bytes = static_cast<const uint8_t*>(mapped);
+    for (int i = 0; i < 64; ++i)
+    {
+        REQUIRE(bytes[i] == static_cast<uint8_t>(i));
+    }
+
+    // 通过映射指针修改应反映到原始内存（零拷贝语义）
+    uint8_t* writable = static_cast<uint8_t*>(mapped);
+    writable[0] = 0xFF;
+    REQUIRE(test_data[0] == 0xFF); // 确认原始内存也被修改
+
+    metal_release(buf);
+}
+
+TEST_CASE("metal_create_buffer_from_pointer NULL 参数检查", "[buffer][from_pointer][error]")
+{
+    DeviceGuard dev_guard;
+
+    REQUIRE(metal_create_buffer_from_pointer(nullptr, nullptr, 64, METAL_STORAGE_MODE_SHARED, nullptr)
+        == METAL_RESULT_INVALID_ARGUMENT);
+    REQUIRE(metal_create_buffer_from_pointer(dev_guard.dev, nullptr, 64, METAL_STORAGE_MODE_SHARED, nullptr)
+        == METAL_RESULT_INVALID_ARGUMENT);
+
+    uint8_t dummy[16];
+    REQUIRE(metal_create_buffer_from_pointer(dev_guard.dev, dummy, 0, METAL_STORAGE_MODE_SHARED, nullptr)
+        == METAL_RESULT_INVALID_ARGUMENT);
+}
+
+TEST_CASE("metal_buffer_get_cpu_address 返回有效地址", "[buffer][cpu_address]")
+{
+    DeviceGuard dev_guard;
+
+    BufferGuard buf_guard(dev_guard.dev, 256, METAL_STORAGE_MODE_SHARED);
+
+    void* ptr = nullptr;
+    metal_result result = metal_buffer_get_cpu_address(buf_guard.buf, &ptr);
+    REQUIRE(result == METAL_RESULT_OK);
+    REQUIRE(ptr != nullptr);
+
+    // 写入并通过 map 验证一致性
+    uint8_t* bytes = static_cast<uint8_t*>(ptr);
+    bytes[42] = 0xAB;
+
+    void* map_ptr = nullptr;
+    REQUIRE(metal_map_buffer(buf_guard.buf, &map_ptr) == METAL_RESULT_OK);
+    const uint8_t* map_bytes = static_cast<const uint8_t*>(map_ptr);
+    REQUIRE(map_bytes[42] == 0xAB);
+}
+
+TEST_CASE("metal_buffer_get_cpu_address 与 metal_map_buffer 返回相同指针", "[buffer][cpu_address][map]")
+{
+    DeviceGuard dev_guard;
+    BufferGuard buf_guard(dev_guard.dev, 128, METAL_STORAGE_MODE_SHARED);
+
+    void* addr1 = nullptr;
+    void* addr2 = nullptr;
+
+    REQUIRE(metal_buffer_get_cpu_address(buf_guard.buf, &addr1) == METAL_RESULT_OK);
+    REQUIRE(metal_map_buffer(buf_guard.buf, &addr2) == METAL_RESULT_OK);
+
+    // 两者应返回相同的 contents() 指针
+    REQUIRE(addr1 == addr2);
+}
+
+TEST_CASE("metal_map_buffer 不再是同步操作（修复方向）", "[buffer][map][sync]")
+{
+    DeviceGuard dev_guard;
+
+    // 验证 map 后无需 unmap 也能直接继续使用指针
+    BufferGuard buf_guard(dev_guard.dev, 64, METAL_STORAGE_MODE_SHARED);
+
+    void* ptr = nullptr;
+    REQUIRE(metal_map_buffer(buf_guard.buf, &ptr) == METAL_RESULT_OK);
+    REQUIRE(ptr != nullptr);
+
+    // map 后直接写入
+    static_cast<uint8_t*>(ptr)[0] = 0x55;
+
+    // 不调用 unmap，再次 map
+    void* ptr2 = nullptr;
+    REQUIRE(metal_map_buffer(buf_guard.buf, &ptr2) == METAL_RESULT_OK);
+    REQUIRE(ptr2 == ptr); // 同一个指针
+    REQUIRE(static_cast<const uint8_t*>(ptr2)[0] == 0x55); // 数据还在
+}
+
+TEST_CASE("metal_create_buffer_from_pointer 释放后原始指针仍有效", "[buffer][from_pointer][release]")
+{
+    DeviceGuard dev_guard;
+
+    uint8_t backing_memory[32];
+    std::memset(backing_memory, 0xAA, sizeof(backing_memory));
+
+    metal_buffer* buf = nullptr;
+    REQUIRE(metal_create_buffer_from_pointer(
+        dev_guard.dev, backing_memory, sizeof(backing_memory),
+        METAL_STORAGE_MODE_SHARED, &buf) == METAL_RESULT_OK);
+    REQUIRE(buf != nullptr);
+
+    // 释放 MTLBuffer（bytesNoCopy 不转移所有权）
+    metal_release(buf);
+
+    // 原始内存应仍然有效且未被修改
+    for (size_t i = 0; i < sizeof(backing_memory); ++i)
+    {
+        REQUIRE(backing_memory[i] == 0xAA);
+    }
+}

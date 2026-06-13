@@ -59,6 +59,12 @@ namespace Ryujinx.Graphics.Metal
 
         [LibraryImport(LibraryName, EntryPoint = "metal_flush_buffer")]
         internal static partial MetalResult FlushBuffer(nint buffer, ulong offset, ulong size);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_create_buffer_from_pointer")]
+        internal static partial MetalResult CreateBufferFromPointer(nint device, nint ptr, ulong size, MetalStorageMode mode, out nint buffer);
+
+        [LibraryImport(LibraryName, EntryPoint = "metal_buffer_get_cpu_address")]
+        internal static partial MetalResult BufferGetCpuAddress(nint buffer, out nint ptr);
     }
 
     internal enum MetalResult : uint

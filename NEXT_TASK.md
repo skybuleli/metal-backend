@@ -1,6 +1,6 @@
 # 下一任务 — P4.1.3 MetalTexture: Maxwell→MTLPixelFormat 映射表
 
-> 生成时间：2026-06-13 15:08:21
+> 生成时间：2026-06-13 15:23:28
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
