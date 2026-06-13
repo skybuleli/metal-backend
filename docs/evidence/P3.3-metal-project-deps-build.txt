@@ -1,0 +1,19 @@
+  正在确定要还原的项目…
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Spv.Generator/Spv.Generator.csproj (用时 2.18 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj (用时 2.35 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.GAL/Ryujinx.Graphics.GAL.csproj (用时 2.36 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Shader/Ryujinx.Graphics.Shader.csproj (用时 2.35 秒)。
+  已还原 /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/Ryujinx.Common.csproj (用时 2.35 秒)。
+  Spv.Generator -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Spv.Generator/bin/Release/net10.0/Spv.Generator.dll
+  Ryujinx.Common -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/bin/Release/net10.0/Ryujinx.Common.dll
+  包 Ryujinx.Common.1.0.0 缺少自述文件。转到 https://aka.ms/nuget/authoring-best-practices/readme 了解为什么包阅读主题很重要。
+  已成功创建包“/Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Common/bin/Release/Ryujinx.Common.1.0.0.nupkg”。
+  Ryujinx.Graphics.Shader -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Shader/bin/Release/net10.0/Ryujinx.Graphics.Shader.dll
+  Ryujinx.Graphics.GAL -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.GAL/bin/Release/net10.0/Ryujinx.Graphics.GAL.dll
+  Ryujinx.Graphics.Metal -> /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx.Graphics.Metal/bin/Release/net10.0/Ryujinx.Graphics.Metal.dll
+
+已成功生成。
+    0 个警告
+    0 个错误
+
+已用时间 00:00:14.57

@@ -567,3 +567,16 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
 - **注意事项**:
   - 当前项目只建立空骨架，依赖引用与源码文件留给 `P3.3` 及后续任务
+
+### 2026-06-13 下午 | P3.3 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 已为 `Ryujinx.Graphics.Metal` 接入最小托管依赖集，项目可连同 `GAL` / `Shader` 依赖链独立构建通过
+- **变更**:
+  - 更新 `src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj`
+  - 新增 `ProjectReference` 到 `Ryujinx.Common`、`Ryujinx.Graphics.GAL`、`Ryujinx.Graphics.Shader`
+  - 生成证据日志 `docs/evidence/P3.3-metal-project-deps-build.txt`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` → 0 警告 / 0 错误
+- **注意事项**:
+  - 当前仍未添加任何 `.cs` 实现文件；P3.4 起再逐步接入 `MetalNative.cs` 与 `IRenderer`/`IPipeline` stub

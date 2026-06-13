@@ -1,14 +1,14 @@
-# 下一任务 — P3.3 引用 Ryujinx.Graphics.GAL 和 Shader 依赖
+# 下一任务 — P3.4 创建 MetalNative.cs (P/Invoke 声明)
 
-> 生成时间：2026-06-13 12:53:32
+> 生成时间：2026-06-13 13:01:16
 > 所属阶段：Phase 3 — Ryubing Fork 与 GAL 集成
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P3.3 |
-| 任务名称 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 |
+| 任务 ID | P3.4 |
+| 任务名称 | 创建 MetalNative.cs (P/Invoke 声明) |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P3.3 → ✅
+- 更新 PROGRESS.md：P3.4 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
