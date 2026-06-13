@@ -128,18 +128,22 @@ namespace Ryujinx.Graphics.Metal
 
         public Capabilities GetCapabilities()
         {
+            var memoryType = _device.Caps.HasUnifiedMemory
+                ? SystemMemoryType.UnifiedMemory
+                : SystemMemoryType.DedicatedMemory;
+
             return new Capabilities(
                 api: TargetApi.Metal,
-                vendorName: "Apple Metal",
-                memoryType: SystemMemoryType.UnifiedMemory,
+                vendorName: _device.Caps.DeviceName,
+                memoryType: memoryType,
                 hasFrontFacingBug: false,
                 hasVectorIndexingBug: false,
                 needsFragmentOutputSpecialization: false,
                 reduceShaderPrecision: false,
                 supportsAstcCompression: true,
-                supportsBc123Compression: false,
-                supportsBc45Compression: false,
-                supportsBc67Compression: false,
+                supportsBc123Compression: true,
+                supportsBc45Compression: true,
+                supportsBc67Compression: true,
                 supportsEtc2Compression: true,
                 supports3DTextureCompression: true,
                 supportsBgraFormat: true,
@@ -184,7 +188,7 @@ namespace Ryujinx.Graphics.Metal
                 maximumStorageBuffersPerStage: 16,
                 maximumTexturesPerStage: 32,
                 maximumImagesPerStage: 16,
-                maximumComputeSharedMemorySize: 32768,
+                maximumComputeSharedMemorySize: (int)_device.Caps.MaxThreadgroupMemory,
                 maximumSupportedAnisotropy: 16f,
                 shaderSubgroupSize: 32,
                 storageBufferOffsetAlignment: 16,
@@ -200,7 +204,7 @@ namespace Ryujinx.Graphics.Metal
 
         public HardwareInfo GetHardwareInfo()
         {
-            return new HardwareInfo("Apple", "Metal Stub Renderer", "libmetal_bridge");
+            return new HardwareInfo("Apple", _device.Caps.DeviceName, "libmetal_bridge");
         }
 
         public void Initialize(GraphicsDebugLevel logLevel)
