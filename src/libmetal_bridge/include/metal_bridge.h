@@ -1005,6 +1005,47 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_scissor_rects(
     const metal_scissor_rect* rects,
     uint32_t count);
 
+// ════════════════════════════════════════════════════════════════
+// 面剔除与多边形模式（P4.3.12）
+// ════════════════════════════════════════════════════════════════
+
+/// 面剔除模式（值与 MTL::CullMode 对齐）
+typedef enum metal_cull_mode
+{
+    METAL_CULL_MODE_NONE = 0,
+    METAL_CULL_MODE_FRONT = 1,
+    METAL_CULL_MODE_BACK = 2,
+} metal_cull_mode;
+
+/// 绕线方向（值与 MTL::Winding 对齐）
+typedef enum metal_winding
+{
+    METAL_WINDING_COUNTER_CLOCKWISE = 0,
+    METAL_WINDING_CLOCKWISE = 1,
+} metal_winding;
+
+/// 三角形填充模式（值与 MTL::TriangleFillMode 对齐）
+typedef enum metal_triangle_fill_mode
+{
+    METAL_TRIANGLE_FILL_MODE_FILL = 0,
+    METAL_TRIANGLE_FILL_MODE_LINES = 1,
+} metal_triangle_fill_mode;
+
+/// 设置面剔除模式
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_cull_mode(
+    metal_render_encoder* encoder,
+    metal_cull_mode cull_mode);
+
+/// 设置正面绕线方向
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_front_facing_winding(
+    metal_render_encoder* encoder,
+    metal_winding winding);
+
+/// 设置三角形填充模式
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_triangle_fill_mode(
+    metal_render_encoder* encoder,
+    metal_triangle_fill_mode fill_mode);
+
 #ifdef __cplusplus
 }
 #endif

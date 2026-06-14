@@ -36,6 +36,10 @@ namespace Ryujinx.Graphics.Metal
         private int _viewportCount;
         private readonly MetalScissorRect[] _scissorRects;
         private int _scissorCount;
+        private MetalCullMode _cullMode;
+        private bool _cullEnabled;
+        private MetalWinding _winding;
+        private MetalTriangleFillMode _fillMode;
         private PrimitiveTopology _primitiveTopology;
         private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
@@ -66,6 +70,10 @@ namespace Ryujinx.Graphics.Metal
             _viewportCount = 0;
             _scissorRects = new MetalScissorRect[MaxViewports];
             _scissorCount = 0;
+            _cullMode = MetalCullMode.None;
+            _cullEnabled = false;
+            _winding = MetalWinding.CounterClockwise;
+            _fillMode = MetalTriangleFillMode.Fill;
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
         }
@@ -305,10 +313,33 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetFaceCulling(bool enable, Face face)
         {
+            _cullEnabled = enable;
+            if (!enable)
+            {
+                _cullMode = MetalCullMode.None;
+                return;
+            }
+
+            // GAL Face 值与 OpenGL 一致：Front=0x404, Back=0x405, FrontAndBack=0x408
+            _cullMode = face switch
+            {
+                Face.Front => MetalCullMode.Front,
+                Face.Back => MetalCullMode.Back,
+                Face.FrontAndBack => MetalCullMode.None, // Metal 不支持同时剔除双面，回退为不剔除
+                _ => MetalCullMode.None,
+            };
         }
 
         public void SetFrontFace(FrontFace frontFace)
         {
+            // GAL FrontFace 值与 OpenGL 一致：Clockwise=0x900, CounterClockwise=0x901
+            // MTL::Winding: CounterClockwise=0, Clockwise=1
+            _winding = frontFace switch
+            {
+                FrontFace.Clockwise => MetalWinding.Clockwise,
+                FrontFace.CounterClockwise => MetalWinding.CounterClockwise,
+                _ => MetalWinding.CounterClockwise,
+            };
         }
 
         public void SetImage(ShaderStage stage, int binding, ITexture texture)
@@ -377,6 +408,16 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetPolygonMode(PolygonMode frontMode, PolygonMode backMode)
         {
+            // Metal 只有 setTriangleFillMode，不区分正反面；使用 frontMode
+            // PolygonMode 值与 OpenGL 一致：Point=0x1b00, Line=0x1b01, Fill=0x1b02
+            // Metal 不支持 Point 模式，回退为 Lines
+            _fillMode = frontMode switch
+            {
+                PolygonMode.Fill => MetalTriangleFillMode.Fill,
+                PolygonMode.Line => MetalTriangleFillMode.Lines,
+                PolygonMode.Point => MetalTriangleFillMode.Lines, // 回退
+                _ => MetalTriangleFillMode.Fill,
+            };
         }
 
         public void SetPrimitiveRestart(bool enable, int index)
@@ -941,6 +982,21 @@ namespace Ryujinx.Graphics.Metal
                     }
                 }
             }
+
+            // 设置面剔除模式（P4.3.12）
+            MetalResult cullResult = MetalNative.RenderEncoderSetCullMode(
+                renderEncoder, _cullEnabled ? _cullMode : MetalCullMode.None);
+            ThrowIfFailed(cullResult, nameof(MetalNative.RenderEncoderSetCullMode));
+
+            // 设置正面绕线方向（P4.3.12）
+            MetalResult windingResult = MetalNative.RenderEncoderSetFrontFacingWinding(
+                renderEncoder, _winding);
+            ThrowIfFailed(windingResult, nameof(MetalNative.RenderEncoderSetFrontFacingWinding));
+
+            // 设置三角形填充模式（P4.3.12）
+            MetalResult fillResult = MetalNative.RenderEncoderSetTriangleFillMode(
+                renderEncoder, _fillMode);
+            ThrowIfFailed(fillResult, nameof(MetalNative.RenderEncoderSetTriangleFillMode));
 
             for (int binding = 0; binding < MaxUniformBufferBindings; binding++)
             {

@@ -500,3 +500,43 @@ metal_result metal_render_encoder_set_scissor_rects(
     }
     return METAL_RESULT_OK;
 }
+
+// ════════════════════════════════════════════════════════════════
+// 面剔除与多边形模式（P4.3.12）
+// ════════════════════════════════════════════════════════════════
+
+metal_result metal_render_encoder_set_cull_mode(
+    metal_render_encoder* encoder,
+    metal_cull_mode cull_mode)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // MTL::CullMode: None=0, Front=1, Back=2
+    encoder->encoder->setCullMode(static_cast<MTL::CullMode>(cull_mode));
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_set_front_facing_winding(
+    metal_render_encoder* encoder,
+    metal_winding winding)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // MTL::Winding: CounterClockwise=0, Clockwise=1
+    encoder->encoder->setFrontFacingWinding(static_cast<MTL::Winding>(winding));
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_set_triangle_fill_mode(
+    metal_render_encoder* encoder,
+    metal_triangle_fill_mode fill_mode)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // MTL::TriangleFillMode: Fill=0, Lines=1
+    encoder->encoder->setTriangleFillMode(static_cast<MTL::TriangleFillMode>(fill_mode));
+    return METAL_RESULT_OK;
+}

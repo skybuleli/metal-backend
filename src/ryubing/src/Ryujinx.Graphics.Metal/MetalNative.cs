@@ -301,6 +301,22 @@ namespace Ryujinx.Graphics.Metal
             nint renderEncoder,
             nint rects,
             uint count);
+
+        // ── 面剔除与多边形模式 P/Invoke (P4.3.12) ──
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_cull_mode")]
+        internal static extern MetalResult RenderEncoderSetCullMode(
+            nint renderEncoder,
+            MetalCullMode cullMode);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_front_facing_winding")]
+        internal static extern MetalResult RenderEncoderSetFrontFacingWinding(
+            nint renderEncoder,
+            MetalWinding winding);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_triangle_fill_mode")]
+        internal static extern MetalResult RenderEncoderSetTriangleFillMode(
+            nint renderEncoder,
+            MetalTriangleFillMode fillMode);
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -699,6 +715,26 @@ namespace Ryujinx.Graphics.Metal
         DontCare = 0,
         Store = 1,
         MultisampleResolve = 2,
+    }
+
+    // ── 面剔除与多边形模式枚举 (P4.3.12) ──
+    internal enum MetalCullMode : uint
+    {
+        None = 0,
+        Front = 1,
+        Back = 2,
+    }
+
+    internal enum MetalWinding : uint
+    {
+        CounterClockwise = 0,
+        Clockwise = 1,
+    }
+
+    internal enum MetalTriangleFillMode : uint
+    {
+        Fill = 0,
+        Lines = 1,
     }
 
     [StructLayout(LayoutKind.Sequential)]

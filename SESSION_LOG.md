@@ -170,3 +170,22 @@
   - metal-cpp `setViewports`/`setScissorRects` 参数顺序为 `(data, count)`
   - 支持最多 16 个视口/裁剪矩形
 - **状态摘要**: P4 进度 82/144 (56.9%)，下一任务 P4.3.12 SetFaceCulling/SetFrontFace/SetPolygonMode
+
+---
+
+### 2026-06-14 12:45 — P4.3.12 SetFaceCulling/SetFrontFace/SetPolygonMode
+- **Agent**: Qoder
+- **结果**: ✅ 实现面剔除、绕线方向、多边形模式设置，均为编码器动态状态
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `metal_cull_mode`/`metal_winding`/`metal_triangle_fill_mode` 枚举 + 3 个 C ABI 函数
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`：实现 `setCullMode`/`setFrontFacingWinding`/`setTriangleFillMode`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：新增枚举 + 3 个 P/Invoke
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：缓存字段 + `SetFaceCulling`/`SetFrontFace`/`SetPolygonMode` + `BindRenderResources` 绑定
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build` ✅（0 警告，0 错误）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（118 个 CA1416 警告，0 错误）
+- **说明**:
+  - Metal 不支持 FrontAndBack 同时剔除，回退为 CullMode.None
+  - Metal 不支持 Point 多边形模式，回退为 Lines
+  - setTriangleFillMode 不区分正反面，使用 frontMode
+- **状态摘要**: P4 进度 83/144 (57.6%)，下一任务 P4.3.13

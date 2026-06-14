@@ -1,0 +1,35 @@
+{
+  "task": "P4.3.12",
+  "title": "SetFaceCulling/SetFrontFace/SetPolygonMode",
+  "status": "done",
+  "timestamp": "2026-06-14T12:45:00+08:00",
+  "changes": [
+    {
+      "file": "src/libmetal_bridge/include/metal_bridge.h",
+      "summary": "新增 metal_cull_mode（None/Front/Back）+ metal_winding（CounterClockwise/Clockwise）+ metal_triangle_fill_mode（Fill/Lines）枚举 + 3 个 C ABI 函数声明"
+    },
+    {
+      "file": "src/libmetal_bridge/src/MetalPipeline.cpp",
+      "summary": "实现 metal_render_encoder_set_cull_mode（setCullMode）+ metal_render_encoder_set_front_facing_winding（setFrontFacingWinding）+ metal_render_encoder_set_triangle_fill_mode（setTriangleFillMode）"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+      "summary": "新增 MetalCullMode/MetalWinding/MetalTriangleFillMode 枚举 + RenderEncoderSetCullMode/RenderEncoderSetFrontFacingWinding/RenderEncoderSetTriangleFillMode P/Invoke"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs",
+      "summary": "新增 _cullMode/_cullEnabled/_winding/_fillMode 缓存字段 + SetFaceCulling（Face→MetalCullMode）+ SetFrontFace（FrontFace→MetalWinding）+ SetPolygonMode（PolygonMode→MetalTriangleFillMode，Point 回退为 Lines）+ BindRenderResources 绑定"
+    }
+  ],
+  "design_decisions": [
+    "面剔除、绕线方向、填充模式均为编码器动态状态，无需重建管线",
+    "Metal 不支持 FrontAndBack 同时剔除，回退为 CullMode.None",
+    "Metal 不支持 Point 多边形模式，回退为 Lines",
+    "setTriangleFillMode 不区分正反面，使用 frontMode",
+    "GAL 枚举值与 OpenGL 一致，通过 switch 映射到 Metal 枚举值"
+  ],
+  "build": {
+    "cpp": "0 警告，0 错误（仅 ranlib 空符号警告）",
+    "csharp": "118 个 CA1416 警告（macOS 平台），0 错误"
+  }
+}

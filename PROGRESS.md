@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T11:40:46+08:00
+# 最后更新: 2026-06-14T11:47:02+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 82/144 任务 (56.9%)
+# 完成度: 83/144 任务 (57.6%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -142,7 +142,7 @@
 | P4.3.9 | SetBlendState: 混合状态映射 | ✅ | 2026-06-14T11:45:00+08:00 | docs/evidence/P4.3.9-meta.json：新增 metal_blend_factor/operation/color_write_mask 枚举 + metal_blend_attachment_descriptor + 管线描述符扩展 + C++ 混合状态应用 + C# ConvertBlendFactor/Op 映射 + SetBlendState 实现 + 管线重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
 | P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ✅ | 2026-06-14T12:15 | docs/evidence/P4.3.10-meta.json：新增 METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE + metal_stencil_operation 枚举 + metal_depth_stencil_descriptor + 3 个 C ABI 函数 + C++ 深度/模板状态创建与绑定 + C# SetDepthTest/SetStencilTest/SetDepthMode 实现 + UpdateDepthStencilState 脏标志懒重建 + BindRenderResources 动态绑定；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（113 个 CA1416 警告，0 错误） |
 | P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ✅ | 2026-06-14T12:30 | docs/evidence/P4.3.11-meta.json：新增 metal_viewport/metal_scissor_rect 描述符 + 2 个 C ABI 函数 + C++ setViewport/setViewports/setScissorRect/setScissorRects 实现 + C# SetScissors/SetViewports 缓存与绑定 + Vulkan→Metal Y 轴翻转；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（115 个 CA1416 警告，0 错误） |
-| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ⬜ | — | — |
+| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ✅ | 2026-06-14T12:45 | docs/evidence/P4.3.12-meta.json：新增 metal_cull_mode/metal_winding/metal_triangle_fill_mode 枚举 + 3 个 C ABI 函数 + C++ setCullMode/setFrontFacingWinding/setTriangleFillMode + C# SetFaceCulling/SetFrontFace/SetPolygonMode 实现 + BindRenderResources 绑定；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（118 个 CA1416 警告，0 错误） |
 
 ### 4.4 同步与呈现
 | ID | 任务 | 状态 | 完成时间 | 证据 |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 82 (56.9%)
+- 已完成: 83 (57.6%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 62
+- 待开始: 61
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.3.12 — SetFaceCulling/SetFrontFace/SetPolygonMode
+- 下一任务: P4.4.1 — CommandBuffer 提交+等待: commit+waitUntilCompleted
