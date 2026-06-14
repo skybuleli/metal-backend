@@ -1,0 +1,34 @@
+{
+  "task": "P4.5.5",
+  "name": "管线状态验收: Blend/Depth/Stencil/Scissor 状态切换正确",
+  "timestamp": "2026-06-14T15:20:00+08:00",
+  "test_results": {
+    "test_pipeline_state": {
+      "test_cases": 10,
+      "assertions": 62,
+      "passed": true,
+      "coverage": [
+        "depth: Less+Write / Always+WriteDisable",
+        "depth: 8 种比较函数全可创建",
+        "stencil: 前后双面模板状态",
+        "stencil: 8 种模板操作组合",
+        "blend: 描述符结构大小",
+        "blend: 单附件混合字段设置 (alpha blend)",
+        "blend: 多附件交替启用",
+        "scissor: 结构体对齐 (16 字节)",
+        "NULL 错误路径返回 INVALID_ARGUMENT"
+      ]
+    },
+    "d4_depth_integration": {
+      "demo": "D4 Basic Lighting",
+      "states_used": ["深度测试 (CompareLess+Write)", "背面剔除"],
+      "output": "out/basic_lighting.ppm (有效 PPM 512×512)",
+      "status": "PASS"
+    }
+  },
+  "verification": {
+    "test_pipeline_state": "PASS (10/10 cases, 62 assertions)",
+    "d4_demo_run": "PASS (depth test + backface culling)"
+  },
+  "new_file": "src/libmetal_bridge/tests/test_pipeline_state.cpp"
+}

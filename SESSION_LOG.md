@@ -320,3 +320,13 @@
   - `src/libmetal_bridge/CMakeLists.txt` — 注册 test_lifecycle_100 目标 + CTest
   - `docs/evidence/P4.5.3-meta.json` — 证据文件
 - **状态摘要**: P4 进度 93/152 (61.2%)，下一任务 P4.5.4 基础 Draw 验收
+
+---
+
+### 2026-06-14 15:15 — P4.5.4 基础 Draw 验收: Triangle + 纹理四边形
+- **结果**: ✅ D1 Triangle + D2 Textured Quad 离屏渲染 → 256×256 PPM 有效图像
+- **验证**:
+  - `src/demos/d1/build/d1_triangle` → `out/triangle.ppm` (196623 bytes)
+  - `src/demos/d2/build/d2_textured_quad` → `out/textured_quad.ppm` (196623 bytes)
+  - D2 使用 Path A: Slang→DXIL→MSC→metallib 全链路
+- **状态摘要**: P4 进度 94/152 (61.8%)，下一任务 P4.5.5 管线状态验收
