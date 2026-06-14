@@ -107,6 +107,21 @@ namespace Ryujinx.Graphics.Metal
             uint regionHeight,
             uint bytesPerRow);
 
+        [DllImport(LibraryName, EntryPoint = "metal_texture_upload_via_blit")]
+        internal static extern MetalResult TextureUploadViaBlit(
+            nint device,
+            nint texture,
+            nint buffer,
+            ulong bufferOffset,
+            uint layer,
+            uint level,
+            uint regionX,
+            uint regionY,
+            uint regionZ,
+            uint regionWidth,
+            uint regionHeight,
+            uint bytesPerRow);
+
         [DllImport(LibraryName, EntryPoint = "metal_texture_readback")]
         internal static extern MetalResult TextureReadback(
             nint texture,

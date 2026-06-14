@@ -155,6 +155,27 @@ typedef struct metal_device_caps
     uint32_t reserved[8];
 } metal_device_caps;
 
+// ─────────────────────────────────────────────────────────────────
+// 纹理上传（GPU blit 路径，用于 depth/stencil 等不可 CPU 上传的格式）
+// ─────────────────────────────────────────────────────────────────
+
+/// 通过 GPU blit 编码器上传纹理数据（P4.5.12）
+/// 替代 replaceRegion 用于 depth/stencil 纹理，因 Apple Silicon 上
+/// 深度/模板格式不支持 CPU-side replaceRegion。
+METAL_BRIDGE_EXPORT metal_result metal_texture_upload_via_blit(
+    metal_device* device,
+    metal_texture* texture,
+    metal_buffer* buffer,
+    uint64_t buffer_offset,
+    uint32_t layer,
+    uint32_t level,
+    uint32_t region_x,
+    uint32_t region_y,
+    uint32_t region_z,
+    uint32_t region_width,
+    uint32_t region_height,
+    uint32_t bytes_per_row);
+
 // ── 生命周期函数：全部模块共用 release，避免每类对象单独暴露销毁入口 ──
 METAL_BRIDGE_EXPORT uint32_t metal_bridge_abi_version(void);
 METAL_BRIDGE_EXPORT void metal_release(void* handle);
