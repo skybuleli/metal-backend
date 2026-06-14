@@ -1,14 +1,14 @@
-# 下一任务 — P4.4.4 ScreenCaptured 事件: 帧缓冲→CGImage
+# 下一任务 — P4.4.5 BackgroundContextAction: 后台 MTLCommandQueue
 
-> 生成时间：2026-06-14 13:56:30
+> 生成时间：2026-06-14 14:20:12
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.4.4 |
-| 任务名称 | ScreenCaptured 事件: 帧缓冲→CGImage |
+| 任务 ID | P4.4.5 |
+| 任务名称 | BackgroundContextAction: 后台 MTLCommandQueue |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.4.4 → ✅
+- 更新 PROGRESS.md：P4.4.5 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

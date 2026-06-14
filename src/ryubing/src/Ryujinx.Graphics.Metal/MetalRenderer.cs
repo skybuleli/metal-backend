@@ -56,6 +56,8 @@ namespace Ryujinx.Graphics.Metal
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
             _window = new MetalWindow();
+            _window.ScreenCapturedCallback = info => ScreenCaptured?.Invoke(this, info);
+
         }
 
         public IWindow Window => _window;
@@ -250,7 +252,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void Screenshot()
         {
-            ScreenCaptured?.Invoke(this, default);
+            _window.ScreenCaptureRequested = true;
         }
 
         public void SetBufferData(BufferHandle buffer, int offset, ReadOnlySpan<byte> data)

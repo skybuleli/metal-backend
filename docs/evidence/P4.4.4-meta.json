@@ -1,0 +1,31 @@
+{
+  "task": "P4.4.4",
+  "name": "ScreenCaptured 事件: 帧缓冲→CGImage",
+  "timestamp": "2026-06-14T14:30:00+08:00",
+  "files_changed": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalWindow.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs"
+  ],
+  "implementation": {
+    "MetalWindow": {
+      "additions": [
+        "ScreenCaptureRequested 标志属性",
+        "ScreenCapturedCallback 委托属性",
+        "CaptureFrame() — 纹理回读→PinnedSpan→裁剪→byte[]→ScreenCaptureImageInfo",
+        "Present() 中检查标志并分发给 CaptureFrame"
+      ]
+    },
+    "MetalRenderer": {
+      "additions": [
+        "构造函数中注册 _window.ScreenCapturedCallback",
+        "Screenshot() 设置 _window.ScreenCaptureRequested = true"
+      ]
+    }
+  },
+  "design": "参照 Vulkan 后端的延迟截图模式：Screenshot() 设置标志 → Present() 时从当前帧缓冲 texture 回读像素 → 触发 ScreenCaptured 事件",
+  "verification": {
+    "libmetal_bridge_build": "PASS (0 error, only ranlib no-symbols warnings)",
+    "dotnet_build": "PASS (0 error, only existing CA1416 warnings)",
+    "ctest": "7/8 PASS (test_heap OUT_OF_MEMORY failure is pre-existing, unrelated to this change)"
+  }
+}
