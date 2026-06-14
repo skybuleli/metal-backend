@@ -276,6 +276,13 @@ namespace Ryujinx.Graphics.Metal
             MetalTextureType textureType = info.Target.ToMetalTextureType();
             MetalPixelFormat pixelFormat = info.Format.ToMetalFormat();
 
+            if (pixelFormat == MetalPixelFormat.Invalid)
+            {
+                throw new NotSupportedException(
+                    $"Metal 暂不支持纹理格式映射: Format={info.Format}, Target={info.Target}, " +
+                    $"Size={info.Width}x{info.Height}x{info.GetDepthOrLayers()}, Levels={info.Levels}, Samples={info.Samples}");
+            }
+
             uint depth = (uint)Math.Max(info.GetDepthOrLayers(), 1);
             uint levels = (uint)Math.Max(info.Levels, 1);
             uint samples = (uint)Math.Max(info.Samples, 1);
@@ -337,6 +344,13 @@ namespace Ryujinx.Graphics.Metal
         {
             MetalPixelFormat pixelFormat = info.Format.ToMetalFormat();
             MetalTextureType textureType = info.Target.ToMetalTextureType();
+
+            if (pixelFormat == MetalPixelFormat.Invalid)
+            {
+                throw new NotSupportedException(
+                    $"Metal 暂不支持纹理视图格式映射: Format={info.Format}, Target={info.Target}, " +
+                    $"FirstLayer={firstLayer}, FirstLevel={firstLevel}");
+            }
 
             uint numLayers = (uint)Math.Max(info.GetDepthOrLayers(), 1);
             uint numLevels = (uint)Math.Max(info.Levels, 1);

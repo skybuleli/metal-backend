@@ -555,15 +555,17 @@ static_assert(offsetof(metal_shader_compile_result, metallib_data) == 520,
               "metallib_data 偏移异常，C# Marshal 会读错");
 #endif
 
-/// 编译单个着色器：Slang 原生语法 → DXIL → MSC → metallib
+/// 编译单个着色器：源码（当前支持 Slang/GLSL 文本）→ DXIL → MSC → metallib
 /// @param compiler   着色器编译器句柄（由 metal_acquire_shader_compiler 获取）
-/// @param source_code Slang 原生语法源码（以 null 结尾）
+/// @param source_code 着色器源码（以 null 结尾）
+/// @param source_language "slang" / "glsl"
 /// @param stage      "vertex" / "fragment" / "compute"
 /// @param entry_point 入口函数名（通常 "main"）
 /// @param profile    "sm_6_0" / "ps_6_0" / "cs_6_0"
 METAL_BRIDGE_EXPORT metal_shader_compile_result metal_compile_shader(
     metal_shader_compiler* compiler,
     const char* source_code,
+    const char* source_language,
     const char* stage,
     const char* entry_point,
     const char* profile);

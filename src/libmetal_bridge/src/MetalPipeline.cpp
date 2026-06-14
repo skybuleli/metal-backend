@@ -11,6 +11,25 @@
 #include <new>
 #include <vector>
 
+static MTL::PixelFormat to_mtl_pixel_format_for_pipeline(metal_pixel_format format)
+{
+    switch (format)
+    {
+    case METAL_PIXEL_FORMAT_INVALID:            return MTL::PixelFormatInvalid;
+    case METAL_PIXEL_FORMAT_RGBA8_UNORM:        return MTL::PixelFormatRGBA8Unorm;
+    case METAL_PIXEL_FORMAT_RGBA8_SRGB:         return MTL::PixelFormatRGBA8Unorm_sRGB;
+    case METAL_PIXEL_FORMAT_BGRA8_UNORM:        return MTL::PixelFormatBGRA8Unorm;
+    case METAL_PIXEL_FORMAT_BGRA8_SRGB:         return MTL::PixelFormatBGRA8Unorm_sRGB;
+    case METAL_PIXEL_FORMAT_R10G10B10A2_UNORM:  return MTL::PixelFormatRGB10A2Unorm;
+    case METAL_PIXEL_FORMAT_R11G11B10_FLOAT:    return MTL::PixelFormatRG11B10Float;
+    case METAL_PIXEL_FORMAT_D16_UNORM:          return MTL::PixelFormatDepth16Unorm;
+    case METAL_PIXEL_FORMAT_D24_UNORM_S8_UINT:  return MTL::PixelFormatDepth32Float_Stencil8;
+    case METAL_PIXEL_FORMAT_D32_FLOAT:          return MTL::PixelFormatDepth32Float;
+    case METAL_PIXEL_FORMAT_D32_FLOAT_S8_UINT:  return MTL::PixelFormatDepth32Float_Stencil8;
+    default:                                    return MTL::PixelFormatInvalid;
+    }
+}
+
 static MTL::VertexDescriptor* create_vertex_descriptor(
     const metal_render_pipeline_descriptor* descriptor)
 {
@@ -213,12 +232,11 @@ metal_result metal_create_render_pipeline(
     MTL::PixelFormat colorFormat = MTL::PixelFormatBGRA8Unorm; // 默认
     if (descriptor->color_attachment_format != METAL_PIXEL_FORMAT_INVALID)
     {
-        // 转换 metal_pixel_format 到 MTL::PixelFormat
-        // TODO: P4.1.3 的格式映射表已有此转换，后续可复用
-        colorFormat = static_cast<MTL::PixelFormat>(
-            static_cast<uint32_t>(descriptor->color_attachment_format) +
-            static_cast<uint32_t>(MTL::PixelFormatInvalid) - 1);
-        // 注意：这个映射假设两种枚举值偏移一致，后续需用正式映射表
+        colorFormat = to_mtl_pixel_format_for_pipeline(descriptor->color_attachment_format);
+        if (colorFormat == MTL::PixelFormatInvalid)
+        {
+            colorFormat = MTL::PixelFormatBGRA8Unorm;
+        }
     }
     rpDesc->colorAttachments()->object(0)->setPixelFormat(colorFormat);
 
@@ -263,10 +281,15 @@ metal_result metal_create_render_pipeline(
     // 设置深度模板格式
     if (descriptor->depth_stencil_format != METAL_PIXEL_FORMAT_INVALID)
     {
-        MTL::PixelFormat dsFormat = static_cast<MTL::PixelFormat>(
-            static_cast<uint32_t>(descriptor->depth_stencil_format) +
-            static_cast<uint32_t>(MTL::PixelFormatInvalid) - 1);
-        rpDesc->setDepthAttachmentPixelFormat(dsFormat);
+        MTL::PixelFormat dsFormat = to_mtl_pixel_format_for_pipeline(descriptor->depth_stencil_format);
+        if (dsFormat != MTL::PixelFormatInvalid)
+        {
+            rpDesc->setDepthAttachmentPixelFormat(dsFormat);
+            if (dsFormat == MTL::PixelFormatDepth32Float_Stencil8)
+            {
+                rpDesc->setStencilAttachmentPixelFormat(dsFormat);
+            }
+        }
     }
 
     // ── 步骤 4：创建管线状态 ──
@@ -286,6 +309,25 @@ metal_result metal_create_render_pipeline(
 
     if (pipelineState == nullptr)
     {
+        if (error != nullptr)
+        {
+            const char* desc = error->localizedDescription() != nullptr
+                ? error->localizedDescription()->utf8String()
+                : nullptr;
+            const char* reason = error->localizedFailureReason() != nullptr
+                ? error->localizedFailureReason()->utf8String()
+                : nullptr;
+
+            if (desc != nullptr && reason != nullptr)
+            {
+                std::fprintf(stderr, "[metal_create_render_pipeline] %s | %s\n", desc, reason);
+            }
+            else if (desc != nullptr)
+            {
+                std::fprintf(stderr, "[metal_create_render_pipeline] %s\n", desc);
+            }
+        }
+
         pool->release();
         return METAL_RESULT_COMPILE_FAILED;
     }

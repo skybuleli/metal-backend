@@ -118,11 +118,12 @@ namespace Ryujinx.Graphics.Metal
                 // ── Depth / Stencil ──
                 Format.D16Unorm        => MetalPixelFormat.D16Unorm,
                 Format.D32Float        => MetalPixelFormat.D32Float,
-                Format.D24UnormS8Uint  => MetalPixelFormat.D24UnormS8Uint,
+                // Apple Silicon 上 Depth24_Stencil8 兼容性较差，统一提升到 Depth32Float_Stencil8。
+                Format.D24UnormS8Uint  => MetalPixelFormat.D32FloatS8Uint,
                 Format.D32FloatS8Uint  => MetalPixelFormat.D32FloatS8Uint,
-                Format.S8Uint          => MetalPixelFormat.D24UnormS8Uint, // stencil-only 映射到 Depth24_Stencil8
-                Format.S8UintD24Unorm  => MetalPixelFormat.D24UnormS8Uint, // 相同布局
-                Format.X8UintD24Unorm  => MetalPixelFormat.D24UnormS8Uint, // 带 padding，近似
+                Format.S8Uint          => MetalPixelFormat.D32FloatS8Uint,
+                Format.S8UintD24Unorm  => MetalPixelFormat.D32FloatS8Uint,
+                Format.X8UintD24Unorm  => MetalPixelFormat.D32FloatS8Uint,
 
                 // ── Scaled — Metal 不支持 ──
                 Format.R8Uscaled or Format.R8Sscaled

@@ -77,7 +77,7 @@ namespace Ryujinx.Graphics.Metal
         /// <summary>
         /// 设置 CAMetalLayer 指针（由 AppHost 层传入）。
         /// </summary>
-        internal void SetLayer(nint metalLayer)
+        public void SetLayer(nint metalLayer)
         {
             _window.SetLayer(metalLayer);
         }

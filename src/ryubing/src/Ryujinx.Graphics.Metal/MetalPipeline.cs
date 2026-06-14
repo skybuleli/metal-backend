@@ -14,6 +14,10 @@ namespace Ryujinx.Graphics.Metal
         private const int MaxTextureBindings = 32;
         private const int MaxShaderStages = 3;
         private const int MaxViewports = 16;
+        private const int ReservedVertexBufferSlots = 3;
+        private const int ZeroVertexBufferIndex = ReservedVertexBufferSlots;
+        private const int FirstUserVertexBufferIndex = ZeroVertexBufferIndex + 1;
+        private const uint DefaultVertexStride = 16;
 
         private IProgram _program;
         private nint _pipelineHandle;
@@ -44,6 +48,7 @@ namespace Ryujinx.Graphics.Metal
         private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
+        private readonly nint _zeroVertexBufferHandle;
 
         /// <summary>
         /// 当前活动的渲染管线句柄（由 metal_create_render_pipeline 返回）
@@ -76,6 +81,7 @@ namespace Ryujinx.Graphics.Metal
             _fillMode = MetalTriangleFillMode.Fill;
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
+            _zeroVertexBufferHandle = CreateZeroVertexBuffer();
         }
 
         public void Barrier()
@@ -232,7 +238,9 @@ namespace Ryujinx.Graphics.Metal
                 _blendAttachments[i] = new MetalBlendAttachmentDescriptor
                 {
                     BlendingEnabled = (byte)(i == 0 ? 1 : 0),
-                    ReservedPad = new byte[3],
+                    ReservedPad0 = 0,
+                    ReservedPad1 = 0,
+                    ReservedPad2 = 0,
                     SrcRgbFactor = MetalBlendFactor.SrcAlpha,
                     DstRgbFactor = MetalBlendFactor.OneMinusSrcAlpha,
                     RgbOperation = MetalBlendOperation.Add,
@@ -272,7 +280,9 @@ namespace Ryujinx.Graphics.Metal
                 _blendAttachments[index] = new MetalBlendAttachmentDescriptor
                 {
                     BlendingEnabled = 1,
-                    ReservedPad = new byte[3],
+                    ReservedPad0 = 0,
+                    ReservedPad1 = 0,
+                    ReservedPad2 = 0,
                     SrcRgbFactor = ConvertBlendFactor(blend.ColorSrcFactor),
                     DstRgbFactor = ConvertBlendFactor(blend.ColorDstFactor),
                     RgbOperation = ConvertBlendOp(blend.ColorOp),
@@ -949,10 +959,20 @@ namespace Ryujinx.Graphics.Metal
 
                 MetalResult result = MetalNative.RenderEncoderSetVertexBuffer(
                     renderEncoder,
-                    (uint)binding,
+                    (uint)(binding + FirstUserVertexBufferIndex),
                     handle,
                     offset);
                 ThrowIfFailed(result, nameof(MetalNative.RenderEncoderSetVertexBuffer));
+            }
+
+            if (UsesZeroVertexAttributes() && _zeroVertexBufferHandle != nint.Zero)
+            {
+                MetalResult zeroResult = MetalNative.RenderEncoderSetVertexBuffer(
+                    renderEncoder,
+                    ZeroVertexBufferIndex,
+                    _zeroVertexBufferHandle,
+                    0);
+                ThrowIfFailed(zeroResult, nameof(MetalNative.RenderEncoderSetVertexBuffer));
             }
 
             // 设置视口（P4.3.11）
@@ -1101,7 +1121,8 @@ namespace Ryujinx.Graphics.Metal
                 DepthCompareFunction = ConvertCompareOp(_depthTest.Func),
                 DepthWriteEnabled = (byte)(_depthTest.WriteEnable ? 1 : 0),
                 StencilEnabled = (byte)(stencilEnabled ? 1 : 0),
-                ReservedPad = new byte[2],
+                ReservedPad0 = 0,
+                ReservedPad1 = 0,
                 FrontFace = new MetalStencilDescriptor
                 {
                     CompareFunction = ConvertCompareOp(_stencilTest.FrontFunc),
@@ -1192,6 +1213,9 @@ namespace Ryujinx.Graphics.Metal
             }
 
             int requiredBufferCount = _vertexBufferCount;
+            int layoutCount = 0;
+            bool usesZeroVertexBuffer = false;
+            Span<uint> referencedStrides = stackalloc uint[MaxVertexBufferBindings];
 
             for (int i = 0; i < attrCount; i++)
             {
@@ -1201,18 +1225,33 @@ namespace Ryujinx.Graphics.Metal
                     continue;
                 }
 
-                int bufferIndex = attrib.BufferIndex;
-                if ((uint)bufferIndex >= MaxVertexBufferBindings)
+                int sourceBufferIndex = attrib.BufferIndex;
+                if (!attrib.IsZero && (uint)sourceBufferIndex >= MaxVertexBufferBindings)
                 {
                     continue;
                 }
 
-                requiredBufferCount = Math.Max(requiredBufferCount, bufferIndex + 1);
+                int metalBufferIndex;
+                if (attrib.IsZero)
+                {
+                    usesZeroVertexBuffer = true;
+                    metalBufferIndex = ZeroVertexBufferIndex;
+                    layoutCount = Math.Max(layoutCount, ZeroVertexBufferIndex + 1);
+                }
+                else
+                {
+                    requiredBufferCount = Math.Max(requiredBufferCount, sourceBufferIndex + 1);
+                    metalBufferIndex = sourceBufferIndex + FirstUserVertexBufferIndex;
+                    layoutCount = Math.Max(layoutCount, metalBufferIndex + 1);
+
+                    uint requiredStride = (uint)Math.Max(attrib.Offset, 0) + GetVertexFormatSize(attrib.Format);
+                    referencedStrides[sourceBufferIndex] = Math.Max(referencedStrides[sourceBufferIndex], requiredStride);
+                }
 
                 descriptor.VertexAttributes[i] = new MetalVertexAttributeDescriptor
                 {
                     AttributeIndex = (uint)i,
-                    BufferIndex = (uint)bufferIndex,
+                    BufferIndex = (uint)metalBufferIndex,
                     Format = vertexFormat,
                     Offset = attrib.IsZero ? 0u : (uint)Math.Max(attrib.Offset, 0),
                 };
@@ -1226,23 +1265,39 @@ namespace Ryujinx.Graphics.Metal
                 bufferCount = MaxVertexBufferBindings;
             }
 
-            for (int i = 0; i < bufferCount; i++)
+            if (usesZeroVertexBuffer)
             {
-                VertexBufferDescriptor buffer = i < _vertexBufferCount ? _vertexBuffers[i] : default;
-                descriptor.VertexBufferLayouts[i] = new MetalVertexBufferLayoutDescriptor
+                descriptor.VertexBufferLayouts[ZeroVertexBufferIndex] = new MetalVertexBufferLayoutDescriptor
                 {
-                    BufferIndex = (uint)i,
-                    Stride = (uint)Math.Max(buffer.Stride, 0),
-                    StepFunction = i >= _vertexBufferCount
-                        ? MetalVertexStepFunction.Constant
-                        : buffer.Divisor != 0
-                            ? MetalVertexStepFunction.PerInstance
-                            : MetalVertexStepFunction.PerVertex,
-                    StepRate = (uint)Math.Max(i < _vertexBufferCount ? buffer.Divisor : 1, 1),
+                    BufferIndex = ZeroVertexBufferIndex,
+                    Stride = DefaultVertexStride,
+                    StepFunction = MetalVertexStepFunction.Constant,
+                    StepRate = 0,
                 };
             }
 
-            descriptor.VertexBufferLayoutCount = (uint)bufferCount;
+            for (int i = 0; i < bufferCount; i++)
+            {
+                VertexBufferDescriptor buffer = i < _vertexBufferCount ? _vertexBuffers[i] : default;
+                uint stride = (uint)Math.Max(buffer.Stride, 0);
+                if (stride == 0 && referencedStrides[i] != 0)
+                {
+                    stride = Math.Max(referencedStrides[i], DefaultVertexStride);
+                }
+
+                descriptor.VertexBufferLayouts[i + FirstUserVertexBufferIndex] = new MetalVertexBufferLayoutDescriptor
+                {
+                    BufferIndex = (uint)(i + FirstUserVertexBufferIndex),
+                    Stride = stride,
+                    StepFunction = buffer.Divisor != 0
+                        ? MetalVertexStepFunction.PerInstance
+                        : MetalVertexStepFunction.PerVertex,
+                    StepRate = buffer.Divisor != 0 ? (uint)Math.Max(buffer.Divisor, 1) : 1u,
+                };
+            }
+
+            layoutCount = Math.Max(layoutCount, bufferCount + FirstUserVertexBufferIndex);
+            descriptor.VertexBufferLayoutCount = (uint)Math.Min(layoutCount, MaxVertexBufferBindings);
         }
 
         private static bool TryConvertVertexFormat(Format format, out MetalVertexFormat metalFormat)
@@ -1306,6 +1361,86 @@ namespace Ryujinx.Graphics.Metal
             };
 
             return metalFormat != MetalVertexFormat.Invalid;
+        }
+
+        private static uint GetVertexFormatSize(Format format)
+        {
+            return format switch
+            {
+                Format.R8Unorm or Format.R8Snorm or Format.R8Uint or Format.R8Sint or
+                Format.R8Uscaled or Format.R8Sscaled => 1,
+                Format.R16Float or Format.R16Unorm or Format.R16Snorm or Format.R16Uint or
+                Format.R16Sint or Format.R16Uscaled or Format.R16Sscaled => 2,
+                Format.R32Float or Format.R32Uint or Format.R32Sint or
+                Format.R32Uscaled or Format.R32Sscaled => 4,
+                Format.R8G8Unorm or Format.R8G8Snorm or Format.R8G8Uint or Format.R8G8Sint or
+                Format.R8G8Uscaled or Format.R8G8Sscaled => 2,
+                Format.R16G16Float or Format.R16G16Unorm or Format.R16G16Snorm or Format.R16G16Uint or
+                Format.R16G16Sint or Format.R16G16Uscaled or Format.R16G16Sscaled => 4,
+                Format.R32G32Float or Format.R32G32Uint or Format.R32G32Sint or
+                Format.R32G32Uscaled or Format.R32G32Sscaled => 8,
+                Format.R8G8B8Unorm or Format.R8G8B8Snorm or Format.R8G8B8Uint or Format.R8G8B8Sint or
+                Format.R8G8B8Uscaled or Format.R8G8B8Sscaled => 3,
+                Format.R16G16B16Float or Format.R16G16B16Unorm or Format.R16G16B16Snorm or
+                Format.R16G16B16Uint or Format.R16G16B16Sint or Format.R16G16B16Uscaled or
+                Format.R16G16B16Sscaled => 6,
+                Format.R32G32B32Float or Format.R32G32B32Uint or Format.R32G32B32Sint or
+                Format.R32G32B32Uscaled or Format.R32G32B32Sscaled => 12,
+                Format.R8G8B8A8Unorm or Format.R8G8B8A8Snorm or Format.R8G8B8A8Uint or Format.R8G8B8A8Sint or
+                Format.R8G8B8A8Srgb or Format.R8G8B8A8Uscaled or Format.R8G8B8A8Sscaled or
+                Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb or Format.A8B8G8R8Uint => 4,
+                Format.R16G16B16A16Float or Format.R16G16B16A16Unorm or Format.R16G16B16A16Snorm or
+                Format.R16G16B16A16Uint or Format.R16G16B16A16Sint or Format.R16G16B16A16Uscaled or
+                Format.R16G16B16A16Sscaled => 8,
+                Format.R32G32B32A32Float or Format.R32G32B32A32Uint or Format.R32G32B32A32Sint or
+                Format.R32G32B32A32Uscaled or Format.R32G32B32A32Sscaled => 16,
+                Format.R10G10B10A2Unorm or Format.R10G10B10A2Uint or Format.R10G10B10A2Snorm or
+                Format.R10G10B10A2Sint or Format.R10G10B10A2Uscaled or Format.R10G10B10A2Sscaled or
+                Format.B10G10R10A2Unorm or Format.R11G11B10Float or Format.R9G9B9E5Float => 4,
+                Format.R4G4B4A4Unorm or Format.R5G5B5X1Unorm or Format.R5G5B5A1Unorm or
+                Format.R5G6B5Unorm or Format.B5G6R5Unorm or Format.B5G5R5A1Unorm or
+                Format.A1B5G5R5Unorm => 2,
+                _ => DefaultVertexStride,
+            };
+        }
+
+        private bool UsesZeroVertexAttributes()
+        {
+            for (int i = 0; i < _vertexAttribCount; i++)
+            {
+                if (_vertexAttribs[i].IsZero)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private nint CreateZeroVertexBuffer()
+        {
+            BufferHandle zeroBuffer = _buffers.Create((int)DefaultVertexStride, BufferAccess.Default);
+            if (zeroBuffer == BufferHandle.Null || !_buffers.TryGet(zeroBuffer, out MetalBuffer metalBuffer))
+            {
+                return nint.Zero;
+            }
+
+            if (MetalNative.MapBuffer(metalBuffer.Handle, out nint ptr) == MetalResult.Ok)
+            {
+                try
+                {
+                    for (int i = 0; i < (int)Math.Min(metalBuffer.Size, DefaultVertexStride); i++)
+                    {
+                        Marshal.WriteByte(ptr, i, 0);
+                    }
+                }
+                finally
+                {
+                    MetalNative.UnmapBuffer(metalBuffer.Handle);
+                }
+            }
+
+            return metalBuffer.Handle;
         }
 
         private static MetalPrimitiveType ConvertPrimitiveTopology(PrimitiveTopology topology)
@@ -1384,7 +1519,9 @@ namespace Ryujinx.Graphics.Metal
             return new MetalBlendAttachmentDescriptor
             {
                 BlendingEnabled = 0,
-                ReservedPad = new byte[3],
+                ReservedPad0 = 0,
+                ReservedPad1 = 0,
+                ReservedPad2 = 0,
                 SrcRgbFactor = MetalBlendFactor.One,
                 DstRgbFactor = MetalBlendFactor.Zero,
                 RgbOperation = MetalBlendOperation.Add,

@@ -974,11 +974,15 @@ namespace Ryujinx.Ava.Systems
 
         private void InitEmulatedSwitch()
         {
+            Logger.Info?.Print(LogClass.Application, "开始初始化模拟器图形后端。");
+
             // Initialize KeySet.
             VirtualFileSystem.ReloadKeySet();
+            Logger.Info?.Print(LogClass.Application, "KeySet 初始化完成。");
 
             // Initialize Renderer.
             GraphicsBackend backend = ConfigurationState.Instance.Graphics.GraphicsBackend;
+            Logger.Info?.Print(LogClass.Application, $"准备创建渲染器：{backend}");
 
             IRenderer renderer = backend switch
             {
@@ -989,8 +993,23 @@ namespace Ryujinx.Ava.Systems
                 GraphicsBackend.Metal => new MetalRenderer(),
                 _ => new OpenGLRenderer()
             };
+            Logger.Info?.Print(LogClass.Application, $"渲染器创建完成：{renderer.GetType().Name}");
+
+            if (renderer is MetalRenderer metalRenderer)
+            {
+                nint metalLayer = RendererHost.EmbeddedWindow.MetalLayerHandle;
+                if (metalLayer == nint.Zero)
+                {
+                    Logger.Warning?.Print(LogClass.Application, "Metal 图层尚未就绪，后续渲染可能无法呈现。");
+                }
+
+                Logger.Info?.Print(LogClass.Application, "正在把 Metal 图层传给渲染器。");
+                metalRenderer.SetLayer(metalLayer);
+                Logger.Info?.Print(LogClass.Application, "Metal 图层绑定完成。");
+            }
 
             // Initialize Configuration.
+            Logger.Info?.Print(LogClass.Application, "开始构建 HLE 配置。");
             Device = new Switch(ConfigurationState.Instance.CreateHleConfiguration()
                 .Configure(
                     VirtualFileSystem,
@@ -1003,6 +1022,7 @@ namespace Ryujinx.Ava.Systems
                     _viewModel.UiHandler
                 )
             );
+            Logger.Info?.Print(LogClass.Application, "模拟器 Switch 构造完成。");
         }
 
         private static IHardwareDeviceDriver InitializeAudio()
@@ -1159,7 +1179,7 @@ namespace Ryujinx.Ava.Systems
                                 InitStatus();
                             }
 
-                            Device.PresentFrame(() =>
+            Device.PresentFrame(() =>
                                 (RendererHost.EmbeddedWindow as EmbeddedWindowOpenGL)?.SwapBuffers());
                         }
 

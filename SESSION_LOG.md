@@ -218,6 +218,58 @@
 - **结果**: ✅ 补齐命令缓冲区提交/等待回归，验证 `commit` + `waitUntilCompleted` 链路可执行
 - **变更**:
   - `src/libmetal_bridge/tests/test_command_buffer.cpp`：新增命令缓冲区提交与等待回归测试，覆盖成功路径与空参数错误路径
+
+---
+
+### 2026-06-14 17:20 — 《蔚蓝》Metal 运行调试：从启动失败推进到 VS/FS 接口失配
+- **Agent**: Codex
+- **结果**: ✅ 将《蔚蓝》在 Metal 后端的阻塞点从运行时启动/资源创建问题，推进并收敛到渲染管线阶段链接问题；当前首要阻塞为顶点着色器输出与片元着色器输入的 user varying 不匹配
+- **变更**:
+  - `src/libmetal_bridge/CMakeLists.txt`：确保 `libmetal_bridge.dylib` 可被 Ryujinx 输出目录消费
+  - `src/ryubing/src/Ryujinx/Ryujinx.csproj`：接入原生 bridge 构建产物复制
+  - `src/ryubing/src/Ryujinx/Systems/AppHost.cs`
+  - `src/ryubing/src/Ryujinx/UI/Renderer/EmbeddedWindow.cs`
+  - `src/ryubing/src/Ryujinx/UI/Renderer/EmbeddedWindowOpenGL.cs`
+  - `src/ryubing/src/Ryujinx/UI/Renderer/RendererHost.cs`
+  - `src/ryubing/src/Ryujinx/UI/ViewModels/MainWindowViewModel.cs`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`
+    - 打通 Metal 图层传递与嵌入窗口初始化，确保 Metal 后端可以进入实际游戏加载
+  - `src/libmetal_bridge/include/metal_bridge.h`
+  - `src/libmetal_bridge/src/ShaderCompiler.cpp`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalShaderCompiler.cs`
+    - 为原生编译接口补充 `source_language`，识别 Ryujinx 当前输出的 GLSL 源码
+    - 新增 `GLSL -> SPIR-V -> HLSL -> DXIL -> metallib` 回退桥接路径，保留失败临时文件与诊断
+    - 修复 metallib 已生成但结果码仍为失败的返回逻辑
+  - `src/libmetal_bridge/src/MetalTexture.cpp`
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalFormatMapping.cs`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs`
+    - 修复 D24/S8 深度模板格式到 Metal 的映射，避免 `MTLTextureDescriptor invalid pixelFormat (255)`
+    - 为无效纹理格式创建补充更早、更明确的托管侧报错
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`
+    - 将非 blittable 的 `ReservedPad` 数组改为独立字节字段，修复 `GCHandle.Alloc(..., Pinned)` 崩溃
+    - 为 `IsZero` 顶点属性补 dummy zero buffer，并调整顶点 buffer 槽位与 stride/step 兜底逻辑，越过 Vertex Descriptor Validation
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`
+    - 输出 `newRenderPipelineState(..., &error)` 的原始 `NS::Error`，将管线创建失败原因显式打印到日志
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build --config Release` ✅
+  - `dotnet build src/ryubing/src/Ryujinx/Ryujinx.csproj -c Release` ✅（0 error，存在既有 NU1902/NU1903 与 CA1416 警告）
+  - 运行命令：
+    - `src/ryubing/src/Ryujinx/bin/Release/net10.0/Ryujinx --graphics-backend metal "/Users/liliang/games/蔚蓝1.3/Celeste [01002B30028F6000][v0] (TurboSnail).nsp"` ✅ 可进入游戏加载与 shader cache 阶段
+  - 关键观测：
+    - shader cache 可成功加载/重建 10 个 shader
+    - 已越过 `libmetal_bridge.dylib` 缺失、shader compile fail、`invalid pixelFormat (255)`、`Object contains references`、Vertex Descriptor Validation 等前置阻塞
+    - 当前首个原始 Metal 管线错误为：
+      - `Fragment input(s) user(color1), user(color0) mismatching vertex shader output type(s) or not written by vertex shader`
+- **调试结论**:
+  - 当前主阻塞已经收敛到 VS/FS 阶段链接问题，而非窗口层、纹理创建、深度格式或顶点布局基础设施
+  - Ryujinx 当前为 Metal 路径提供的源码语言是 GLSL，不是预期的 Slang；因此 shader path 必须继续围绕 GLSL 兼容与 varying 对齐展开
+- **后续建议**:
+  - 先为失败的顶点/片元 shader 对增加更细粒度的 stage I/O dump，打印 user varying location、类型、是否写出
+  - 对照 `Ryujinx.Graphics.Shader` 中 user-defined I/O 的 location/type 生成逻辑，确认 VS 输出与 FS 输入是否在转换链中发生丢失或重排
+  - 若 Slang/桥接链无法稳定保持 varying 接口，可考虑在 Metal shader 编译链中增加显式的 I/O 规范化步骤，再进入 DXIL/MSC
   - `src/libmetal_bridge/CMakeLists.txt`：新增 `test_command_buffer` 测试目标
   - `PROGRESS.md`：将 P4.4.1 标记为完成并写入证据路径
   - `docs/evidence/P4.4.1-meta.json`：记录构建与测试证据

@@ -18,6 +18,25 @@
     </MSBuild>
   </Target>
 
+  <PropertyGroup>
+    <MetalBridgeSourceDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../../libmetal_bridge'))</MetalBridgeSourceDir>
+    <MetalBridgeBuildDir>$(MetalBridgeSourceDir)/build</MetalBridgeBuildDir>
+    <MetalBridgeBinary>$(MetalBridgeBuildDir)/libmetal_bridge.dylib</MetalBridgeBinary>
+  </PropertyGroup>
+
+  <Target Name="BuildMetalBridge"
+          BeforeTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Exec Command="cmake -S &quot;$(MetalBridgeSourceDir)&quot; -B &quot;$(MetalBridgeBuildDir)&quot; -DCMAKE_BUILD_TYPE=$(Configuration)" />
+    <Exec Command="cmake --build &quot;$(MetalBridgeBuildDir)&quot; --config $(Configuration)" />
+  </Target>
+
+  <Target Name="CopyMetalBridge"
+          AfterTargets="Build"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) and Exists('$(MetalBridgeBinary)')">
+    <Copy SourceFiles="$(MetalBridgeBinary)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="$([MSBuild]::IsOSPlatform('OSX'))">
     <Exec Command="codesign --entitlements '$(ProjectDir)..\..\distribution\macos\entitlements.xml' -f -s $(SigningCertificate) '$(TargetDir)$(TargetName)'" />
   </Target>

@@ -11,6 +11,7 @@ namespace Ryujinx.Ava.UI.Renderer
     {
         public readonly EmbeddedWindow EmbeddedWindow;
         private readonly GraphicsBackend _backend;
+        private bool _windowCreated;
 
         public event EventHandler<EventArgs> WindowCreated;
         public event Action<object, Size> BoundsChanged;
@@ -26,7 +27,7 @@ namespace Ryujinx.Ava.UI.Renderer
             {
                 GraphicsBackend.OpenGl => new EmbeddedWindowOpenGL(),
                 GraphicsBackend.Vulkan => new EmbeddedWindowVulkan(),
-                GraphicsBackend.Metal => new EmbeddedWindowOpenGL(),
+                GraphicsBackend.Metal => new EmbeddedWindowVulkan(),
                 _ => throw new NotSupportedException()
             };
 
@@ -68,7 +69,10 @@ namespace Ryujinx.Ava.UI.Renderer
 
         private void CurrentWindow_WindowCreated(object sender, nint e)
         {
+            _windowCreated = true;
             WindowCreated?.Invoke(this, EventArgs.Empty);
         }
+
+        public bool IsWindowCreated => _windowCreated;
     }
 }

@@ -1,6 +1,8 @@
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader;
+using Ryujinx.Graphics.Shader.Translation;
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -126,8 +128,24 @@ namespace Ryujinx.Graphics.Metal
                     continue;
                 }
 
+                string sourceLanguage = shader.Language switch
+                {
+                    TargetLanguage.Glsl => "glsl",
+                    TargetLanguage.Spirv => "spirv",
+                    TargetLanguage.Arb => "arb",
+                    _ => "unknown"
+                };
+
+                if (sourceLanguage is "spirv" or "arb" or "unknown")
+                {
+                    Console.Error.WriteLine(
+                        $"[MetalShaderCompiler] {stage}/{profile} 不支持的源码语言：{shader.Language}");
+                    compileFailed = true;
+                    continue;
+                }
+
                 MetalShaderCompileResult compileResult =
-                    MetalNative.CompileShader(_compilerHandle, shader.Code, stageStr, "main", profile);
+                    MetalNative.CompileShader(_compilerHandle, shader.Code, sourceLanguage, stageStr, "main", profile);
 
                 if (compileResult.Result != MetalResult.Ok || compileResult.MetallibData == nint.Zero)
                 {
@@ -135,8 +153,9 @@ namespace Ryujinx.Graphics.Metal
                     string compileErr = compileResult.Result != MetalResult.Ok
                         ? $" {compileResult.Result}: {compileResult.ErrorMessage}"
                         : " metallib 数据为空";
+                    DumpFailedShader(shader.Code, sourceLanguage, stageStr, profile, compileErr);
                     Console.Error.WriteLine(
-                        $"[MetalShaderCompiler] {stage}/{profile} 编译失败：{compileErr}");
+                        $"[MetalShaderCompiler] {stage}/{profile}/{sourceLanguage} 编译失败：{compileErr}");
                     compileFailed = true;
                     continue;
                 }
@@ -192,6 +211,31 @@ namespace Ryujinx.Graphics.Metal
                 : "未提供错误消息。";
 
             return new InvalidOperationException($"{operation} 失败：{result}，{errorMessage}");
+        }
+
+        private static void DumpFailedShader(string code, string sourceLanguage, string stage, string profile, string error)
+        {
+            if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SWITCH_METAL_DUMP_FAILED_SHADERS")))
+            {
+                return;
+            }
+
+            try
+            {
+                string root = Path.Combine(Path.GetTempPath(), "SwitchMetalFailedShaders");
+                Directory.CreateDirectory(root);
+
+                string baseName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{stage}_{profile}_{sourceLanguage}";
+                string extension = sourceLanguage == "glsl" ? ".glsl" : ".txt";
+                string sourcePath = Path.Combine(root, baseName + extension);
+                string errorPath = Path.Combine(root, baseName + ".log");
+
+                File.WriteAllText(sourcePath, code);
+                File.WriteAllText(errorPath, error);
+            }
+            catch
+            {
+            }
         }
     }
 

@@ -32,6 +32,7 @@ namespace Ryujinx.Ava.UI.Renderer
         protected nint X11Display { get; set; }
         protected nint NsView { get; set; }
         protected nint MetalLayer { get; set; }
+        public nint MetalLayerHandle => MetalLayer;
 
         public delegate void UpdateBoundsCallbackDelegate(Rect rect);
 
@@ -228,7 +229,7 @@ namespace Ryujinx.Ava.UI.Renderer
         }
 
         [SupportedOSPlatform("macos")]
-        PlatformHandle CreateMacOS()
+        protected PlatformHandle CreateMacOS()
         {
             // Create a new CAMetalLayer.
             ObjectiveC.Object layerObject = new("CAMetalLayer");

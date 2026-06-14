@@ -51,9 +51,13 @@ set(METAL_BRIDGE_SOURCES
     src/MetalHeap.cpp
 )
 
-add_library(metal_bridge STATIC
+add_library(metal_bridge SHARED
     ${METAL_BRIDGE_PUBLIC_HEADERS}
     ${METAL_BRIDGE_SOURCES}
+)
+
+set_target_properties(metal_bridge PROPERTIES
+    OUTPUT_NAME "metal_bridge"
 )
 
 target_include_directories(metal_bridge
@@ -75,14 +79,6 @@ target_link_libraries(metal_bridge
         "${QUARTZCORE_FRAMEWORK}"
 )
 
-if(SLANG_LIB)
-    target_link_libraries(metal_bridge PRIVATE "${SLANG_LIB}")
-    target_include_directories(metal_bridge PRIVATE "${SLANG_INCLUDE_DIR}")
-    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=1)
-else()
-    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=0)
-endif()
-
 # ── Slang 着色器编译器 ──
 find_library(SLANG_LIB slang HINTS /usr/local/lib)
 if(SLANG_LIB)
@@ -96,6 +92,16 @@ if(SLANG_INCLUDE_DIR)
     message(STATUS "Slang 头文件: ${SLANG_INCLUDE_DIR}")
 else()
     message(WARNING "未找到 slang.h，P4.2.2 着色器编译将不可用")
+endif()
+
+if(SLANG_LIB)
+    target_link_libraries(metal_bridge PRIVATE "${SLANG_LIB}")
+    if(SLANG_INCLUDE_DIR)
+        target_include_directories(metal_bridge PRIVATE "${SLANG_INCLUDE_DIR}")
+    endif()
+    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=1)
+else()
+    target_compile_definitions(metal_bridge PRIVATE METAL_SLANG_FOUND=0)
 endif()
 
 # ── Metal IR Converter SDK（MSC）──

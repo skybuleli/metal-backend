@@ -19,6 +19,7 @@
 #include <cctype>
 #include <string>
 #include <vector>
+#include <sstream>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/stat.h>
@@ -74,6 +75,173 @@ static int run_command(const std::string& cmd, std::string& out_output, size_t m
     return rc;
 }
 
+static bool should_keep_failed_shader_temp()
+{
+    const char* value = getenv("SWITCH_METAL_KEEP_FAILED_SHADER_TEMP");
+    return value && value[0] != '\0' && strcmp(value, "0") != 0;
+}
+
+static std::string preprocess_glsl_source_for_dxil(const char* source_code, const char* stage)
+{
+    bool is_vertex_stage = strcmp(stage, "vertex") == 0;
+    std::istringstream input(source_code);
+    std::ostringstream output;
+    std::string line;
+
+    while (std::getline(input, line))
+    {
+        if (line.find("#pragma optionNV(") != std::string::npos)
+        {
+            continue;
+        }
+
+        if (is_vertex_stage && line.find("gl_PointSize") != std::string::npos)
+        {
+            continue;
+        }
+
+        output << line << '\n';
+    }
+
+    return output.str();
+}
+
+static bool compile_glsl_via_spirv_hlsl_bridge(
+    const char* source_code,
+    const char* stage,
+    const char* profile,
+    std::vector<uint8_t>& out_dxil_data,
+    char* out_error_message,
+    size_t out_error_message_size)
+{
+    char tmpdir_template[] = "/tmp/metal_shader_bridge_XXXXXX";
+    char* tmpdir = mkdtemp(tmpdir_template);
+    if (!tmpdir)
+    {
+        snprintf(out_error_message, out_error_message_size,
+                 "无法创建 GLSL 桥接临时目录：%s", strerror(errno));
+        return false;
+    }
+
+    std::string tmpdir_str(tmpdir);
+    std::string stage_extension =
+        strcmp(stage, "vertex") == 0 ? ".vert" :
+        strcmp(stage, "fragment") == 0 ? ".frag" :
+        strcmp(stage, "compute") == 0 ? ".comp" : ".glsl";
+
+    std::string glsl_path = tmpdir_str + "/shader" + stage_extension;
+    std::string spv_path = tmpdir_str + "/shader.spv";
+    std::string hlsl_path = tmpdir_str + "/shader.hlsl";
+    std::string dxil_path = tmpdir_str + "/shader.dxil";
+    std::string glslang_err_path = tmpdir_str + "/glslang.err";
+    std::string cross_err_path = tmpdir_str + "/spirv-cross.err";
+    std::string slang_err_path = tmpdir_str + "/slang.err";
+
+    std::string preprocessed_source = preprocess_glsl_source_for_dxil(source_code, stage);
+
+    {
+        FILE* f = fopen(glsl_path.c_str(), "w");
+        if (!f)
+        {
+            snprintf(out_error_message, out_error_message_size,
+                     "无法写入桥接 GLSL 源码。");
+            if (!should_keep_failed_shader_temp())
+            {
+                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                system(cleanup.c_str());
+            }
+            return false;
+        }
+
+        fwrite(preprocessed_source.data(), 1, preprocessed_source.size(), f);
+        fclose(f);
+    }
+
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+            "glslangValidator -V \"%s\" -o \"%s\" 2>\"%s\"",
+            glsl_path.c_str(), spv_path.c_str(), glslang_err_path.c_str());
+
+        std::string cmd_output;
+        int rc = run_command(cmd, cmd_output);
+        auto err_data = read_file(glslang_err_path);
+        std::string err_msg(err_data.begin(), err_data.end());
+        if (err_msg.empty()) err_msg = cmd_output;
+
+        if (rc != 0 || read_file(spv_path).empty())
+        {
+            snprintf(out_error_message, out_error_message_size,
+                     "glslangValidator 失败（exit=%d）：%.400s", rc, err_msg.c_str());
+            if (!should_keep_failed_shader_temp())
+            {
+                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                system(cleanup.c_str());
+            }
+            return false;
+        }
+    }
+
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+            "spirv-cross \"%s\" --hlsl --shader-model 60 --output \"%s\" 2>\"%s\"",
+            spv_path.c_str(), hlsl_path.c_str(), cross_err_path.c_str());
+
+        std::string cmd_output;
+        int rc = run_command(cmd, cmd_output);
+        auto err_data = read_file(cross_err_path);
+        std::string err_msg(err_data.begin(), err_data.end());
+        if (err_msg.empty()) err_msg = cmd_output;
+
+        if (rc != 0 || read_file(hlsl_path).empty())
+        {
+            snprintf(out_error_message, out_error_message_size,
+                     "spirv-cross 失败（exit=%d）：%.400s", rc, err_msg.c_str());
+            if (!should_keep_failed_shader_temp())
+            {
+                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                system(cleanup.c_str());
+            }
+            return false;
+        }
+    }
+
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+            "slangc \"%s\" -target dxil -entry main -stage %s -profile %s -o \"%s\" 2>\"%s\"",
+            hlsl_path.c_str(), stage, profile, dxil_path.c_str(), slang_err_path.c_str());
+
+        std::string cmd_output;
+        int rc = run_command(cmd, cmd_output);
+        out_dxil_data = read_file(dxil_path);
+        auto err_data = read_file(slang_err_path);
+        std::string err_msg(err_data.begin(), err_data.end());
+        if (err_msg.empty()) err_msg = cmd_output;
+
+        if (rc != 0 || out_dxil_data.empty())
+        {
+            snprintf(out_error_message, out_error_message_size,
+                     "GLSL->SPIR-V->HLSL->DXIL 失败（exit=%d）：%.400s", rc, err_msg.c_str());
+            if (!should_keep_failed_shader_temp())
+            {
+                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                system(cleanup.c_str());
+            }
+            return false;
+        }
+    }
+
+    if (!should_keep_failed_shader_temp())
+    {
+        std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+        system(cleanup.c_str());
+    }
+
+    return true;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // 磁盘着色器缓存（P4.2.4）
 // ════════════════════════════════════════════════════════════════════
@@ -81,15 +249,17 @@ static int run_command(const std::string& cmd, std::string& out_output, size_t m
 /// 缓存目录的根路径
 static const char* kCacheRoot = "Library/Caches/SwitchMetal";
 
-/// 计算 SHA256 缓存键：source_code + entry_point + stage + profile
+/// 计算 SHA256 缓存键：source_code + source_language + entry_point + stage + profile
 static std::string compute_cache_key(
     const char* source_code,
+    const char* source_language,
     const char* entry_point,
     const char* stage,
     const char* profile)
 {
-    // 将四个输入拼接后计算 SHA256
+    // 将五个输入拼接后计算 SHA256
     std::string input = std::string(source_code) + "\0" +
+                        source_language + "\0" +
                         entry_point + "\0" +
                         stage + "\0" +
                         profile;
@@ -512,6 +682,7 @@ static bool compile_path_b_metallib(
 metal_shader_compile_result metal_compile_shader(
     metal_shader_compiler* compiler,
     const char* source_code,
+    const char* source_language,
     const char* stage,
     const char* entry_point,
     const char* profile)
@@ -521,7 +692,7 @@ metal_shader_compile_result metal_compile_shader(
     result.metallib_data = nullptr;
     result.metallib_size = 0;
 
-    if (!compiler || !source_code || !stage || !entry_point || !profile)
+    if (!compiler || !source_code || !source_language || !stage || !entry_point || !profile)
     {
         result.result = METAL_RESULT_INVALID_ARGUMENT;
         snprintf(result.error_message, sizeof(result.error_message),
@@ -543,7 +714,7 @@ metal_shader_compile_result metal_compile_shader(
 
     // ── 步骤 0：检查磁盘着色器缓存（P4.2.4）──
     std::string cache_root = get_cache_root();
-    std::string cache_key = compute_cache_key(source_code, entry_point, stage, profile);
+    std::string cache_key = compute_cache_key(source_code, source_language, entry_point, stage, profile);
     std::vector<uint8_t> cached_metallib;
     bool cache_hit = load_from_cache(cache_root, cache_key, cached_metallib);
 
@@ -565,6 +736,7 @@ metal_shader_compile_result metal_compile_shader(
 
 #if METAL_SLANG_FOUND
     {
+        bool is_glsl_source = strcmp(source_language, "glsl") == 0;
         slang::IGlobalSession* globalSession = acquire_global_session();
         if (!globalSession)
         {
@@ -584,6 +756,7 @@ metal_shader_compile_result metal_compile_shader(
         sessionDesc.structureSize = sizeof(sessionDesc);
         sessionDesc.targets = &targetDesc;
         sessionDesc.targetCount = 1;
+        sessionDesc.allowGLSLSyntax = is_glsl_source;
 
         slang::ISession* compileSession = nullptr;
         SlangResult sr = globalSession->createSession(sessionDesc, &compileSession);
@@ -597,90 +770,97 @@ metal_shader_compile_result metal_compile_shader(
         }
 
         // 加载模块
+        slang::IBlob* diagnostics = nullptr;
         slang::IModule* module = compileSession->loadModuleFromSourceString(
-            "shader_module", ".", source_code, nullptr);
+            "shader_module", ".", source_code, &diagnostics);
 
         if (!module)
         {
+            std::string diagnostic_text;
+            if (diagnostics)
+            {
+                const char* diag_ptr = static_cast<const char*>(diagnostics->getBufferPointer());
+                size_t diag_size = diagnostics->getBufferSize();
+                if (diag_ptr && diag_size > 0)
+                {
+                    diagnostic_text.assign(diag_ptr, diag_size);
+                }
+                diagnostics->release();
+            }
+
             result.result = METAL_RESULT_COMPILE_FAILED;
             snprintf(result.error_message, sizeof(result.error_message),
-                     "Slang loadModuleFromSourceString 失败。");
-            compileSession->release();
-            release_global_session();
-            return result;
+                     "Slang loadModuleFromSourceString 失败（lang=%s）：%.400s",
+                     source_language,
+                     diagnostic_text.empty() ? "无诊断信息" : diagnostic_text.c_str());
         }
-
-        // 查找入口点，获取 IEntryPoint（继承自 IComponentType）
-        slang::IEntryPoint* entryPointComponent = nullptr;
-        sr = module->findEntryPointByName(entry_point, &entryPointComponent);
-        if (SLANG_FAILED(sr) || !entryPointComponent)
+        else
         {
-            result.result = METAL_RESULT_COMPILE_FAILED;
-            snprintf(result.error_message, sizeof(result.error_message),
-                     "未找到入口点 '%s'（阶段不匹配或函数名错误）", entry_point);
-            compileSession->release();
-            release_global_session();
-            return result;
+            // 查找入口点，获取 IEntryPoint（继承自 IComponentType）
+            slang::IEntryPoint* entryPointComponent = nullptr;
+            sr = module->findEntryPointByName(entry_point, &entryPointComponent);
+            if (SLANG_FAILED(sr) || !entryPointComponent)
+            {
+                result.result = METAL_RESULT_COMPILE_FAILED;
+                snprintf(result.error_message, sizeof(result.error_message),
+                         "未找到入口点 '%s'（阶段不匹配或函数名错误）", entry_point);
+            }
+            else
+            {
+                // 创建复合组件类型（module + entry point）
+                slang::IComponentType* components[2] = { module, entryPointComponent };
+                slang::IComponentType* composite = nullptr;
+                sr = compileSession->createCompositeComponentType(
+                    components, 2, &composite, nullptr);
+
+                if (SLANG_FAILED(sr) || !composite)
+                {
+                    result.result = METAL_RESULT_COMPILE_FAILED;
+                    snprintf(result.error_message, sizeof(result.error_message),
+                             "Slang createCompositeComponentType 失败（%d）", (int)sr);
+                }
+                else
+                {
+                    // Link
+                    slang::IComponentType* linkedProgram = nullptr;
+                    sr = composite->link(&linkedProgram, nullptr);
+                    if (SLANG_FAILED(sr) || !linkedProgram)
+                    {
+                        result.result = METAL_RESULT_COMPILE_FAILED;
+                        snprintf(result.error_message, sizeof(result.error_message),
+                                 "Slang link 失败（%d）", (int)sr);
+                    }
+                    else
+                    {
+                        // 获取 DXIL 入口点代码
+                        slang::IBlob* dxilBlob = nullptr;
+                        sr = linkedProgram->getEntryPointCode(0, 0, &dxilBlob, nullptr);
+                        if (SLANG_FAILED(sr) || !dxilBlob)
+                        {
+                            result.result = METAL_RESULT_COMPILE_FAILED;
+                            snprintf(result.error_message, sizeof(result.error_message),
+                                     "Slang getEntryPointCode 失败（%d）", (int)sr);
+                        }
+                        else
+                        {
+                            const void* blobData = dxilBlob->getBufferPointer();
+                            size_t blobSize = dxilBlob->getBufferSize();
+                            if (blobData && blobSize > 0)
+                            {
+                                dxil_data.assign(
+                                    static_cast<const uint8_t*>(blobData),
+                                    static_cast<const uint8_t*>(blobData) + blobSize);
+                            }
+
+                            dxilBlob->release();
+                        }
+                    }
+                }
+
+                entryPointComponent->release();
+            }
         }
 
-        // 创建复合组件类型（module + entry point）
-        slang::IComponentType* components[2] = { module, entryPointComponent };
-        slang::IComponentType* composite = nullptr;
-        sr = compileSession->createCompositeComponentType(
-            components, 2, &composite, nullptr);
-
-        if (SLANG_FAILED(sr) || !composite)
-        {
-            result.result = METAL_RESULT_COMPILE_FAILED;
-            snprintf(result.error_message, sizeof(result.error_message),
-                     "Slang createCompositeComponentType 失败（%d）", (int)sr);
-            entryPointComponent->release();
-            // 不释放 module — session 管理其生命周期
-            compileSession->release();
-            release_global_session();
-            return result;
-        }
-        entryPointComponent->release();
-
-        // Link
-        slang::IComponentType* linkedProgram = nullptr;
-        sr = composite->link(&linkedProgram, nullptr);
-        if (SLANG_FAILED(sr) || !linkedProgram)
-        {
-            result.result = METAL_RESULT_COMPILE_FAILED;
-            snprintf(result.error_message, sizeof(result.error_message),
-                     "Slang link 失败（%d）", (int)sr);
-            // 不释放 composite/module — session 管理其生命周期
-            compileSession->release();
-            release_global_session();
-            return result;
-        }
-
-        // 获取 DXIL 入口点代码
-        slang::IBlob* dxilBlob = nullptr;
-        sr = linkedProgram->getEntryPointCode(0, 0, &dxilBlob, nullptr);
-        if (SLANG_FAILED(sr) || !dxilBlob)
-        {
-            result.result = METAL_RESULT_COMPILE_FAILED;
-            snprintf(result.error_message, sizeof(result.error_message),
-                     "Slang getEntryPointCode 失败（%d）", (int)sr);
-            // 不释放 linkedProgram/composite/module — session 管理其生命周期
-            compileSession->release();
-            release_global_session();
-            return result;
-        }
-
-        // 读取 DXIL 数据
-        const void* blobData = dxilBlob->getBufferPointer();
-        size_t blobSize = dxilBlob->getBufferSize();
-        if (blobData && blobSize > 0)
-        {
-            dxil_data.assign(
-                static_cast<const uint8_t*>(blobData),
-                static_cast<const uint8_t*>(blobData) + blobSize);
-        }
-
-        dxilBlob->release();
         // 不手动释放 linkedProgram/composite/module — session 释放时自动清理
         compileSession->release();
         release_global_session();
@@ -705,19 +885,20 @@ metal_shader_compile_result metal_compile_shader(
             return result;
         }
 
+        bool is_glsl_source = strcmp(source_language, "glsl") == 0;
         std::string tmpdir_str(tmpdir);
-        std::string slang_path   = tmpdir_str + "/shader.slang";
+        std::string slang_path = tmpdir_str + (is_glsl_source ? "/shader.glsl" : "/shader.slang");
         std::string dxil_path    = tmpdir_str + "/shader.dxil";
         std::string slang_err_path = tmpdir_str + "/slang.err";
 
-        // 写入 Slang 源码
+        // 写入源码
         {
             FILE* f = fopen(slang_path.c_str(), "w");
             if (!f)
             {
                 result.result = METAL_RESULT_RUNTIME_ERROR;
                 snprintf(result.error_message, sizeof(result.error_message),
-                         "无法写入 Slang 源码。");
+                         "无法写入着色器源码。");
                 std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
                 system(cleanup.c_str());
                 return result;
@@ -729,10 +910,20 @@ metal_shader_compile_result metal_compile_shader(
         // 运行 slangc
         {
             char cmd[4096];
-            snprintf(cmd, sizeof(cmd),
-                "slangc \"%s\" -target dxil -entry %s -stage %s -profile %s -o \"%s\" 2>\"%s\"",
-                slang_path.c_str(), entry_point, stage, profile,
-                dxil_path.c_str(), slang_err_path.c_str());
+            if (is_glsl_source)
+            {
+                snprintf(cmd, sizeof(cmd),
+                    "slangc -allow-glsl -lang glsl \"%s\" -target dxil -entry %s -stage %s -profile %s -o \"%s\" 2>\"%s\"",
+                    slang_path.c_str(), entry_point, stage, profile,
+                    dxil_path.c_str(), slang_err_path.c_str());
+            }
+            else
+            {
+                snprintf(cmd, sizeof(cmd),
+                    "slangc \"%s\" -target dxil -entry %s -stage %s -profile %s -o \"%s\" 2>\"%s\"",
+                    slang_path.c_str(), entry_point, stage, profile,
+                    dxil_path.c_str(), slang_err_path.c_str());
+            }
 
             std::string cmd_output;
             int slang_rc = run_command(cmd, cmd_output);
@@ -748,16 +939,43 @@ metal_shader_compile_result metal_compile_shader(
                 snprintf(result.error_message, sizeof(result.error_message),
                          "slangc 失败（exit=%d）：%.400s", slang_rc, err_msg.c_str());
 
-                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
-                system(cleanup.c_str());
-                return result;
+                if (!should_keep_failed_shader_temp())
+                {
+                    std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                    system(cleanup.c_str());
+                }
+
+                if (!is_glsl_source)
+                {
+                    return result;
+                }
+
+                dxil_data.clear();
             }
         }
 
         // 清理临时文件
         {
-            std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
-            system(cleanup.c_str());
+            if (!should_keep_failed_shader_temp())
+            {
+                std::string cleanup = "rm -rf " + tmpdir_str + " 2>/dev/null";
+                system(cleanup.c_str());
+            }
+        }
+    }
+
+    if (dxil_data.empty() && strcmp(source_language, "glsl") == 0)
+    {
+        if (!compile_glsl_via_spirv_hlsl_bridge(
+                source_code,
+                stage,
+                profile,
+                dxil_data,
+                result.error_message,
+                sizeof(result.error_message)))
+        {
+            result.result = METAL_RESULT_COMPILE_FAILED;
+            return result;
         }
     }
 
@@ -970,6 +1188,11 @@ metal_shader_compile_result metal_compile_shader(
             }
             result.result = METAL_RESULT_COMPILE_FAILED;
         }
+    }
+
+    if (result.metallib_data && result.metallib_size > 0)
+    {
+        result.result = METAL_RESULT_OK;
     }
 
     // ── 编译成功：写入磁盘缓存（P4.2.4）──

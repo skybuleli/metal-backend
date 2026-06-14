@@ -74,7 +74,8 @@ static MTL::PixelFormat to_mtl_pixel_format(metal_pixel_format fmt)
     // Depth / Stencil
     case METAL_PIXEL_FORMAT_D16_UNORM:       return MTL::PixelFormatDepth16Unorm;
     case METAL_PIXEL_FORMAT_D32_FLOAT:       return MTL::PixelFormatDepth32Float;
-    case METAL_PIXEL_FORMAT_D24_UNORM_S8_UINT: return MTL::PixelFormatDepth24Unorm_Stencil8;
+    // Apple Silicon 上更稳妥的回退：将 D24S8 提升到 D32FS8。
+    case METAL_PIXEL_FORMAT_D24_UNORM_S8_UINT: return MTL::PixelFormatDepth32Float_Stencil8;
     case METAL_PIXEL_FORMAT_D32_FLOAT_S8_UINT: return MTL::PixelFormatDepth32Float_Stencil8;
     // Compressed (BC)
     case METAL_PIXEL_FORMAT_BC1_RGBA: return MTL::PixelFormatBC1_RGBA;

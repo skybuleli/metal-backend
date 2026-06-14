@@ -1243,6 +1243,12 @@ namespace Ryujinx.Ava.UI.ViewModels
         {
             RendererHostControl.WindowCreated += RendererHost_Created;
 
+            if (RendererHostControl.IsWindowCreated)
+            {
+                Logger.Info?.Print(LogClass.Application, "窗口已在等待前创建，直接释放加载等待。");
+                RendererHost_Created(RendererHostControl, EventArgs.Empty);
+            }
+
             AppHost.StatusUpdatedEvent += Update_StatusBar;
             AppHost.AppExit += AppHost_AppExit;
 
@@ -1325,6 +1331,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         private void RendererHost_Created(object sender, EventArgs e)
         {
+            Logger.Info?.Print(LogClass.Application, "渲染窗口已就绪，继续进入游戏加载。");
             ShowLoading(false);
 
             _rendererWaitEvent.Set();

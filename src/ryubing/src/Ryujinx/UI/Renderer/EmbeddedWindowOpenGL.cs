@@ -22,7 +22,7 @@ namespace Ryujinx.Ava.UI.Renderer
 
         protected override void OnWindowDestroying()
         {
-            Context.Dispose();
+            Context?.Dispose();
 
             base.OnWindowDestroying();
         }

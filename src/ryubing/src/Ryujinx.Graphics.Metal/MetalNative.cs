@@ -165,6 +165,7 @@ namespace Ryujinx.Graphics.Metal
         internal static extern MetalShaderCompileResult CompileShader(
             nint compiler,
             string sourceCode,
+            string sourceLanguage,
             string stage,
             string entryPoint,
             string profile);
@@ -854,8 +855,9 @@ namespace Ryujinx.Graphics.Metal
     internal struct MetalBlendAttachmentDescriptor
     {
         public byte BlendingEnabled;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-        public byte[] ReservedPad;
+        public byte ReservedPad0;
+        public byte ReservedPad1;
+        public byte ReservedPad2;
         public MetalBlendFactor SrcRgbFactor;
         public MetalBlendFactor DstRgbFactor;
         public MetalBlendOperation RgbOperation;
@@ -898,8 +900,8 @@ namespace Ryujinx.Graphics.Metal
         public MetalCompareFunction DepthCompareFunction;
         public byte DepthWriteEnabled;
         public byte StencilEnabled;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public byte[] ReservedPad;
+        public byte ReservedPad0;
+        public byte ReservedPad1;
         public MetalStencilDescriptor FrontFace;
         public MetalStencilDescriptor BackFace;
     }
