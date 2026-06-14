@@ -106,6 +106,83 @@ static std::string preprocess_glsl_source_for_dxil(const char* source_code, cons
     return output.str();
 }
 
+/// 从 HLSL 源码中提取 varying 变量声明
+/// 返回格式: "VAR_NAME:TYPE:SEMANTIC;..."
+static std::string extract_hlsl_varying_signatures(const std::string& hlsl_source)
+{
+    std::ostringstream sigs;
+    std::istringstream input(hlsl_source);
+    std::string line;
+    
+    while (std::getline(input, line))
+    {
+        size_t colon_pos = line.find(" : ");
+        if (colon_pos == std::string::npos) continue;
+        
+        std::string after_colon = line.substr(colon_pos + 3);
+        size_t semicolon_pos = after_colon.find(';');
+        if (semicolon_pos == std::string::npos) continue;
+        std::string semantic = after_colon.substr(0, semicolon_pos);
+        
+        if (semantic.find("SV_") == 0) continue;
+        
+        std::string before_colon = line.substr(0, colon_pos);
+        size_t last_space = before_colon.rfind(' ');
+        if (last_space == std::string::npos) continue;
+        std::string var_name = before_colon.substr(last_space + 1);
+        
+        size_t type_start = 0;
+        while (type_start < last_space && before_colon[type_start] == ' ') type_start++;
+        size_t type_end = last_space;
+        while (type_end > type_start && before_colon[type_end-1] == ' ') type_end--;
+        std::string type_name = before_colon.substr(type_start, type_end - type_start);
+        
+        if (!sigs.str().empty()) sigs << ";";
+        sigs << var_name << ":" << type_name << ":" << semantic;
+    }
+    
+    return sigs.str();
+}
+
+/// 将 HLSL 中的 varying 语义从 spirv-cross 默认分配统一为规范化格式
+/// 确保同一 varying 在 VS 输出和 FS 输入中使用相同的语义
+static std::string normalize_hlsl_varying_semantics(
+    const std::string& hlsl_source,
+    const std::string& stage)
+{
+    std::istringstream input(hlsl_source);
+    std::ostringstream output;
+    std::string line;
+    
+    while (std::getline(input, line))
+    {
+        std::string modified = line;
+        
+        // 替换 COLOR{N} → TEXCOORD{N}（在 HLSL varying 声明中的语义）
+        size_t pos = 0;
+        while ((pos = modified.find(" : COLOR", pos)) != std::string::npos)
+        {
+            size_t num_start = pos + 8;
+            if (num_start < modified.size() && std::isdigit(modified[num_start]))
+            {
+                size_t num_end = num_start;
+                while (num_end < modified.size() && std::isdigit(modified[num_end])) num_end++;
+                std::string number = modified.substr(num_start, num_end - num_start);
+                modified.replace(pos + 3, 5 + number.size(), "TEXCOORD" + number);
+                pos = pos + 8 + number.size();
+            }
+            else
+            {
+                pos += 8;
+            }
+        }
+        
+        output << modified << "\n";
+    }
+    
+    return output.str();
+}
+
 static bool compile_glsl_via_spirv_hlsl_bridge(
     const char* source_code,
     const char* stage,
@@ -182,6 +259,29 @@ static bool compile_glsl_via_spirv_hlsl_bridge(
         }
     }
 
+    // ── 步骤 2a: spirv-opt 规范化 SPIR-V（修复 VS/FS varying location 不一致）──
+    std::string spv_opt_path = tmpdir_str + "/shader.opt.spv";
+    {
+        char cmd[4096];
+        snprintf(cmd, sizeof(cmd),
+            "spirv-opt \"%s\" --legalize-vector-shuffle --compact-ids -o \"%s\" 2>\"%s\"",
+            spv_path.c_str(), spv_opt_path.c_str(), cross_err_path.c_str());
+        
+        std::string cmd_output;
+        int rc = run_command(cmd, cmd_output);
+        // spirv-opt 失败不退避，继续使用原始 SPIR-V
+        if (rc == 0)
+        {
+            // 检查输出文件是否有效
+            auto opt_data = read_file(spv_opt_path);
+            if (!opt_data.empty())
+            {
+                spv_path = spv_opt_path; // 使用优化后的 SPIR-V
+            }
+        }
+    }
+
+    // ── 步骤 2b: spirv-cross SPIR-V → HLSL ──
     {
         char cmd[4096];
         snprintf(cmd, sizeof(cmd),
@@ -204,6 +304,26 @@ static bool compile_glsl_via_spirv_hlsl_bridge(
                 system(cleanup.c_str());
             }
             return false;
+        }
+        
+        // ── 步骤 2c: 规范化 HLSL varying 语义（修复 VS/FS COLOR↔TEXCOORD 不匹配）──
+        {
+            auto hlsl_data = read_file(hlsl_path);
+            if (!hlsl_data.empty())
+            {
+                std::string hlsl_source(hlsl_data.begin(), hlsl_data.end());
+                std::string normalized = normalize_hlsl_varying_semantics(hlsl_source, stage);
+                if (normalized != hlsl_source)
+                {
+                    FILE* f = fopen(hlsl_path.c_str(), "w");
+                    if (f)
+                    {
+                        fwrite(normalized.data(), 1, normalized.size(), f);
+                        fclose(f);
+                        std::fprintf(stderr, "[shader-compiler] varying 语义已规范化 (%s)\n", stage);
+                    }
+                }
+            }
         }
     }
 
