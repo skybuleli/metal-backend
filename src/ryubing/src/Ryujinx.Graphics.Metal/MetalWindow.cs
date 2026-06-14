@@ -14,6 +14,7 @@ namespace Ryujinx.Graphics.Metal
         internal Action<ScreenCaptureImageInfo> ScreenCapturedCallback { get; set; }
 
         private readonly nint _deviceHandle;
+        private MetalPipeline _pipeline;
         private nint _metalLayer;
         private bool _firstPresent = true;
         private bool _firstTextureDiagnostic = true;
@@ -24,6 +25,11 @@ namespace Ryujinx.Graphics.Metal
         internal MetalWindow(nint deviceHandle)
         {
             _deviceHandle = deviceHandle;
+        }
+
+        internal void SetPipeline(MetalPipeline pipeline)
+        {
+            _pipeline = pipeline;
         }
 
         /// <summary>
@@ -45,11 +51,16 @@ namespace Ryujinx.Graphics.Metal
                 MetalNative.Release(_presenterHandle);
                 _presenterHandle = nint.Zero;
             }
+            // 确保所有 CommandBuffer 在销毁前提交
+            _pipeline?.Flush();
+
         }
 
         public void Present(ITexture texture, ImageCrop crop, Action swapBuffersCallback)
         {
             // 仅首次 Present 时记录
+            // 提交当前帧的 CommandBuffer（确保所有 Draw 完成后再 Present）
+            _pipeline?.Flush();
             if (_firstPresent)
             {
                 _firstPresent = false;
