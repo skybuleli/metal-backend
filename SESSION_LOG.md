@@ -417,3 +417,33 @@
   - `docs/evidence/P4.5.8-d2-quad-reference.ppm` — D2 参考
   - `docs/evidence/P4.5.8-meta.json` — 验证元数据
 - **状态**: **Phase 4 完成!** P4.5 验收 8/8 全部通过。下一阶段 P5.0 状态映射表骨架
+
+---
+
+### 2026-06-14 19:00 — 《蔚蓝》VS/FS varying 不匹配根因分析与修复
+- **Agent**: Ally (Codex)
+- **结果**: ✅ 定位根因 + 实施修复方案，待编译验证
+- **问题**: `Fragment input(s) user(color1), user(color0) mismatching vertex shader output type(s) or not written by vertex shader`
+- **根因分析**:
+  - Ryujinx 为 Metal 路径提供的源码语言是 GLSL
+  - GLSL→glslangValidator→SPIR-V→spirv-cross→HLSL→slangc→DXIL→MSC→metallib 链路中
+  - VS 和 FS 是分开编译的，spirv-cross 为两者分配 varying 语义时使用独立策略
+  - spirv-cross 对 HLSL 输出的语义分配：可能 VS 输出用 `COLOR{N}` 而 FS 输入用 `TEXCOORD{N}`
+  - MSC 在转换到 metallib 时，不同语义名称被映射到不同的 `[[user(locN)]]` 属性
+  - Metal 管线创建验证时发现 location 不匹配，报错拒绝
+- **修复方案**（三管齐下）:
+  1. **spirv-opt 规范化**: 在 spirv-cross 之前运行 `spirv-opt --legalize-vector-shuffle --compact-ids`，确保 SPIR-V 层面的 varying location 一致
+  2. **HLSL 语义规范化**: 新增 `normalize_hlsl_varying_semantics()` — 将 HLSL 中的 `: COLOR{N}` 统一替换为 `: TEXCOORD{N}`，消除 spirv-cross 的语义分配差异
+  3. **诊断函数**: 新增 `extract_hlsl_varying_signatures()` — 提取 VS/FS varying 签名用于日志对比
+- **变更文件**:
+  - `src/libmetal_bridge/src/ShaderCompiler.cpp`: +120 行（3 个新函数 + spirv-opt 步骤 + HLSL 后处理）
+- **验证步骤**（待执行）:
+  1. `cmake --build src/libmetal_bridge/build --config Release`
+  2. 设置 `SWITCH_METAL_KEEP_FAILED_SHADER_TEMP=1` 保留中间产物
+  3. `dotnet run --project Ryujinx -- --graphics-backend metal Celeste.nsp`
+  4. 检查 Metal 管线是否创建成功
+  5. 若仍失败，检查 `/tmp/metal_shader_bridge_XXXXXX/` 中保留的 HLSL varying 签名
+- **后续建议**:
+  - 若语义规范化仍不解决，考虑实现 MSL 直接编译路径（GLSL→SPIR-V→spirv-cross→MSL→MSC）作为 fallback
+  - 参考 Ryujinx.Graphics.Shader 中 user-defined I/O 的生成逻辑，确保 GLSL 中显式声明 location
+
