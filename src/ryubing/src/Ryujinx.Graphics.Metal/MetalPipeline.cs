@@ -506,6 +506,11 @@ namespace Ryujinx.Graphics.Metal
                 _currentProgram = metalProgram;
                 _pipelineHandle = GetOrCreatePipeline(metalProgram, _pipelineColorFormat, _pipelineDepthStencilFormat);
             }
+
+            if (_encoderActive)
+            {
+                _renderTargetsChanged = true;
+            }
         }
 
         /// <summary>
