@@ -130,6 +130,29 @@ namespace Ryujinx.Graphics.Metal
         [DllImport(LibraryName, EntryPoint = "metal_pixel_format_get_info")]
         internal static extern MetalPixelFormatInfo PixelFormatGetInfo(MetalPixelFormat format);
 
+        // ── Presenter P/Invoke (P4.4.3) ──
+        [DllImport(LibraryName, EntryPoint = "metal_create_presenter")]
+        internal static extern MetalResult CreatePresenter(
+            nint device,
+            nint metalLayer,
+            out nint presenter);
+
+        [DllImport(LibraryName, EntryPoint = "metal_presenter_get_info")]
+        internal static extern MetalResult PresenterGetInfo(
+            nint presenter,
+            out MetalPresenterInfo info);
+
+        [DllImport(LibraryName, EntryPoint = "metal_presenter_resize")]
+        internal static extern MetalResult PresenterResize(
+            nint presenter,
+            uint drawableWidth,
+            uint drawableHeight);
+
+        [DllImport(LibraryName, EntryPoint = "metal_presenter_present_texture")]
+        internal static extern MetalResult PresenterPresentTexture(
+            nint presenter,
+            nint texture);
+
         // ── 采样器 P/Invoke (P4.1.4) ──
         [DllImport(LibraryName, EntryPoint = "metal_create_sampler")]
         internal static extern MetalResult CreateSampler(
@@ -645,6 +668,16 @@ namespace Ryujinx.Graphics.Metal
         public MetalTextureType Type;
         public MetalPixelFormat PixelFormat;
         public MetalStorageMode StorageMode;
+        public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalPresenterInfo
+    {
+        public uint AbiVersion;
+        public uint DrawableWidth;
+        public uint DrawableHeight;
+        public MetalPixelFormat PixelFormat;
         public uint Reserved;
     }
 

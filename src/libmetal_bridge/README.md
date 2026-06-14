@@ -18,7 +18,7 @@ libmetal_bridge/
 │   ├── MetalTexture.cpp              # MTLTexture + 格式映射 + 上传/回读
 │   ├── ShaderCompiler.cpp            # Slang + MSC + 缓存 + workaround（P4.2 实现）
 │   ├── CommandMapper.cpp             # GAL/Maxwell 状态 → Metal API 翻译（P5 实现）
-│   └── Presenter.cpp                 # CAMetalLayer、交换链、显示路径（P4.4 实现）
+│   └── Presenter.cpp                 # CAMetalLayer、drawable 交换链、blit present（P4.4.3）
 └── tests/
     ├── test_device.cpp               # 11 个设备与生命周期测试
     ├── test_buffer.cpp               # 19 个缓冲区测试
@@ -43,7 +43,7 @@ libmetal_bridge/
 - `MetalDevice` 持有 `MTLDevice` 与能力查询
 - `MetalQueue` 持有 `MTLCommandQueue`，后续吸收 command buffer 提交入口
 - `ShaderCompiler` 独立负责 Slang + MSC，并在 `P3.1b` 收口单例与 workaround 设计
-- `Presenter` 只处理显示与交换链，不混入资源创建逻辑
+- `Presenter` 只处理显示与交换链，不混入资源创建逻辑；当前实现通过 `CAMetalLayer` 的 drawable + blit 提交完成 present
 - `CommandMapper` 只做状态翻译，不承担设备/资源所有权
 
 ## 与 Phase 3 任务的关系

@@ -116,6 +116,7 @@
 - **Texture 完整 C ABI**（`create / get_info / upload / readback / pixel_format_get_info` + `metal_pixel_format` + `metal_texture_type` + `metal_texture_usage` 枚举）— P4.1.3
 - **硬件限制常量**（`metal_limits.h`，9 类 30+ 常量 + 存储模式策略 + 对齐辅助宏）— P4.1.0
 - **内部结构体共享**（`metal_internal.h`，device/queue/buffer/texture 的 struct 定义）— P4.1.2
+- **Presenter 完整 C ABI**（`metal_create_presenter / metal_presenter_get_info / metal_presenter_resize / metal_presenter_present_texture`）— P4.4.3
 
 ### ⏸️ 仍延后的
 
@@ -124,7 +125,6 @@
 | `metal_create_sampler` | P4.1.4 | 采样器状态映射，无阻塞依赖 |
 | `metal_create_render_pipeline` / `metal_create_compute_pipeline` | P4.3.1 | 需要等动态函数签名基础设施 |
 | `metal_begin_command_buffer` / `metal_commit_command_buffer` / `metal_wait_command_buffer` | P4.4.1 | 需要等 command submission 基础设施 |
-| `metal_presenter_*` 系列 | P4.4.3 | 需要 CAMetalLayer 和交换链 |
 | `metal_encoder_*` 系列 | P4.3.x | 所有 setBuffer/setTexture/draw 入口 |
 | `metal_fence` / `metal_shared_event` | P4.4.x | 同步原语 |
 | true pipeline descriptor | P4.3.x | 动态函数签名与管线反射 |

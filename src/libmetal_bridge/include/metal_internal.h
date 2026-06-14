@@ -15,6 +15,11 @@
 #include <Metal/Metal.hpp>
 #include <Foundation/Foundation.hpp>
 
+namespace CA
+{
+class MetalLayer;
+}
+
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
@@ -82,6 +87,21 @@ struct metal_texture
 
 static_assert(offsetof(struct metal_texture, texture) >= sizeof(metal_handle_base),
     "metal_texture.base 必须在最前面");
+
+/// metal_presenter 内部实现（P4.4.3）
+struct metal_presenter
+{
+    METAL_HANDLE_HEADER
+    MTL::Device* device;              // 负责 drawable 创建的 Metal 设备
+    MTL::CommandQueue* command_queue;  // 呈现用命令队列
+    CA::MetalLayer* layer;            // 目标 CAMetalLayer
+    uint32_t drawable_width;          // 当前 drawable 宽度（像素）
+    uint32_t drawable_height;         // 当前 drawable 高度（像素）
+    metal_pixel_format pixel_format;  // 当前 layer 像素格式
+};
+
+static_assert(offsetof(struct metal_presenter, device) >= sizeof(metal_handle_base),
+    "metal_presenter.base 必须在最前面");
 
 /// metal_sampler 内部实现
 struct metal_sampler

@@ -227,3 +227,24 @@
   - `ctest --test-dir src/libmetal_bridge/build -R test_command_buffer --output-on-failure` ✅（1/1 通过）
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` ✅（仅既有 CA1416 警告）
 - **状态摘要**: P4 进度 84/144 (58.3%)，下一任务 P4.4.2 CreateSync/WaitSync: MTLEvent 信号量
+
+---
+
+### 2026-06-14 13:55 — P4.4.3 Presenter/Window: CAMetalLayer + 交换链
+- **Agent**: Codex
+- **结果**: ✅ 实现 CAMetalLayer presenter，补齐 drawable 交换链与 native present 路径
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `metal_presenter_info` 与 `metal_create_presenter / metal_presenter_get_info / metal_presenter_resize / metal_presenter_present_texture`
+  - `src/libmetal_bridge/include/metal_internal.h`：新增 `metal_presenter` 内部结构体
+  - `src/libmetal_bridge/src/Presenter.cpp`：实现 `CAMetalLayer::nextDrawable`、`MTLBlitCommandEncoder` 拷贝、`presentDrawable` 提交链路
+  - `src/libmetal_bridge/src/MetalDevice.cpp`：`metal_release` 新增 presenter 释放分支
+  - `src/libmetal_bridge/tests/test_presenter.cpp`：新增 presenter 回归测试，覆盖创建、resize、信息查询与不支持格式错误路径
+  - `src/libmetal_bridge/CMakeLists.txt`：新增 `test_presenter`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：补充 presenter P/Invoke 与结构体
+  - `docs/evidence/P4.4.3-meta.json`：记录构建与测试证据
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` ✅
+  - `cmake --build src/libmetal_bridge/build --target test_presenter -j 4` ✅
+  - `ctest --test-dir src/libmetal_bridge/build -R 'test_(command_buffer|sync|presenter)' --output-on-failure` ✅（3/3 通过）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（仅既有 CA1416 警告）
+- **状态摘要**: P4 进度 86/144 (59.7%)，下一任务 P4.4.4 ScreenCaptured 事件: 帧缓冲→CGImage

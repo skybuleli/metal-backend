@@ -360,6 +360,16 @@ typedef struct metal_texture_info
     uint32_t reserved;
 } metal_texture_info;
 
+// ── 呈现器信息：CAMetalLayer + 交换链状态 ──
+typedef struct metal_presenter_info
+{
+    uint32_t abi_version;
+    uint32_t drawable_width;
+    uint32_t drawable_height;
+    metal_pixel_format pixel_format;
+    uint32_t reserved;
+} metal_presenter_info;
+
 // ── 纹理入口：P4.1.3 MetalTexture 完整实现 ──
 METAL_BRIDGE_EXPORT metal_result metal_create_texture(
     metal_device* device,
@@ -413,6 +423,25 @@ METAL_BRIDGE_EXPORT metal_result metal_create_texture_view(
 // ── 像素格式查询：供 C# 侧缓存使用 ———
 METAL_BRIDGE_EXPORT metal_pixel_format_info metal_pixel_format_get_info(
     metal_pixel_format format);
+
+// ── 呈现器入口：P4.4.3 CAMetalLayer + 交换链 ──
+METAL_BRIDGE_EXPORT metal_result metal_create_presenter(
+    metal_device* device,
+    void* metal_layer,
+    metal_presenter** out_presenter);
+
+METAL_BRIDGE_EXPORT metal_result metal_presenter_get_info(
+    metal_presenter* presenter,
+    metal_presenter_info* out_info);
+
+METAL_BRIDGE_EXPORT metal_result metal_presenter_resize(
+    metal_presenter* presenter,
+    uint32_t drawable_width,
+    uint32_t drawable_height);
+
+METAL_BRIDGE_EXPORT metal_result metal_presenter_present_texture(
+    metal_presenter* presenter,
+    metal_texture* texture);
 
 // ════════════════════════════════════════════════════════════════════
 // 采样器枚举（P4.1.4）

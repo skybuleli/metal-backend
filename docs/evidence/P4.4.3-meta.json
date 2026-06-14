@@ -1,0 +1,28 @@
+{
+  "task": "P4.4.3",
+  "title": "Presenter/Window: CAMetalLayer + 交换链",
+  "completed_at": "2026-06-14T13:54:50+08:00",
+  "verification": [
+    {
+      "command": "cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON",
+      "result": "success"
+    },
+    {
+      "command": "cmake --build src/libmetal_bridge/build --target test_presenter -j 4",
+      "result": "success"
+    },
+    {
+      "command": "ctest --test-dir src/libmetal_bridge/build -R 'test_(command_buffer|sync|presenter)' --output-on-failure",
+      "result": "3/3 passed"
+    },
+    {
+      "command": "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj",
+      "result": "success with existing CA1416 warnings only"
+    }
+  ],
+  "notes": [
+    "新增 metal_create_presenter / metal_presenter_get_info / metal_presenter_resize / metal_presenter_present_texture C ABI，并通过 metal_release 统一回收 presenter 句柄",
+    "Presenter.cpp 使用 CAMetalLayer 的 nextDrawable + MTLBlitCommandEncoder 完成 drawable 交换链与 present 提交",
+    "新增 test_presenter 回归测试，覆盖创建、resize、信息查询与不支持格式的错误路径"
+  ]
+}

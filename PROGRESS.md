@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T12:40:20+08:00
+# 最后更新: 2026-06-14T13:56:30+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 85/144 任务 (59.0%)
+# 完成度: 86/144 任务 (59.7%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -149,7 +149,7 @@
 |----|------|------|----------|------|
 | P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ✅ | 2026-06-14T12:23:49+08:00 | docs/evidence/P4.4.1-meta.json：`cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` 配置成功；`cmake --build src/libmetal_bridge/build --target test_command_buffer -j 4` 编译成功；`ctest --test-dir src/libmetal_bridge/build -R test_command_buffer --output-on-failure` 1/1 通过 |
 | P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ✅ | 2026-06-14T12:39:06+08:00 | docs/evidence/P4.4.2-meta.json：新增 `metal_create_shared_event` / `metal_encode_signal_shared_event` / `metal_get_shared_event_signaled_value` C ABI、`MetalSync` 管理器与 `test_sync` 回归；`ctest --test-dir src/libmetal_bridge/build -R 'test_(sync|command_buffer)' --output-on-failure` 2/2 通过，`dotnet build` 0 错误（仅既有 CA1416 警告） |
-| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ⬜ | — | — |
+| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ✅ | 2026-06-14T13:54:50+08:00 | docs/evidence/P4.4.3-meta.json |
 | P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ⬜ | — | — |
 | P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ⬜ | — | — |
 | P4.4.6 | RunLoop: 主渲染循环 | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 85 (59.0%)
+- 已完成: 86 (59.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 59
+- 待开始: 58
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.4.3 — Presenter/Window: CAMetalLayer + 交换链
+- 下一任务: P4.4.4 — ScreenCaptured 事件: 帧缓冲→CGImage

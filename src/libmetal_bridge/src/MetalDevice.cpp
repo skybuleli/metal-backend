@@ -11,6 +11,8 @@
 #include "metal_limits.h"
 #include "metal_internal.h"
 
+#include <QuartzCore/QuartzCore.hpp>
+
 #include <cstring>
 #include <cstdio>
 #include <cstdarg>
@@ -323,6 +325,27 @@ void metal_release(void* handle)
             q->queue = nullptr;
         }
         delete q;
+        break;
+    }
+    case METAL_HANDLE_TYPE_PRESENTER:
+    {
+        metal_presenter* presenter = static_cast<metal_presenter*>(handle);
+        if (presenter->command_queue != nullptr)
+        {
+            presenter->command_queue->release();
+            presenter->command_queue = nullptr;
+        }
+        if (presenter->layer != nullptr)
+        {
+            presenter->layer->release();
+            presenter->layer = nullptr;
+        }
+        if (presenter->device != nullptr)
+        {
+            presenter->device->release();
+            presenter->device = nullptr;
+        }
+        delete presenter;
         break;
     }
     case METAL_HANDLE_TYPE_BUFFER:
