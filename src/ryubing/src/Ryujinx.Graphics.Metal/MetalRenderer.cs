@@ -69,7 +69,6 @@ namespace Ryujinx.Graphics.Metal
             _nullImageArray = new MetalImageArray(0, false);
             _window = new MetalWindow(_device.Handle);
             _window.ScreenCapturedCallback = info => ScreenCaptured?.Invoke(this, info);
-            _window.SetPipeline(_pipeline);
 
         }
 
