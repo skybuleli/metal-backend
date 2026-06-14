@@ -355,3 +355,13 @@
 - **变更**:
   - `src/libmetal_bridge/tests/test_presenter.cpp` — 新增 100 帧持续呈现 + resize 后呈现不崩溃测试
 - **状态摘要**: P4 进度 97/152 (63.8%)，下一任务 P4.5.8 2D Demo 完整渲染
+
+---
+
+### 2026-06-14 15:35 — P4.5.8 2D Demo 完整渲染: D1 帧缓冲对比 (像素差异<1%)
+- **结果**: ✅ D1 + D2 两次运行输出完全一致（0% 像素差异，MD5 匹配）。参考图像已存档
+- **证据**:
+  - `docs/evidence/P4.5.8-d1-triangle-reference.ppm` — D1 参考
+  - `docs/evidence/P4.5.8-d2-quad-reference.ppm` — D2 参考
+  - `docs/evidence/P4.5.8-meta.json` — 验证元数据
+- **状态**: **Phase 4 完成!** P4.5 验收 8/8 全部通过。下一阶段 P5.0 状态映射表骨架
