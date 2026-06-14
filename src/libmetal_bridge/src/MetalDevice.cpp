@@ -450,6 +450,11 @@ case METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE:
         metal_render_encoder* encoder = static_cast<metal_render_encoder*>(handle);
         if (encoder->encoder != nullptr)
         {
+            if (!encoder->encoding_ended)
+            {
+                encoder->encoder->endEncoding();
+                encoder->encoding_ended = true;
+            }
             encoder->encoder->release();
             encoder->encoder = nullptr;
         }

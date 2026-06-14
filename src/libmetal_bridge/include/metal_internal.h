@@ -180,7 +180,8 @@ struct metal_render_encoder
     MTL::RenderCommandEncoder* encoder;       // Metal 渲染编码器
     MTL::Texture* color_targets[8];           // 颜色附件纹理（最多 8 个）
     uint32_t color_target_count;              // 实际颜色附件数
-    MTL::Texture* depth_stencil_target;       // 深度/模板附件纹理（nullptr 表示无）
+    MTL::Texture* depth_stencil_target;       // 深度/模板附件纹理
+    bool encoding_ended;                      // P4.5.8: 追踪 endEncoding 状态（nullptr 表示无）
 };
 
 static_assert(offsetof(struct metal_render_encoder, encoder) >= sizeof(metal_handle_base),

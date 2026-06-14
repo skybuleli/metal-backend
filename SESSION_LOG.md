@@ -507,3 +507,12 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
   # VS/FS HLSL varying 对比
   grep "TEXCOORD\|COLOR" docs/evidence/P4.5.8-celeste-temp-files/metal_shader_bridge_*/shader.hlsl
   ```
+
+---
+
+### 2026-06-14 19:35 — 修复 encoder endEncoding 断言崩溃
+- **Agent**: Ally (Codex)
+- **结果**: ✅ 定位根因 + 实施修复
+- **问题**: `-[_MTLCommandEncoder dealloc]:134: failed assertion 'Command encoder released without endEncoding'`
+- **根因**: `metal_release` 对 `METAL_HANDLE_TYPE_RENDER_ENCODER` 直接调 `encoder->release()` 未检查 `endEncoding`
+- **修复**: 在 encoder 结构添加 `encoding_ended` 追踪 + release 前自动补调 endEncoding

@@ -228,6 +228,7 @@ metal_result metal_begin_render_encoding(
     handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
     handle->owner = command_buffer;
     handle->encoder = encoder;
+    handle->encoding_ended = false;
     handle->color_targets[0] = color_target;
     handle->color_target_count = 1;
     for (uint32_t i = 1; i < 8; i++)
@@ -438,6 +439,7 @@ metal_result metal_begin_render_encoding_with_targets(
     handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
     handle->owner = command_buffer;
     handle->encoder = encoder;
+    handle->encoding_ended = false;
     handle->color_target_count = color_attachment_count;
 
     // 保留颜色附件纹理引用
@@ -596,6 +598,7 @@ metal_result metal_end_render_encoding(
     }
 
     encoder->encoder->endEncoding();
+    encoder->encoding_ended = true;
     return METAL_RESULT_OK;
 }
 
