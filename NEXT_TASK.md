@@ -1,6 +1,6 @@
-# 下一任务 — P4.3.7 SetRenderTargets: MTLRenderPassDescriptor
+# 当前任务 — P4.3.7 SetRenderTargets: MTLRenderPassDescriptor
 
-> 生成时间：2026-06-14 00:07:45
+> 生成时间：2026-06-14 10:35:12
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
@@ -9,7 +9,7 @@
 |------|------|
 | 任务 ID | P4.3.7 |
 | 任务名称 | SetRenderTargets: MTLRenderPassDescriptor |
-| 当前状态 | ⬜ |
+| 当前状态 | 🔄 |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
 
