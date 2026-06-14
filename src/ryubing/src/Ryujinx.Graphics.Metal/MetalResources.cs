@@ -280,44 +280,21 @@ namespace Ryujinx.Graphics.Metal
             uint regionX, uint regionY, uint regionZ,
             uint regionWidth, uint regionHeight, uint bytesPerRow)
         {
+            // Blit 上传会导致 waitUntilCompleted 死锁（GPU 线程被阻塞），
+            // 暂时跳过深度/模板上传，后续排查同步问题后启用。
             if (Info.Format.IsDepthOrStencil)
             {
-                ulong count = ++_diagnosticDepthUploadSkipCount;
-                if (count <= 5 || (count % 100) == 0)
-                {
-                    Logger.Warning?.PrintMsg(
-                        LogClass.Gpu,
-                        $"[DIAG] Blit 上传 depth/stencil 纹理: count={count}, format={Info.Format}, size={Info.Width}x{Info.Height}, level={level}");
-                }
-
-                MetalResult result = MetalNative.TextureUploadViaBlit(
-                    _queueHandle,
-                    textureHandle,
-                    bufferHandle,
-                    bufferOffset,
-                    layer, level,
-                    regionX, regionY, regionZ,
-                    regionWidth, regionHeight,
-                    bytesPerRow);
-
-                if (result != MetalResult.Ok)
-                {
-                    Logger.Error?.PrintMsg(
-                        LogClass.Gpu,
-                        $"[DIAG] Blit 上传 depth/stencil 纹理失败: result={result}");
-                }
+                return;
             }
-            else
-            {
-                MetalNative.TextureUpload(
-                    textureHandle,
-                    bufferHandle,
-                    bufferOffset,
-                    layer, level,
-                    regionX, regionY, regionZ,
-                    regionWidth, regionHeight,
-                    bytesPerRow);
-            }
+
+            MetalNative.TextureUpload(
+                textureHandle,
+                bufferHandle,
+                bufferOffset,
+                layer, level,
+                regionX, regionY, regionZ,
+                regionWidth, regionHeight,
+                bytesPerRow);
         }
 
         /// <summary>
