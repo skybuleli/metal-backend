@@ -201,4 +201,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_heap COMMAND test_heap)
+
+    add_executable(test_command_buffer
+        tests/test_command_buffer.cpp
+    )
+    target_link_libraries(test_command_buffer PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_command_buffer PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_command_buffer COMMAND test_command_buffer)
 endif()

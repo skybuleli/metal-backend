@@ -189,3 +189,20 @@
   - Metal 不支持 Point 多边形模式，回退为 Lines
   - setTriangleFillMode 不区分正反面，使用 frontMode
 - **状态摘要**: P4 进度 83/144 (57.6%)，下一任务 P4.3.13
+
+---
+
+### 2026-06-14 12:24 — P4.4.1 CommandBuffer 提交+等待: commit+waitUntilCompleted
+- **Agent**: Codex
+- **结果**: ✅ 补齐命令缓冲区提交/等待回归，验证 `commit` + `waitUntilCompleted` 链路可执行
+- **变更**:
+  - `src/libmetal_bridge/tests/test_command_buffer.cpp`：新增命令缓冲区提交与等待回归测试，覆盖成功路径与空参数错误路径
+  - `src/libmetal_bridge/CMakeLists.txt`：新增 `test_command_buffer` 测试目标
+  - `PROGRESS.md`：将 P4.4.1 标记为完成并写入证据路径
+  - `docs/evidence/P4.4.1-meta.json`：记录构建与测试证据
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` ✅
+  - `cmake --build src/libmetal_bridge/build --target test_command_buffer -j 4` ✅
+  - `ctest --test-dir src/libmetal_bridge/build -R test_command_buffer --output-on-failure` ✅（1/1 通过）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` ✅（仅既有 CA1416 警告）
+- **状态摘要**: P4 进度 84/144 (58.3%)，下一任务 P4.4.2 CreateSync/WaitSync: MTLEvent 信号量

@@ -1,14 +1,14 @@
-# 下一任务 — P4.4.1 CommandBuffer 提交+等待: commit+waitUntilCompleted
+# 下一任务 — P4.4.2 CreateSync/WaitSync: MTLEvent 信号量
 
-> 生成时间：2026-06-14 11:47:02
+> 生成时间：2026-06-14 12:25:50
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.4.1 |
-| 任务名称 | CommandBuffer 提交+等待: commit+waitUntilCompleted |
+| 任务 ID | P4.4.2 |
+| 任务名称 | CreateSync/WaitSync: MTLEvent 信号量 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.4.1 → ✅
+- 更新 PROGRESS.md：P4.4.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T11:47:02+08:00
+# 最后更新: 2026-06-14T12:25:50+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 83/144 任务 (57.6%)
+# 完成度: 84/144 任务 (58.3%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -147,7 +147,7 @@
 ### 4.4 同步与呈现
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ⬜ | — | — |
+| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ✅ | 2026-06-14T12:23:49+08:00 | docs/evidence/P4.4.1-meta.json：`cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` 配置成功；`cmake --build src/libmetal_bridge/build --target test_command_buffer -j 4` 编译成功；`ctest --test-dir src/libmetal_bridge/build -R test_command_buffer --output-on-failure` 1/1 通过 |
 | P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ⬜ | — | — |
 | P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ⬜ | — | — |
 | P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ⬜ | — | — |
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 83 (57.6%)
+- 已完成: 84 (58.3%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 61
+- 待开始: 60
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.4.1 — CommandBuffer 提交+等待: commit+waitUntilCompleted
+- 下一任务: P4.4.2 — CreateSync/WaitSync: MTLEvent 信号量
