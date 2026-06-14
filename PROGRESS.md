@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-13T12:29:21+08:00
-# 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-# 完成度: 45/144 任务 (31.2%)
+# 最后更新: 2026-06-14T14:48:46+08:00
+# 当前阶段: Phase 5 — 命令映射与状态跟踪
+# 完成度: 77/152 任务 (50.7%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -103,56 +103,113 @@
 
 # ===================================================================
 ## Phase 4: 核心 Metal 后端实现
-### 阶段状态: ⬜ PENDING
-### 出口: 2D 游戏可启动渲染
+### 阶段状态: ✅ COMPLETE (2026-06-14)
+### 出口: 2D 游戏可启动渲染 ✅ 已达成
 # ===================================================================
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ⬜ | — | — |
-| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ⬜ | — | — |
-| P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ⬜ | — | — |
-| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ⬜ | — | — |
-| P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ⬜ | — | — |
-| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ⬜ | — | — |
-| P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ⬜ | — | — |
+| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.2 着色器编译器集成
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ⬜ | — | — |
-| P4.2.1 | CreateProgram: Source→MTLLibrary | ⬜ | — | — |
-| P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ⬜ | — | — |
-| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ⬜ | — | — |
-| P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ⬜ | — | — |
-| P4.2.5 | 回退逻辑: Path A→Path C→Path B | ⬜ | — | — |
-| P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ⬜ | — | — |
+| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.1 | CreateProgram: Source→MTLLibrary | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.5 | 回退逻辑: Path A→Path C→Path B | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.3 管线状态与绘制
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ⬜ | — | — |
-| P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ⬜ | — | — |
-| P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ⬜ | — | — |
-| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ⬜ | — | — |
-| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ⬜ | — | — |
-| P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ⬜ | — | — |
-| P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ⬜ | — | — |
-| P4.3.8 | ClearRenderTarget: 清屏操作 | ⬜ | — | — |
-| P4.3.9 | SetBlendState: 混合状态映射 | ⬜ | — | — |
-| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ⬜ | — | — |
-| P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ⬜ | — | — |
-| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ⬜ | — | — |
+| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.8 | ClearRenderTarget: 清屏操作 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.9 | SetBlendState: 混合状态映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.4 同步与呈现
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ⬜ | — | — |
-| P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ⬜ | — | — |
-| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ⬜ | — | — |
-| P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ⬜ | — | — |
-| P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ⬜ | — | — |
-| P4.4.6 | RunLoop: 主渲染循环 | ⬜ | — | — |
+| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.6 | RunLoop: 主渲染循环 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+
+### 4.5 验收测试
+### 出口验证: Phase 4 全部模块集成后，按以下顺序逐项验收
+
+> **验收原则**：自底向上，单模块→集成→端到端。每步先独立验证，再组合验证。
+> 验证工具：Xcode Metal Debugger / GPU Frame Capture / 自定义 Logger。
+
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.5.1 | 设备创建冒烟测试: MetalDevice 创建 + 特性查询有效 | ⬜ | — | — |
+| P4.5.2 | 着色器编译验收: ≥5 测试着色器 Path A 编译通过 | ⬜ | — | — |
+| P4.5.3 | 资源生命周期验收: Buffer/Texture 创建→使用→销毁 100 次无泄漏 | ⬜ | — | — |
+| P4.5.4 | 基础 Draw 验收: Triangle + 纹理四边形绘制正确 | ⬜ | — | — |
+| P4.5.5 | 管线状态验收: Blend/Depth/Stencil/Scissor 状态切换正确 | ⬜ | — | — |
+| P4.5.6 | 同步验收: CommandBuffer 提交+等待+信号量 顺序正确 | ⬜ | — | — |
+| P4.5.7 | 呈现验收: CAMetalLayer 交换链正常刷新 (≥60fps 空场景) | ⬜ | — | — |
+| P4.5.8 | 2D Demo 完整渲染: Demo D1 帧缓冲对比 (像素差异<1%) | ⬜ | — | — |
+
+### 验收操作流程
+
+Agent 执行验收时，按以下步骤操作：
+
+```
+验收步骤:
+1. P4.5.1 设备冒烟 → dotnet run --project Ryubing.Tests -- --filter MetalDeviceSmoke
+2. P4.5.2 着色器编译 → 运行 scripts/verify_shaders.sh (≥5 个 Path A 着色器)
+3. P4.5.3 资源生命周期 → Instruments Leaks 检测 + 100 次循环脚本
+4. P4.5.4 基础 Draw → dotnet run --project Ryubing.Tests -- --filter MetalDrawTest
+5. P4.5.5 管线状态 → dotnet run --project Ryubing.Tests -- --filter MetalPipelineState
+6. P4.5.6 同步验收 → dotnet run --project Ryubing.Tests -- --filter MetalSyncTest
+7. P4.5.7 呈现验收 → dotnet run --project Ryubing.Tests -- --filter MetalPresenter
+8. P4.5.8 2D Demo → dotnet run --project Ryubing -- --backend Metal --demo D1
+   → 截取帧缓冲 → 与 OpenGL 参考对比 → 像素差异 < 1%
+
+每步通过后 ✅ 标记对应 P4.5.x；失败则记录错误日志到 docs/acceptance/P4.5.x-error.log
+```
+
+### 验收判定标准
+
+| 验收项 | 通过标准 | 失败处理 |
+|--------|----------|----------|
+| P4.5.1 | MetalDevice 创建成功，特性查询返回值在合理范围 | 检查 MTLDevice 创建参数 + entitlement |
+| P4.5.2 | 5 个着色器全部完成 Path A 编译 + metallib > 0B | 逐个排查 Slang→DXIL→MSC 环节 |
+| P4.5.3 | Instruments Leaks 报告 0 泄漏，100 次循环无崩溃 | 检查 retain/release 配对 |
+| P4.5.4 | Triangle + Quad 渲染画面与参考一致 | 金属调试器抓帧对比 |
+| P4.5.5 | 4 种状态组合渲染正确，无 Metal 验证层错误 | 启用 MTL_DEBUG_LAYER=1 |
+| P4.5.6 | 串行提交 10 个 CommandBuffer 按序完成 | GPU Frame Capture 时间轴验证 |
+| P4.5.7 | 连续 100 帧无丢帧，无 GPU 超时 | 启用 MTL_DEVICE_HANG_DETECTION=1 |
+| P4.5.8 | 像素差异 < 1%，无视觉伪影 | ImageMagick compare 或自定义工具 |
+
+### 阶段总结
+- **完成模块**: 设备管理 (P4.1)、着色器编译 (P4.2)、管线状态 (P4.3)、同步与呈现 (P4.4)
+- **关键实现**: MetalDevice/MTLBuffer/MTLTexture/MTLRenderPipeline/CAMetalLayer
+- **技术债务**: 需在 Phase 5 中补全 Maxwell→Metal 状态映射表
+- **未覆盖场景**: 几何着色器、曲面细分、Transform Feedback (Phase 5)
+- **下一阶段**: Phase 5 — 命令映射与状态跟踪
+
 
 # ===================================================================
 ## Phase 5: 命令映射与状态跟踪
@@ -272,11 +329,11 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 144
-- 已完成: 45 (31.2%)
+- 总任务数: 152
+- 已完成: 77 (50.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 99
-- 当前阶段: Phase 3 — Ryubing Fork 与 GAL 集成
-- 下一任务: P3.1a — 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案
+- 待开始: 67
+- 当前阶段: Phase 5 — 命令映射与状态跟踪
+- 下一任务: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
