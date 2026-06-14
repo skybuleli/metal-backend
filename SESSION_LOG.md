@@ -516,3 +516,67 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 - **问题**: `-[_MTLCommandEncoder dealloc]:134: failed assertion 'Command encoder released without endEncoding'`
 - **根因**: `metal_release` 对 `METAL_HANDLE_TYPE_RENDER_ENCODER` 直接调 `encoder->release()` 未检查 `endEncoding`
 - **修复**: 在 encoder 结构添加 `encoding_ended` 追踪 + release 前自动补调 endEncoding
+
+### 2026-06-14 21:45 — 《蔚蓝》黑屏排查推进到 Metal Validation 第三层：深度上传 → Pipeline 附件 → Scissor
+- **Agent**: Ally (Codex)
+- **上下文**: 围绕《蔚蓝》“黑屏但有声音”继续做运行时调试，打开屏幕截图权限后，使用 Metal API Validation / GPU Validation 逐层剥离首个非法调用。
+
+#### 已验证结论
+1. **首帧源纹理本身就是黑的，不只是 Presenter 丢画面**
+   - 证据：`/tmp/ryujinx_metal_first_present_formatfix.png`
+   - 日志：`PresentTexture 首帧: hasNonZero=True, hasVisibleColor=False, hasOpaquePixel=True`
+2. **`CreateTextureView` 失败回退不是本轮复现主因**
+   - 本轮复现日志中未出现 `CreateTextureView 失败，回退为独立纹理`
+3. **第一个明确非法点：深度/模板纹理被错误地走了 CPU `replaceRegion` 上传**
+   - Validation 报错：`MTLPixelFormatDepth32Float_Stencil8 ... CPU access for this texture is disallowed`
+   - 证据：`/tmp/celeste_metal_validation.log`
+   - 结论：当前 `metal_texture_upload` 只适合普通颜色纹理；`Depth32Float_Stencil8` 必须改走 GPU blit/staging
+4. **第二个明确非法点：pipeline 把未绑定的 color attachment 1..7 也声明成有效格式**
+   - Validation 报错：`For color attachment 1..7, the renderPipelineState pixelFormat must be MTLPixelFormatInvalid`
+   - 证据：`/tmp/celeste_metal_validation2.log`
+   - 结论：这会在首个 draw 前直接让 `setRenderPipelineState` 失败
+5. **第三个明确非法点：scissor 状态越界**
+   - Validation 报错：`rect.width(65535) <= render pass width(1920)` / `rect.height(65535) <= render pass height(1080)` 不成立
+   - 证据：`/tmp/celeste_metal_validation3.log`
+   - 结论：在清掉前两个非法点后，当前主阻塞已经前移到 scissor 映射
+
+#### 本轮代码改动
+- **`src/ryubing/src/Ryujinx.Graphics.Metal/MetalWindow.cs`**
+  - 增加首帧 present 纹理导出与像素统计诊断，确认 source texture 自身即为黑帧
+- **`src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`**
+  - 增加 render target 格式变化日志与 pipeline 重建
+  - 增加 `DrawTexture` stub 命中诊断
+- **`src/ryubing/src/Ryujinx.Graphics.Metal/MetalResources.cs`**
+  - 增加 `CreateTextureView` 回退诊断
+  - 为 `CopyTo` stub 增加命中日志
+  - 对 depth/stencil 纹理临时跳过 CPU 上传并记录诊断，避免再次触发非法 `replaceRegion`
+- **`src/libmetal_bridge/src/MetalPipeline.cpp`**
+  - 创建 render pipeline 时，仅 attachment 0 继承颜色格式；未显式描述的 attachment 1..7 维持 `Invalid`
+
+#### 当前状态
+- 《蔚蓝》仍未出画面，窗口依旧黑屏，但 Metal Validation 的首个致命错误已经从
+  - 深度上传非法
+  - 推进到 pipeline 附件声明非法
+  - 再推进到 scissor 越界
+- 这说明排查路径有效，当前问题已明显收敛，不再是“黑屏原因不明”
+
+#### 下一次排查方向
+1. **优先修 `SetScissors` / scissor 状态映射**
+   - 目标：禁止向 Metal 传入超出 render pass 尺寸的 `65535x65535` 矩形
+   - 重点文件：`src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`
+2. **把 depth/stencil 上传从“临时跳过”升级为正式的 blit/staging 实现**
+   - 重点文件：`src/libmetal_bridge/src/MetalTexture.cpp`
+   - 目标：替换当前仅基于 `replaceRegion` 的 `metal_texture_upload`
+3. **继续坚持 Validation 驱动**
+   - 运行命令：
+     ```bash
+     cd /Users/liliang/MetalBackend/metal-backend/src/ryubing/src/Ryujinx/bin/Release/net10.0
+     env MTL_DEBUG_LAYER=1 MTL_SHADER_VALIDATION=1 SWITCH_METAL_KEEP_FAILED_SHADER_TEMP=1 ./Ryujinx --graphics-backend metal "/Users/liliang/games/蔚蓝1.3/Celeste [01002B30028F6000][v0] (TurboSnail).nsp"
+     ```
+   - 每次只清掉“当前第一个非法点”，再继续前推
+
+#### 关键证据
+- ` /tmp/celeste_metal_validation.log`
+- ` /tmp/celeste_metal_validation2.log`
+- ` /tmp/celeste_metal_validation3.log`
+- ` /tmp/ryujinx_metal_first_present_formatfix.png`

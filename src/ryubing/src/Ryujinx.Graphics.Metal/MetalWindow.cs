@@ -1,6 +1,7 @@
 using Ryujinx.Common.Configuration;
 using Ryujinx.Graphics.GAL;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using Ryujinx.Common.Logging;
 
@@ -15,6 +16,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly nint _deviceHandle;
         private nint _metalLayer;
         private bool _firstPresent = true;
+        private bool _firstTextureDiagnostic = true;
         private nint _presenterHandle;
         private uint _presenterWidth;
         private uint _presenterHeight;
@@ -61,10 +63,16 @@ namespace Ryujinx.Graphics.Metal
                 if (result == MetalResult.Ok)
                 {
                     _presenterHandle = presenter;
+                    Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] CreatePresenter 成功, presenter={presenter:X}, layer={_metalLayer:X}");
                     if (_presenterWidth > 0 && _presenterHeight > 0)
                     {
-                        MetalNative.PresenterResize(presenter, _presenterWidth, _presenterHeight);
+                        MetalResult resizeResult = MetalNative.PresenterResize(presenter, _presenterWidth, _presenterHeight);
+                        Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] PresenterResize({_presenterWidth}x{_presenterHeight}) -> {resizeResult}");
                     }
+                }
+                else
+                {
+                    Logger.Error?.PrintMsg(LogClass.Gpu, $"[DIAG] CreatePresenter 失败: {result}, layer={_metalLayer:X}");
                 }
             }
 
@@ -78,16 +86,144 @@ namespace Ryujinx.Graphics.Metal
             // Present 到 Metal 屏幕
             if (_presenterHandle != nint.Zero && texture is MetalTexture presentTexture)
             {
+                LogTextureDiagnosticIfNeeded(presentTexture);
+
                 if (_presenterWidth == 0 || _presenterHeight == 0)
                 {
                     _presenterWidth = (uint)presentTexture.Width;
                     _presenterHeight = (uint)presentTexture.Height;
-                    MetalNative.PresenterResize(_presenterHandle, _presenterWidth, _presenterHeight);
+                    MetalResult resizeResult = MetalNative.PresenterResize(_presenterHandle, _presenterWidth, _presenterHeight);
+                    Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] PresenterResize({_presenterWidth}x{_presenterHeight}) -> {resizeResult}");
                 }
-                MetalNative.PresenterPresentTexture(_presenterHandle, presentTexture.Handle);
+                MetalResult presentResult = MetalNative.PresenterPresentTexture(_presenterHandle, presentTexture.Handle);
+                if (presentResult != MetalResult.Ok)
+                {
+                    Logger.Error?.PrintMsg(
+                        LogClass.Gpu,
+                        $"[DIAG] PresenterPresentTexture 失败: {presentResult}, size={presentTexture.Width}x{presentTexture.Height}, format={presentTexture.Info.Format}");
+                }
             }
 
             swapBuffersCallback?.Invoke();
+        }
+
+        private void LogTextureDiagnosticIfNeeded(MetalTexture texture)
+        {
+            if (!_firstTextureDiagnostic)
+            {
+                return;
+            }
+
+            _firstTextureDiagnostic = false;
+
+            bool hasNonZero = false;
+            bool hasVisibleColor = false;
+            bool hasOpaquePixel = false;
+            int inspectedBytes = 0;
+            PinnedSpan<byte> rawData = texture.GetData(0, 0);
+
+            try
+            {
+                ReadOnlySpan<byte> data = rawData.Get();
+                inspectedBytes = Math.Min(data.Length, 4096);
+                bool isBgra = texture.Info.Format.IsBgr;
+                int bytesPerPixel = texture.Info.BytesPerPixel;
+
+                for (int i = 0; i < inspectedBytes; i++)
+                {
+                    if (data[i] != 0)
+                    {
+                        hasNonZero = true;
+                    }
+                }
+
+                if (bytesPerPixel >= 4)
+                {
+                    for (int i = 0; i + 3 < inspectedBytes; i += bytesPerPixel)
+                    {
+                        byte r = data[i + (isBgra ? 2 : 0)];
+                        byte g = data[i + 1];
+                        byte b = data[i + (isBgra ? 0 : 2)];
+                        byte a = data[i + 3];
+
+                        if ((r | g | b) != 0)
+                        {
+                            hasVisibleColor = true;
+                        }
+
+                        if (a != 0)
+                        {
+                            hasOpaquePixel = true;
+                        }
+
+                        if (hasVisibleColor && hasOpaquePixel)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                DumpTextureToPpm(texture, data);
+            }
+            finally
+            {
+                rawData.Dispose();
+            }
+
+            Logger.Info?.PrintMsg(
+                LogClass.Gpu,
+                $"[DIAG] PresentTexture 首帧: size={texture.Width}x{texture.Height}, format={texture.Info.Format}, bytesPerPixel={texture.Info.BytesPerPixel}, inspectBytes={inspectedBytes}, hasNonZero={hasNonZero}, hasVisibleColor={hasVisibleColor}, hasOpaquePixel={hasOpaquePixel}");
+        }
+
+        private void DumpTextureToPpm(MetalTexture texture, ReadOnlySpan<byte> data)
+        {
+            try
+            {
+                int width = texture.Width;
+                int height = texture.Height;
+                int bytesPerPixel = texture.Info.BytesPerPixel;
+
+                if (width <= 0 || height <= 0 || bytesPerPixel < 4)
+                {
+                    Logger.Warning?.PrintMsg(LogClass.Gpu, "[DIAG] 跳过首帧 PNG 导出：尺寸或像素格式不支持。");
+                    return;
+                }
+
+                int stride = texture.Info.GetMipStride(0);
+                int rowBytes = width * bytesPerPixel;
+                byte[] tightData = new byte[height * rowBytes];
+
+                for (int y = 0; y < height; y++)
+                {
+                    data.Slice(y * stride, rowBytes).CopyTo(tightData.AsSpan(y * rowBytes, rowBytes));
+                }
+
+                string path = Path.Combine(Path.GetTempPath(), "ryujinx_metal_first_present.ppm");
+                using FileStream stream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+                using StreamWriter writer = new(stream, leaveOpen: true);
+                writer.WriteLine("P6");
+                writer.WriteLine($"{width} {height}");
+                writer.WriteLine("255");
+                writer.Flush();
+
+                bool isBgra = texture.Info.Format.IsBgr;
+                byte[] rgbData = new byte[width * height * 3];
+
+                for (int src = 0, dst = 0; src + 3 < tightData.Length; src += bytesPerPixel, dst += 3)
+                {
+                    rgbData[dst + 0] = tightData[src + (isBgra ? 2 : 0)];
+                    rgbData[dst + 1] = tightData[src + 1];
+                    rgbData[dst + 2] = tightData[src + (isBgra ? 0 : 2)];
+                }
+
+                stream.Write(rgbData, 0, rgbData.Length);
+
+                Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] 已导出首帧源纹理 PPM: {path}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu, $"[DIAG] 导出首帧源纹理 PPM 失败: {ex.GetType().Name}: {ex.Message}");
+            }
         }
 
         private void CaptureFrame(MetalTexture texture, ImageCrop crop)

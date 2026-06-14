@@ -1,4 +1,5 @@
 using Ryujinx.Common.Memory;
+using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using System;
 using System.Collections.Generic;
@@ -248,6 +249,11 @@ namespace Ryujinx.Graphics.Metal
 
     internal sealed class MetalTexture : ITexture
     {
+        private static ulong _diagnosticCopyToCount;
+        private static ulong _diagnosticCopyRegionCount;
+        private static ulong _diagnosticCopyToBufferCount;
+        private static ulong _diagnosticDepthUploadSkipCount;
+
         private nint _handle;
         private readonly nint _deviceHandle;
         private readonly MetalTextureInfo _textureInfo;
@@ -263,6 +269,25 @@ namespace Ryujinx.Graphics.Metal
         public int Height => Info.Height;
 
         internal nint Handle => _handle;
+
+        private static bool ShouldSkipCpuTextureUpload(TextureCreateInfo info)
+        {
+            if (!info.Format.IsDepthOrStencil)
+            {
+                return false;
+            }
+
+            ulong count = ++_diagnosticDepthUploadSkipCount;
+
+            if (count <= 5 || (count % 100) == 0)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] 跳过 depth/stencil 纹理 CPU 上传，等待后续 Blit 路径: count={count}, format={info.Format}, size={info.Width}x{info.Height}, levels={info.Levels}");
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// 创建 Metal 原生纹理。格式通过 MetalFormatMapping 映射表转换为 MetalPixelFormat。
@@ -324,18 +349,62 @@ namespace Ryujinx.Graphics.Metal
 
         public void CopyTo(ITexture destination, int firstLayer, int firstLevel)
         {
+            ulong count = ++_diagnosticCopyToCount;
+
+            if (count <= 5 || (count % 100) == 0)
+            {
+                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
+                    ? format.ToString()
+                    : "Unknown";
+
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] Texture.CopyTo(layer/level) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, firstLayer={firstLayer}, firstLevel={firstLevel}, size={Info.Width}x{Info.Height}");
+            }
         }
 
         public void CopyTo(ITexture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel)
         {
+            ulong count = ++_diagnosticCopyToCount;
+
+            if (count <= 5 || (count % 100) == 0)
+            {
+                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
+                    ? format.ToString()
+                    : "Unknown";
+
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] Texture.CopyTo(single slice) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, srcLayer={srcLayer}, dstLayer={dstLayer}, srcLevel={srcLevel}, dstLevel={dstLevel}");
+            }
         }
 
         public void CopyTo(ITexture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter)
         {
+            ulong count = ++_diagnosticCopyRegionCount;
+
+            if (count <= 5 || (count % 100) == 0)
+            {
+                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
+                    ? format.ToString()
+                    : "Unknown";
+
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] Texture.CopyTo(region) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, src=({srcRegion.X1},{srcRegion.Y1})-({srcRegion.X2},{srcRegion.Y2}), dst=({dstRegion.X1},{dstRegion.Y1})-({dstRegion.X2},{dstRegion.Y2}), linear={linearFilter}");
+            }
         }
 
         public void CopyTo(BufferRange range, int layer, int level, int stride)
         {
+            ulong count = ++_diagnosticCopyToBufferCount;
+
+            if (count <= 5 || (count % 100) == 0)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] Texture.CopyTo(buffer) 仍为 stub: count={count}, format={Info.Format}, layer={layer}, level={level}, stride={stride}, size={range.Size}");
+            }
         }
 
         // ── CreateView: 通过 newTextureView 共享父纹理的底层存储 ──
@@ -367,6 +436,10 @@ namespace Ryujinx.Graphics.Metal
 
             if (result != MetalResult.Ok)
             {
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] CreateTextureView 失败，回退为独立纹理: result={result}, format={info.Format}, target={info.Target}, size={info.Width}x{info.Height}, firstLayer={firstLayer}, firstLevel={firstLevel}, layers={numLayers}, levels={numLevels}");
+
                 // 回退：创建全新的纹理（不支持 view 的格式/类型组合时）
                 return new MetalTexture(_deviceHandle, info, _storageMode);
             }
@@ -412,10 +485,10 @@ namespace Ryujinx.Graphics.Metal
                 Info = info;
             }
 
-            public void CopyTo(ITexture destination, int firstLayer, int firstLevel) { }
-            public void CopyTo(ITexture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel) { }
-            public void CopyTo(ITexture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter) { }
-            public void CopyTo(BufferRange range, int layer, int level, int stride) { }
+            public void CopyTo(ITexture destination, int firstLayer, int firstLevel) => _parent.CopyTo(destination, firstLayer, firstLevel);
+            public void CopyTo(ITexture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel) => _parent.CopyTo(destination, srcLayer, dstLayer, srcLevel, dstLevel);
+            public void CopyTo(ITexture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter) => _parent.CopyTo(destination, srcRegion, dstRegion, linearFilter);
+            public void CopyTo(BufferRange range, int layer, int level, int stride) => _parent.CopyTo(range, layer, level, stride);
 
             public ITexture CreateView(TextureCreateInfo info, int firstLayer, int firstLevel)
             {
@@ -501,6 +574,11 @@ namespace Ryujinx.Graphics.Metal
 
                 try
                 {
+                    if (ShouldSkipCpuTextureUpload(Info))
+                    {
+                        return;
+                    }
+
                     int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                     int safeLayer = Math.Clamp(layer, 0, Math.Max(Info.GetDepthOrLayers() - 1, 0));
 
@@ -558,6 +636,11 @@ namespace Ryujinx.Graphics.Metal
 
                 try
                 {
+                    if (ShouldSkipCpuTextureUpload(Info))
+                    {
+                        return;
+                    }
+
                     int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                     int safeLayer = Math.Clamp(layer, 0, Math.Max(Info.GetDepthOrLayers() - 1, 0));
 
@@ -725,6 +808,22 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
+        internal static bool TryGetMetalFormat(ITexture texture, out MetalPixelFormat format)
+        {
+            switch (texture)
+            {
+                case MetalTexture metalTexture:
+                    format = metalTexture.Info.Format.ToMetalFormat();
+                    return format != MetalPixelFormat.Invalid;
+                case MetalTextureViewProxy textureView:
+                    format = textureView.Info.Format.ToMetalFormat();
+                    return format != MetalPixelFormat.Invalid;
+                default:
+                    format = MetalPixelFormat.Invalid;
+                    return false;
+            }
+        }
+
         // ── SetData: pin → CreateBufferWithBytes → TextureUpload → release temp buf ──
 
         public void SetData(MemoryOwner<byte> data)
@@ -742,6 +841,11 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
+                if (ShouldSkipCpuTextureUpload(Info))
+                {
+                    return;
+                }
+
                 int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                 int safeLayer = Math.Clamp(layer, 0, Math.Max((int)_textureInfo.Depth - 1, 0));
                 int levelWidth = Math.Max(1, Info.Width >> safeLevel);
@@ -806,6 +910,11 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
+                if (ShouldSkipCpuTextureUpload(Info))
+                {
+                    return;
+                }
+
                 int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                 int safeLayer = Math.Clamp(layer, 0, Math.Max((int)_textureInfo.Depth - 1, 0));
                 int levelHeight = Math.Max(1, Info.Height >> safeLevel);

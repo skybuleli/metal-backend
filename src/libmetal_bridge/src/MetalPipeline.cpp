@@ -254,8 +254,10 @@ metal_result metal_create_render_pipeline(
             const metal_blend_attachment_descriptor& blend = descriptor->blend_attachments[i];
             MTL::RenderPipelineColorAttachmentDescriptor* colorAtt = rpDesc->colorAttachments()->object(i);
 
-            // 设置像素格式（与 colorAttachment(0) 一致）
-            colorAtt->setPixelFormat(colorFormat);
+            // 当前 ABI 仅显式携带 color attachment 0 的像素格式。
+            // 对于未绑定的 1..7 号附件，必须保持 Invalid，
+            // 否则 Metal Validation 会在 render pass 未绑定对应纹理时报错。
+            colorAtt->setPixelFormat(i == 0 ? colorFormat : MTL::PixelFormatInvalid);
             colorAtt->setBlendingEnabled(blend.blending_enabled != 0);
 
             if (blend.blending_enabled)

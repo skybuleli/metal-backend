@@ -25,6 +25,7 @@ namespace Ryujinx.Graphics.Metal
 
         // 诊断计数器
         private ulong _diagnosticDrawCount;
+        private ulong _diagnosticDrawTextureCount;
         private long _diagnosticLastLogTicks;
         private static readonly long DiagnosticLogIntervalTicks = Stopwatch.Frequency * 5; // 5秒
 
@@ -58,6 +59,8 @@ namespace Ryujinx.Graphics.Metal
         private int _vertexAttribCount;
         private int _vertexBufferCount;
         private readonly nint _zeroVertexBufferHandle;
+        private MetalPixelFormat _pipelineColorFormat;
+        private MetalPixelFormat _pipelineDepthStencilFormat;
 
         /// <summary>
         /// 当前活动的渲染管线句柄（由 metal_create_render_pipeline 返回）
@@ -91,6 +94,8 @@ namespace Ryujinx.Graphics.Metal
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
             _zeroVertexBufferHandle = CreateZeroVertexBuffer();
+            _pipelineColorFormat = MetalPixelFormat.BGRA8Unorm;
+            _pipelineDepthStencilFormat = MetalPixelFormat.Invalid;
         }
 
         public void Barrier()
@@ -230,6 +235,18 @@ namespace Ryujinx.Graphics.Metal
 
         public void DrawTexture(ITexture texture, ISampler sampler, Extents2DF srcRegion, Extents2DF dstRegion)
         {
+            _diagnosticDrawTextureCount++;
+
+            if (_diagnosticDrawTextureCount <= 5 || (_diagnosticDrawTextureCount % 100) == 0)
+            {
+                string textureFormat = texture != null && MetalTexture.TryGetMetalFormat(texture, out MetalPixelFormat format)
+                    ? format.ToString()
+                    : "Unknown";
+
+                Logger.Warning?.PrintMsg(
+                    LogClass.Gpu,
+                    $"[DIAG] DrawTexture 仍为 stub: count={_diagnosticDrawTextureCount}, textureFormat={textureFormat}, src=({srcRegion.X1:F1},{srcRegion.Y1:F1})-({srcRegion.X2:F1},{srcRegion.Y2:F1}), dst=({dstRegion.X1:F1},{dstRegion.Y1:F1})-({dstRegion.X2:F1},{dstRegion.Y2:F1})");
+            }
         }
 
         public void EndHostConditionalRendering()
@@ -514,8 +531,8 @@ namespace Ryujinx.Graphics.Metal
                         : 0UL,
                     VertexFunction = "main",
                     FragmentFunction = "main",
-                    ColorAttachmentFormat = MetalPixelFormat.BGRA8Unorm,
-                    DepthStencilFormat = MetalPixelFormat.Invalid,
+                    ColorAttachmentFormat = _pipelineColorFormat,
+                    DepthStencilFormat = _pipelineDepthStencilFormat,
                     VertexAttributeCount = 0,
                     VertexBufferLayoutCount = 0,
                     VertexAttributes = new MetalVertexAttributeDescriptor[MaxVertexAttributes],
@@ -587,7 +604,22 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetRenderTargets(Span<ITexture> colors, ITexture depthStencil)
         {
-            _renderTargets.Set(colors, depthStencil);
+            bool formatsChanged = _renderTargets.Set(colors, depthStencil, out MetalPixelFormat colorFormat, out MetalPixelFormat depthStencilFormat);
+
+            if (formatsChanged)
+            {
+                _pipelineColorFormat = colorFormat;
+                _pipelineDepthStencilFormat = depthStencilFormat;
+
+                if (_program is MetalProgram metalProgram)
+                {
+                    Logger.Info?.PrintMsg(
+                        LogClass.Gpu,
+                        $"[DIAG] RenderTarget 格式变化，重建 Pipeline: color={_pipelineColorFormat}, depth={_pipelineDepthStencilFormat}");
+                    ReleasePipeline();
+                    CreatePipelineFromProgram(metalProgram);
+                }
+            }
         }
 
         public void SetScissors(ReadOnlySpan<Rectangle<int>> regions)
@@ -936,20 +968,17 @@ namespace Ryujinx.Graphics.Metal
 
                 result = MetalNative.CommitCommandBuffer(commandBuffer);
                 ThrowIfFailed(result, nameof(MetalNative.CommitCommandBuffer));
-
-                // 不等待 GPU 完成——异步处理，同步由 Syncpoint 机制在帧边界保证。
-                // MetalNative.WaitCommandBuffer(commandBuffer);
             }
             finally
             {
-                if (commandBuffer != nint.Zero)
-                {
-                    MetalNative.Release(commandBuffer);
-                }
                 if (renderEncoder != nint.Zero)
                 {
                     MetalNative.EndRenderEncoding(renderEncoder);
                     MetalNative.Release(renderEncoder);
+                }
+                if (commandBuffer != nint.Zero)
+                {
+                    MetalNative.Release(commandBuffer);
                 }
             }
         }
@@ -1741,6 +1770,8 @@ namespace Ryujinx.Graphics.Metal
             private readonly nint[] _colorHandles;
             private int _colorCount;
             private nint _depthStencilHandle;
+            private MetalPixelFormat _colorFormat;
+            private MetalPixelFormat _depthStencilFormat;
 
             // P4.3.8：挂起的清除参数
             private readonly PendingColorClear[] _pendingColorClears;
@@ -1755,6 +1786,8 @@ namespace Ryujinx.Graphics.Metal
                 _colorHandles = new nint[MaxColorAttachments];
                 _colorCount = 0;
                 _depthStencilHandle = nint.Zero;
+                _colorFormat = MetalPixelFormat.BGRA8Unorm;
+                _depthStencilFormat = MetalPixelFormat.Invalid;
                 _pendingColorClears = new PendingColorClear[MaxColorAttachments];
                 _pendingDepthClear = default;
             }
@@ -1811,10 +1844,16 @@ namespace Ryujinx.Graphics.Metal
             /// 从 GAL 接口更新渲染目标状态。
             /// 提取 ITexture 中的原生 Metal 纹理句柄以供后续 P/Invoke 使用。
             /// </summary>
-            public void Set(Span<ITexture> colors, ITexture depthStencil)
+            public bool Set(
+                Span<ITexture> colors,
+                ITexture depthStencil,
+                out MetalPixelFormat colorFormat,
+                out MetalPixelFormat depthStencilFormat)
             {
                 int count = Math.Min(colors.Length, MaxColorAttachments);
                 int validCount = 0;
+                MetalPixelFormat newColorFormat = MetalPixelFormat.BGRA8Unorm;
+                MetalPixelFormat newDepthStencilFormat = MetalPixelFormat.Invalid;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -1823,6 +1862,12 @@ namespace Ryujinx.Graphics.Metal
                     {
                         _colorHandles[i] = handle;
                         validCount++;
+
+                        if (newColorFormat == MetalPixelFormat.BGRA8Unorm &&
+                            MetalTexture.TryGetMetalFormat(texture, out MetalPixelFormat format))
+                        {
+                            newColorFormat = format;
+                        }
                     }
                     else
                     {
@@ -1842,11 +1887,23 @@ namespace Ryujinx.Graphics.Metal
                 if (depthStencil != null && MetalTexture.TryGetNativeHandle(depthStencil, out nint dsHandle))
                 {
                     _depthStencilHandle = dsHandle;
+
+                    if (MetalTexture.TryGetMetalFormat(depthStencil, out MetalPixelFormat format))
+                    {
+                        newDepthStencilFormat = format;
+                    }
                 }
                 else
                 {
                     _depthStencilHandle = nint.Zero;
                 }
+
+                bool formatsChanged = _colorFormat != newColorFormat || _depthStencilFormat != newDepthStencilFormat;
+                _colorFormat = newColorFormat;
+                _depthStencilFormat = newDepthStencilFormat;
+                colorFormat = _colorFormat;
+                depthStencilFormat = _depthStencilFormat;
+                return formatsChanged;
             }
 
             /// <summary>

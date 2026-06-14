@@ -203,7 +203,7 @@ metal_result metal_presenter_present_texture(
     if (presenter->drawable_width != texture->width ||
         presenter->drawable_height != texture->height)
     {
-        return METAL_RESULT_INVALID_ARGUMENT;
+        configure_layer(presenter, texture->width, texture->height);
     }
 
     NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
