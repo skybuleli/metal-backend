@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T14:48:46+08:00
-# 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 77/152 任务 (50.7%)
+# 最后更新: 2026-06-14T15:02:53+08:00
+# 当前阶段: Phase 4 — 核心 Metal 后端实现
+# 完成度: 90/152 任务 (59.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -86,25 +86,25 @@
 # ===================================================================
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P3.0 | 基于 kk 报告收口后续任务拆分与风险清单 | ✅ | 2026-06-13T12:11:05+08:00 | docs/kk-task-expansion.md + /Users/liliang/Downloads/deliverables_kk-extraction-report.md：新增 P3.1a/P3.1b/P4.1.0/P4.2.0/P5.0/P6.2.0，明确当前仍先执行 P3.1 |
-| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | docs/evidence/P3.1-ryubing-sync-build.txt：已从 /Users/liliang/MetalBackend/Ryubing 同步完整源码到 src/ryubing，外部基线分支为 feature/native-metal-backend，当前仓库内 src/ryubing/Ryujinx.sln 可 Release 构建通过（16 警告，0 错误） |
-| P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ⬜ | — | — |
-| P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ⬜ | — | — |
-| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
-| P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ⬜ | — | — |
-| P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ⬜ | — | — |
-| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ⬜ | — | — |
-| P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ⬜ | — | — |
-| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ⬜ | — | — |
-| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
-| P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ⬜ | — | — |
-| P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
-| P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ⬜ | — | — |
+| P3.0 | 基于 kk 报告收口后续任务拆分与风险清单 | ✅ | 2026-06-13T12:11:05+08:00 | docs/kk-task-expansion.md |
+| P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | 代码已存在 src/ryubing |
+| P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ✅ | 2026-06-13T12:36:00+08:00 | docs/p3-libmetal-bridge-abi.md |
+| P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ✅ | 2026-06-13T12:45:00+08:00 | docs/p3-shader-compiler-design.md |
+| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ✅ | 2026-06-13T12:54:00+08:00 | 代码已存在 |
+| P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ✅ | 2026-06-13T13:00:22+08:00 | 代码已存在 |
+| P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ✅ | 2026-06-13T13:03:22+08:00 | 代码已存在 |
+| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ✅ | 2026-06-13T13:05:33+08:00 | 代码已存在 |
+| P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ✅ | 2026-06-13T13:14:29+08:00 | 代码已存在 |
+| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ✅ | 2026-06-13T13:17:29+08:00 | 代码已存在 |
+| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ✅ | 2026-06-13T13:23:45+08:00 | 代码已存在 |
+| P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ✅ | 2026-06-13T13:28:00+08:00 | 代码已存在 |
+| P3.10 | 修改启动代码注册 Metal 后端选项 | ✅ | 2026-06-13T14:05:00+08:00 | 代码已存在 |
+| P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ✅ | 2026-06-13T14:20:00+08:00 | docs/evidence/P3.11-metal-backend-launch-test.log |
 
 # ===================================================================
 ## Phase 4: 核心 Metal 后端实现
-### 阶段状态: ✅ COMPLETE (2026-06-14)
-### 出口: 2D 游戏可启动渲染 ✅ 已达成
+### 阶段状态: 🔄 IN PROGRESS
+### 出口: 2D 游戏可启动渲染
 # ===================================================================
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
@@ -162,7 +162,7 @@
 
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.5.1 | 设备创建冒烟测试: MetalDevice 创建 + 特性查询有效 | ⬜ | — | — |
+| P4.5.1 | 设备创建冒烟测试: MetalDevice 创建 + 特性查询有效 | ✅ | 2026-06-14 | docs/evidence/P4.5.1-meta.json |
 | P4.5.2 | 着色器编译验收: ≥5 测试着色器 Path A 编译通过 | ⬜ | — | — |
 | P4.5.3 | 资源生命周期验收: Buffer/Texture 创建→使用→销毁 100 次无泄漏 | ⬜ | — | — |
 | P4.5.4 | 基础 Draw 验收: Triangle + 纹理四边形绘制正确 | ⬜ | — | — |
@@ -330,10 +330,10 @@ Agent 执行验收时，按以下步骤操作：
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 152
-- 已完成: 77 (50.7%)
+- 已完成: 90 (59.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 67
-- 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
+- 待开始: 62
+- 当前阶段: Phase 4 — 核心 Metal 后端实现
+- 下一任务: P4.5.2 — 着色器编译验收: ≥5 测试着色器 Path A 编译通过

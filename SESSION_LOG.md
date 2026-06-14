@@ -276,3 +276,19 @@
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（0 错误，仅既有 CA1416 警告）
   - `ctest --test-dir src/libmetal_bridge/build --output-on-failure` ✅（7/8 通过，test_heap 失败为既有问题）
 - **状态摘要**: P4 进度 88/144 (61.1%)，下一任务 P4.4.6 RunLoop: 主渲染循环
+
+---
+
+### 2026-06-14 14:45 — P4.4.6 RunLoop: 主渲染循环
+- **结果**: ✅ RunLoop 显式重写 + Presenter 延迟创建 + Present 路径集成到 CAMetalLayer drawable
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalWindow.cs`：构造函数接收 `_deviceHandle`；添加 `SetLayer(nint)` 设置 `CAMetalLayer`；`Present()` 延迟创建 Presenter → 截屏 → `PresenterPresentTexture` → `swapBuffersCallback`；`SetSize()` 转发到 `PresenterResize`；`Dispose()` 释放 presenter handle
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`：`MetalWindow` 构造传入 `_device.Handle`；`SetLayer(nint)` 委托给 `_window`；`RunLoop(ThreadStart)` 显式重写
+- **设计**: Presenter 延迟初始化（需 CAMetalLayer 就绪后首次 Present 创建），保证分层解耦。RunLoop 重写使 Metal 渲染循环入口明确。SetLayer/SetSize/Dispose 完整生命周期管理
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build -j 4` ✅
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（0 错误，仅既有 CA1416 警告）
+  - `ctest --test-dir src/libmetal_bridge/build --output-on-failure` ✅（7/8 通过，test_heap 失败为既有问题）
+- **状态摘要**: P4 进度 90/144 (62.5%)，下一任务 P5.0 搭建 Maxwell/GAL→Metal 状态映射表骨架
+
+⚠️ 注意：P4.4 同步与呈现子阶段现已全部完成（6/6）。下一阶段 P5 涉及命令映射与状态跟踪。

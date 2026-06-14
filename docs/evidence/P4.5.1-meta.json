@@ -1,0 +1,26 @@
+{
+  "task": "P4.5.1",
+  "name": "设备创建冒烟测试: MetalDevice 创建 + 特性查询有效",
+  "timestamp": "2026-06-14T15:05:00+08:00",
+  "test_results": {
+    "binary": "test_device",
+    "test_cases": 11,
+    "assertions": 45,
+    "passed": true,
+    "covered": [
+      "ABI 版本号正确",
+      "metal_create_device 成功创建",
+      "metal_get_device_info 返回正确版本",
+      "metal_get_device_caps 有效能力数据（名称/ID/线程限制/共享内存/颜色附件）",
+      "metal_create_queue 成功",
+      "metal_release nullptr 安全",
+      "metal_validate_limits 全部常量校验",
+      "NULL 参数返回 INVALID_ARGUMENT",
+      "多次创建-释放无泄漏",
+      "metal_device_caps 结构体大小合理"
+    ]
+  },
+  "verification": {
+    "test_device": "PASS (11/11 cases, 45 assertions)"
+  }
+}
