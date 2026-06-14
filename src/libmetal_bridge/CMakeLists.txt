@@ -241,4 +241,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_presenter COMMAND test_presenter)
+
+    add_executable(test_lifecycle_100
+        tests/test_lifecycle_100.cpp
+    )
+    target_link_libraries(test_lifecycle_100 PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_lifecycle_100 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_lifecycle_100 COMMAND test_lifecycle_100)
 endif()

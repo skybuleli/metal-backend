@@ -1,0 +1,25 @@
+{
+  "task": "P4.5.3",
+  "name": "资源生命周期验收: Buffer/Texture 创建→使用→销毁 100 次无泄漏",
+  "timestamp": "2026-06-14T15:10:00+08:00",
+  "test_results": {
+    "binary": "test_lifecycle_100",
+    "test_cases": 5,
+    "assertions": 2110,
+    "passed": true,
+    "coverage": [
+      "Buffer 创建→map(写1B)→释放 100 次",
+      "Buffer 创建→get_info→释放 100 次",
+      "Texture(RGBA8) 创建→get_info→释放 100 次",
+      "Texture 7 种格式循环创建 100 次",
+      "Buffer+Texture 混合创建释放 100 次"
+    ],
+    "total_create_use_destroy_cycles": 500,
+    "requirement": "≥100 次无泄漏",
+    "status": "PASS"
+  },
+  "verification": {
+    "test_lifecycle_100": "PASS (5/5 cases, 2110 assertions)"
+  },
+  "new_file": "src/libmetal_bridge/tests/test_lifecycle_100.cpp"
+}
