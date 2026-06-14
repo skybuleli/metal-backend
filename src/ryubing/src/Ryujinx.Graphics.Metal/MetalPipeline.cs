@@ -1,7 +1,11 @@
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader;
 using System;
+using Ryujinx.Common.Logging;
+
 using System.Runtime.InteropServices;
+
+using System.Diagnostics;
 
 namespace Ryujinx.Graphics.Metal
 {
@@ -18,6 +22,11 @@ namespace Ryujinx.Graphics.Metal
         private const int ZeroVertexBufferIndex = ReservedVertexBufferSlots;
         private const int FirstUserVertexBufferIndex = ZeroVertexBufferIndex + 1;
         private const uint DefaultVertexStride = 16;
+
+        // 诊断计数器
+        private ulong _diagnosticDrawCount;
+        private long _diagnosticLastLogTicks;
+        private static readonly long DiagnosticLogIntervalTicks = Stopwatch.Frequency * 5; // 5秒
 
         private IProgram _program;
         private nint _pipelineHandle;
@@ -137,6 +146,9 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
+            _diagnosticDrawCount++;
+            LogDiagnosticIfNeeded();
+
             ExecuteRenderDraw(renderEncoder =>
             {
                 MetalResult result = MetalNative.RenderEncoderDrawPrimitives(
@@ -180,6 +192,9 @@ namespace Ryujinx.Graphics.Metal
             {
                 return;
             }
+
+            _diagnosticDrawCount++;
+            LogDiagnosticIfNeeded();
 
             ExecuteRenderDraw(renderEncoder =>
             {
@@ -850,6 +865,17 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
+        private void LogDiagnosticIfNeeded()
+        {
+            long now = Stopwatch.GetTimestamp();
+            if (now - _diagnosticLastLogTicks >= DiagnosticLogIntervalTicks)
+            {
+                _diagnosticLastLogTicks = now;
+                double seconds = (double)now / Stopwatch.Frequency;
+                Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] Draw 总数: {_diagnosticDrawCount}, 运行时间: {seconds:F1}s");
+            }
+        }
+
         private void ExecuteRenderDraw(Action<nint> drawAction)
         {
             if (_pipelineHandle == nint.Zero || _queueHandle == nint.Zero || drawAction == null)
@@ -870,7 +896,6 @@ namespace Ryujinx.Graphics.Metal
             {
                 if (_renderTargets.HasTargets)
                 {
-                    // 使用真实的渲染目标创建 render encoding
                     MetalColorAttachmentDescriptor[] colorDescs = _renderTargets.BuildColorDescriptors();
                     uint colorCount = (uint)_renderTargets.ColorCount;
 
@@ -892,7 +917,6 @@ namespace Ryujinx.Graphics.Metal
                 }
                 else
                 {
-                    // 无渲染目标时使用内部临时 1x1 附件（P4.3.6 回退路径）
                     result = MetalNative.BeginRenderEncoding(
                         commandBuffer, _pipelineHandle, out renderEncoder);
                 }
@@ -903,10 +927,7 @@ namespace Ryujinx.Graphics.Metal
                     return;
                 }
 
-                // 渲染通道开始后立即清除挂起的清除请求
-                // （清除参数已合并到描述符的 loadAction=Clear 中）
                 _renderTargets.ClearPending();
-
                 BindRenderResources(renderEncoder);
                 drawAction(renderEncoder);
 
@@ -916,17 +937,20 @@ namespace Ryujinx.Graphics.Metal
                 result = MetalNative.CommitCommandBuffer(commandBuffer);
                 ThrowIfFailed(result, nameof(MetalNative.CommitCommandBuffer));
 
-                result = MetalNative.WaitCommandBuffer(commandBuffer);
-                ThrowIfFailed(result, nameof(MetalNative.WaitCommandBuffer));
+                // 不等待 GPU 完成——异步处理，同步由 Syncpoint 机制在帧边界保证。
+                // MetalNative.WaitCommandBuffer(commandBuffer);
             }
             finally
             {
+                if (commandBuffer != nint.Zero)
+                {
+                    MetalNative.Release(commandBuffer);
+                }
                 if (renderEncoder != nint.Zero)
                 {
+                    MetalNative.EndRenderEncoding(renderEncoder);
                     MetalNative.Release(renderEncoder);
                 }
-
-                MetalNative.Release(commandBuffer);
             }
         }
 

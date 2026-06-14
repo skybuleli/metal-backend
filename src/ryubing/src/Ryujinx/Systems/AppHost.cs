@@ -1000,12 +1000,23 @@ namespace Ryujinx.Ava.Systems
                 nint metalLayer = RendererHost.EmbeddedWindow.MetalLayerHandle;
                 if (metalLayer == nint.Zero)
                 {
-                    Logger.Warning?.Print(LogClass.Application, "Metal 图层尚未就绪，后续渲染可能无法呈现。");
+                    Logger.Warning?.Print(LogClass.Application, "Metal 图层尚未就绪，延迟到窗口创建后绑定。");
+                    RendererHost.WindowCreated += (_, _) =>
+                    {
+                        nint updatedLayer = RendererHost.EmbeddedWindow.MetalLayerHandle;
+                        if (updatedLayer != nint.Zero)
+                        {
+                            metalRenderer.SetLayer(updatedLayer);
+                            Logger.Info?.Print(LogClass.Application, "Metal 图层延迟绑定完成。");
+                        }
+                    };
                 }
-
-                Logger.Info?.Print(LogClass.Application, "正在把 Metal 图层传给渲染器。");
-                metalRenderer.SetLayer(metalLayer);
-                Logger.Info?.Print(LogClass.Application, "Metal 图层绑定完成。");
+                else
+                {
+                    Logger.Info?.Print(LogClass.Application, "正在把 Metal 图层传给渲染器。");
+                    metalRenderer.SetLayer(metalLayer);
+                    Logger.Info?.Print(LogClass.Application, "Metal 图层绑定完成。");
+                }
             }
 
             // Initialize Configuration.
@@ -1148,6 +1159,7 @@ namespace Ryujinx.Ava.Systems
 
             _chrono.Start();
 
+
             Device.Gpu.Renderer.RunLoop(() =>
             {
                 try
@@ -1169,6 +1181,7 @@ namespace Ryujinx.Ava.Systems
                             Device.ProcessFrame();
                             Device.Statistics.RecordFifoEnd();
                         }
+
 
                         while (Device.ConsumeFrameAvailable())
                         {

@@ -228,6 +228,7 @@ metal_result metal_begin_render_encoding(
     handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
     handle->owner = command_buffer;
     handle->encoder = encoder;
+    handle->encoder->retain();
     handle->encoding_ended = false;
     handle->color_targets[0] = color_target;
     handle->color_target_count = 1;
@@ -439,6 +440,7 @@ metal_result metal_begin_render_encoding_with_targets(
     handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
     handle->owner = command_buffer;
     handle->encoder = encoder;
+    handle->encoder->retain();
     handle->encoding_ended = false;
     handle->color_target_count = color_attachment_count;
 
@@ -597,8 +599,11 @@ metal_result metal_end_render_encoding(
         return METAL_RESULT_INVALID_ARGUMENT;
     }
 
-    encoder->encoder->endEncoding();
-    encoder->encoding_ended = true;
+    if (!encoder->encoding_ended)
+    {
+        encoder->encoder->endEncoding();
+        encoder->encoding_ended = true;
+    }
     return METAL_RESULT_OK;
 }
 

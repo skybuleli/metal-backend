@@ -2,6 +2,8 @@ using Ryujinx.Common.Configuration;
 using Ryujinx.Graphics.GAL;
 using System;
 using System.Runtime.InteropServices;
+using Ryujinx.Common.Logging;
+
 
 namespace Ryujinx.Graphics.Metal
 {
@@ -12,6 +14,7 @@ namespace Ryujinx.Graphics.Metal
 
         private readonly nint _deviceHandle;
         private nint _metalLayer;
+        private bool _firstPresent = true;
         private nint _presenterHandle;
         private uint _presenterWidth;
         private uint _presenterHeight;
@@ -44,6 +47,13 @@ namespace Ryujinx.Graphics.Metal
 
         public void Present(ITexture texture, ImageCrop crop, Action swapBuffersCallback)
         {
+            // 仅首次 Present 时记录
+            if (_firstPresent)
+            {
+                _firstPresent = false;
+                Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] 首次 Present, layer={_metalLayer:X}, presenter={_presenterHandle:X}");
+            }
+
             // 延迟创建 Presenter：需要 CAMetalLayer 就绪
             if (_presenterHandle == nint.Zero && _deviceHandle != nint.Zero && _metalLayer != nint.Zero)
             {
