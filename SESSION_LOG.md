@@ -150,3 +150,23 @@
   - `metal_compare_function` 复用采样器模块已有枚举
   - `setStencilReferenceValues` 同时设置正反面模板引用值
 - **状态摘要**: P4 进度 81/144 (56.3%)，下一任务 P4.3.11 SetScissors/SetViewports
+
+---
+
+### 2026-06-14 12:30 — P4.3.11 SetScissors/SetViewports: 视口+裁剪
+- **Agent**: Qoder
+- **结果**: ✅ 实现视口和裁剪矩形设置，支持多视口/多裁剪，包含 Vulkan→Metal Y 轴坐标翻转
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `metal_viewport` + `metal_scissor_rect` 描述符 + `metal_render_encoder_set_viewports` / `metal_render_encoder_set_scissor_rects` 函数声明
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`：实现单个 + 多个视口/裁剪矩形设置，修正 metal-cpp 参数顺序 `(data, count)`
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：新增 `MetalViewport` / `MetalScissorRect` 结构体 + 2 个 P/Invoke
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：`MaxViewports=16` + `_viewports`/`_scissorRects` 缓存 + `SetScissors`/`SetViewports` 实现 + `BindRenderResources` 中 fixed 指针绑定
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build` ✅（0 警告，0 错误）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（115 个 CA1416 警告，0 错误）
+- **说明**:
+  - Vulkan 视口 Y 轴向下、Metal Y 轴向上，通过 `originY = |height| - regionY - height` 翻转坐标
+  - ViewportSwizzle 当前忽略（Metal 无原生等价，需通过顶点着色器修改）
+  - metal-cpp `setViewports`/`setScissorRects` 参数顺序为 `(data, count)`
+  - 支持最多 16 个视口/裁剪矩形
+- **状态摘要**: P4 进度 82/144 (56.9%)，下一任务 P4.3.12 SetFaceCulling/SetFrontFace/SetPolygonMode

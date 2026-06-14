@@ -13,6 +13,7 @@ namespace Ryujinx.Graphics.Metal
         private const int MaxStorageBufferBindings = 31;
         private const int MaxTextureBindings = 32;
         private const int MaxShaderStages = 3;
+        private const int MaxViewports = 16;
 
         private IProgram _program;
         private nint _pipelineHandle;
@@ -31,6 +32,10 @@ namespace Ryujinx.Graphics.Metal
         private DepthTestDescriptor _depthTest;
         private StencilTestDescriptor _stencilTest;
         private bool _depthStencilDirty;
+        private readonly MetalViewport[] _viewports;
+        private int _viewportCount;
+        private readonly MetalScissorRect[] _scissorRects;
+        private int _scissorCount;
         private PrimitiveTopology _primitiveTopology;
         private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
@@ -57,6 +62,10 @@ namespace Ryujinx.Graphics.Metal
             _blendAttachmentCount = 0;
             _depthStencilStateHandle = nint.Zero;
             _depthStencilDirty = false;
+            _viewports = new MetalViewport[MaxViewports];
+            _viewportCount = 0;
+            _scissorRects = new MetalScissorRect[MaxViewports];
+            _scissorCount = 0;
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
         }
@@ -517,6 +526,19 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetScissors(ReadOnlySpan<Rectangle<int>> regions)
         {
+            int count = Math.Min(MaxViewports, regions.Length);
+            for (int i = 0; i < count; i++)
+            {
+                Rectangle<int> r = regions[i];
+                _scissorRects[i] = new MetalScissorRect
+                {
+                    X = (uint)Math.Max(0, r.X),
+                    Y = (uint)Math.Max(0, r.Y),
+                    Width = (uint)Math.Max(0, r.Width),
+                    Height = (uint)Math.Max(0, r.Height),
+                };
+            }
+            _scissorCount = count;
         }
 
         public void SetStencilTest(StencilTestDescriptor stencilTest)
@@ -726,6 +748,28 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetViewports(ReadOnlySpan<Viewport> viewports)
         {
+            int count = Math.Min(MaxViewports, viewports.Length);
+            for (int i = 0; i < count; i++)
+            {
+                Viewport vp = viewports[i];
+                float width = vp.Region.Width == 0f ? 1f : vp.Region.Width;
+                float height = vp.Region.Height == 0f ? 1f : vp.Region.Height;
+
+                // Vulkan 视口 Y 轴向下，Metal Y 轴向上；通过翻转 originY 进行坐标转换
+                // originY = |height| - region.Y - region.Height
+                double originY = Math.Abs(height) - vp.Region.Y - height;
+
+                _viewports[i] = new MetalViewport
+                {
+                    OriginX = vp.Region.X,
+                    OriginY = originY,
+                    Width = width,
+                    Height = Math.Abs(height),
+                    ZNear = Math.Clamp(vp.DepthNear, 0f, 1f),
+                    ZFar = Math.Clamp(vp.DepthFar, 0f, 1f),
+                };
+            }
+            _viewportCount = count;
         }
 
         public void TextureBarrier()
@@ -868,6 +912,34 @@ namespace Ryujinx.Graphics.Metal
                     handle,
                     offset);
                 ThrowIfFailed(result, nameof(MetalNative.RenderEncoderSetVertexBuffer));
+            }
+
+            // 设置视口（P4.3.11）
+            if (_viewportCount > 0)
+            {
+                unsafe
+                {
+                    fixed (MetalViewport* vpPtr = _viewports)
+                    {
+                        MetalResult vpResult = MetalNative.RenderEncoderSetViewports(
+                            renderEncoder, (nint)vpPtr, (uint)_viewportCount);
+                        ThrowIfFailed(vpResult, nameof(MetalNative.RenderEncoderSetViewports));
+                    }
+                }
+            }
+
+            // 设置裁剪矩形（P4.3.11）
+            if (_scissorCount > 0)
+            {
+                unsafe
+                {
+                    fixed (MetalScissorRect* srPtr = _scissorRects)
+                    {
+                        MetalResult srResult = MetalNative.RenderEncoderSetScissorRects(
+                            renderEncoder, (nint)srPtr, (uint)_scissorCount);
+                        ThrowIfFailed(srResult, nameof(MetalNative.RenderEncoderSetScissorRects));
+                    }
+                }
             }
 
             for (int binding = 0; binding < MaxUniformBufferBindings; binding++)

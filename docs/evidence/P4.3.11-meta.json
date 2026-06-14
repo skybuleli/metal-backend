@@ -1,0 +1,35 @@
+{
+  "task": "P4.3.11",
+  "title": "SetScissors/SetViewports: 视口+裁剪",
+  "status": "done",
+  "timestamp": "2026-06-14T12:30:00+08:00",
+  "changes": [
+    {
+      "file": "src/libmetal_bridge/include/metal_bridge.h",
+      "summary": "新增 metal_viewport（6 个 double：origin_x/y, width, height, znear, zfar）+ metal_scissor_rect（4 个 uint32：x, y, width, height）+ metal_render_encoder_set_viewports / metal_render_encoder_set_scissor_rects 函数声明"
+    },
+    {
+      "file": "src/libmetal_bridge/src/MetalPipeline.cpp",
+      "summary": "实现 metal_render_encoder_set_viewports（单个 setViewport + 多视口 setViewports）+ metal_render_encoder_set_scissor_rects（单个 setScissorRect + 多裁剪 setScissorRects）"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+      "summary": "新增 MetalViewport / MetalScissorRect 结构体 + RenderEncoderSetViewports / RenderEncoderSetScissorRects P/Invoke"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs",
+      "summary": "新增 MaxViewports=16 常量 + _viewports/_scissorRects 缓存数组 + SetScissors 缓存裁剪矩形 + SetViewports 缓存视口（含 Vulkan→Metal Y 轴翻转） + BindRenderResources 中 fixed 绑定"
+    }
+  ],
+  "design_decisions": [
+    "视口和裁剪矩形通过缓存数组在 SetViewports/SetScissors 时更新，在 BindRenderResources 中通过 fixed 指针传递到 C++ 层",
+    "Vulkan 视口 Y 轴向下、Metal Y 轴向上，通过 originY = |height| - regionY - height 翻转坐标",
+    "ViewportSwizzle 当前忽略（Metal 无原生等价，需通过顶点着色器修改实现）",
+    "支持最多 16 个视口/裁剪矩形（Metal Apple Silicon 上限）",
+    "metal-cpp setViewports/setScissorRects 参数顺序为 (data, count) 而非 (count, data)"
+  ],
+  "build": {
+    "cpp": "0 警告，0 错误（仅 ranlib 空符号警告）",
+    "csharp": "115 个 CA1416 警告（macOS 平台），0 错误"
+  }
+}

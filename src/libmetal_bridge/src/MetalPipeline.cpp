@@ -9,6 +9,7 @@
 #include <cstring>
 #include <cstdio>
 #include <new>
+#include <vector>
 
 static MTL::VertexDescriptor* create_vertex_descriptor(
     const metal_render_pipeline_descriptor* descriptor)
@@ -415,5 +416,87 @@ metal_result metal_render_encoder_set_stencil_reference_value(
 
     // metal-cpp 使用 setStencilReferenceValues 同时设置正反面引用值
     encoder->encoder->setStencilReferenceValues(front_value, back_value);
+    return METAL_RESULT_OK;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 视口与裁剪矩形（P4.3.11）
+// ════════════════════════════════════════════════════════════════
+
+metal_result metal_render_encoder_set_viewports(
+    metal_render_encoder* encoder,
+    const metal_viewport* viewports,
+    uint32_t count)
+{
+    if (encoder == nullptr || viewports == nullptr || count == 0)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (encoder->encoder == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    // 转换为 MTL::Viewport 数组
+    // MTLViewport: originX, originY, width, height, znear, zfar (均为 double)
+    if (count == 1)
+    {
+        MTL::Viewport vp;
+        vp.originX = viewports[0].origin_x;
+        vp.originY = viewports[0].origin_y;
+        vp.width = viewports[0].width;
+        vp.height = viewports[0].height;
+        vp.znear = viewports[0].znear;
+        vp.zfar = viewports[0].zfar;
+        encoder->encoder->setViewport(vp);
+    }
+    else
+    {
+        // 多视口：构建 MTL::Viewport 数组并通过 setViewports(count, array) 设置
+        std::vector<MTL::Viewport> vpArray(count);
+        for (uint32_t i = 0; i < count; i++)
+        {
+            vpArray[i].originX = viewports[i].origin_x;
+            vpArray[i].originY = viewports[i].origin_y;
+            vpArray[i].width = viewports[i].width;
+            vpArray[i].height = viewports[i].height;
+            vpArray[i].znear = viewports[i].znear;
+            vpArray[i].zfar = viewports[i].zfar;
+        }
+        encoder->encoder->setViewports(vpArray.data(), count);
+    }
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_set_scissor_rects(
+    metal_render_encoder* encoder,
+    const metal_scissor_rect* rects,
+    uint32_t count)
+{
+    if (encoder == nullptr || rects == nullptr || count == 0)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (encoder->encoder == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    // MTLScissorRect: x, y, width, height (均为 NSUInteger)
+    if (count == 1)
+    {
+        MTL::ScissorRect sr;
+        sr.x = rects[0].x;
+        sr.y = rects[0].y;
+        sr.width = rects[0].width;
+        sr.height = rects[0].height;
+        encoder->encoder->setScissorRect(sr);
+    }
+    else
+    {
+        std::vector<MTL::ScissorRect> srArray(count);
+        for (uint32_t i = 0; i < count; i++)
+        {
+            srArray[i].x = rects[i].x;
+            srArray[i].y = rects[i].y;
+            srArray[i].width = rects[i].width;
+            srArray[i].height = rects[i].height;
+        }
+        encoder->encoder->setScissorRects(srArray.data(), count);
+    }
     return METAL_RESULT_OK;
 }

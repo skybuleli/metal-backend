@@ -969,6 +969,42 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_stencil_reference_valu
     uint32_t front_value,
     uint32_t back_value);
 
+// ════════════════════════════════════════════════════════════════
+// 视口与裁剪矩形（P4.3.11）
+// ════════════════════════════════════════════════════════════════
+
+/// 视口描述符（对应 MTLViewport）
+typedef struct metal_viewport
+{
+    double origin_x;   ///< 左上角 X
+    double origin_y;   ///< 左上角 Y（Metal 坐标系：Y 轴向上）
+    double width;      ///< 宽度
+    double height;     ///< 高度
+    double znear;      ///< 近裁剪平面 [0, 1]
+    double zfar;       ///< 远裁剪平面 [0, 1]
+} metal_viewport;
+
+/// 裁剪矩形描述符（对应 MTLScissorRect）
+typedef struct metal_scissor_rect
+{
+    uint32_t x;        ///< 左上角 X（像素坐标）
+    uint32_t y;        ///< 左上角 Y（像素坐标）
+    uint32_t width;    ///< 宽度（像素）
+    uint32_t height;   ///< 高度（像素）
+} metal_scissor_rect;
+
+/// 在渲染编码器上设置视口数组（支持多视口）
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_viewports(
+    metal_render_encoder* encoder,
+    const metal_viewport* viewports,
+    uint32_t count);
+
+/// 在渲染编码器上设置裁剪矩形数组（支持多裁剪）
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_scissor_rects(
+    metal_render_encoder* encoder,
+    const metal_scissor_rect* rects,
+    uint32_t count);
+
 #ifdef __cplusplus
 }
 #endif

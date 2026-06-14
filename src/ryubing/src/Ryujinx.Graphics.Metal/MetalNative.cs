@@ -288,6 +288,19 @@ namespace Ryujinx.Graphics.Metal
             nint renderEncoder,
             uint frontValue,
             uint backValue);
+
+        // ── 视口与裁剪矩形 P/Invoke (P4.3.11) ──
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_viewports")]
+        internal static extern MetalResult RenderEncoderSetViewports(
+            nint renderEncoder,
+            nint viewports,
+            uint count);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_scissor_rects")]
+        internal static extern MetalResult RenderEncoderSetScissorRects(
+            nint renderEncoder,
+            nint rects,
+            uint count);
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -828,5 +841,26 @@ namespace Ryujinx.Graphics.Metal
         public MetalLoadAction StencilLoadAction;
         public MetalStoreAction StencilStoreAction;
         public MetalClearDepthStencil ClearValue;
+    }
+
+    // ── 视口与裁剪矩形描述符 (P4.3.11) ──
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalViewport
+    {
+        public double OriginX;
+        public double OriginY;
+        public double Width;
+        public double Height;
+        public double ZNear;
+        public double ZFar;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalScissorRect
+    {
+        public uint X;
+        public uint Y;
+        public uint Width;
+        public uint Height;
     }
 }
