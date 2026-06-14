@@ -6,6 +6,7 @@ using Ryujinx.Common.Logging;
 using System.Runtime.InteropServices;
 
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Ryujinx.Graphics.Metal
 {
@@ -61,7 +62,11 @@ namespace Ryujinx.Graphics.Metal
         private readonly nint _zeroVertexBufferHandle;
         private MetalPixelFormat _pipelineColorFormat;
         private MetalPixelFormat _pipelineDepthStencilFormat;
-
+        private MetalProgram _currentProgram;
+        private readonly Dictionary<(MetalPixelFormat, MetalPixelFormat), nint> _pipelineCache = new();
+        private readonly HashSet<string> _loggedFormatCombos = new();
+        private int _renderWidth;
+        private int _renderHeight;
         /// <summary>
         /// 当前活动的渲染管线句柄（由 metal_create_render_pipeline 返回）
         /// </summary>
@@ -96,6 +101,9 @@ namespace Ryujinx.Graphics.Metal
             _zeroVertexBufferHandle = CreateZeroVertexBuffer();
             _pipelineColorFormat = MetalPixelFormat.BGRA8Unorm;
             _pipelineDepthStencilFormat = MetalPixelFormat.Invalid;
+            _renderWidth = 1920;
+            _renderHeight = 1080;
+
         }
 
         public void Barrier()
@@ -478,9 +486,8 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
-            // 释放旧的管线状态
-            ReleasePipeline();
-
+            // 程序变更：释放所有缓存的管线
+            ReleaseAllPipelines();
             _program = program;
 
             if (program == null)
@@ -490,24 +497,25 @@ namespace Ryujinx.Graphics.Metal
 
             if (program is MetalProgram metalProgram)
             {
-                CreatePipelineFromProgram(metalProgram);
+                _currentProgram = metalProgram;
+                _pipelineHandle = GetOrCreatePipeline(metalProgram, _pipelineColorFormat, _pipelineDepthStencilFormat);
             }
         }
 
         /// <summary>
-        /// 从 MetalProgram 创建 MTLRenderPipelineState
+        /// 从 MetalProgram + 格式创建 MTLRenderPipelineState，返回句柄。
+        /// 由 SetProgram 或 SetRenderTargets 调用，并通过缓存复用。
         /// </summary>
-        private void CreatePipelineFromProgram(MetalProgram program)
+        private nint CreatePipelineForFormat(MetalProgram program, MetalPixelFormat colorFormat, MetalPixelFormat depthStencilFormat)
         {
             byte[] vertexMetallib = program.GetShaderMetallib(ShaderStage.Vertex);
             byte[] fragmentMetallib = program.GetShaderMetallib(ShaderStage.Fragment);
 
             if (vertexMetallib == null || vertexMetallib.Length == 0)
             {
-                return;
+                return nint.Zero;
             }
 
-            // 固定 metallib 数据以传递指针到 native 层
             GCHandle vertexHandle = GCHandle.Alloc(vertexMetallib, GCHandleType.Pinned);
             GCHandle? fragmentHandle = null;
             GCHandle? blendHandle = null;
@@ -531,8 +539,8 @@ namespace Ryujinx.Graphics.Metal
                         : 0UL,
                     VertexFunction = "main",
                     FragmentFunction = "main",
-                    ColorAttachmentFormat = _pipelineColorFormat,
-                    DepthStencilFormat = _pipelineDepthStencilFormat,
+                    ColorAttachmentFormat = colorFormat,
+                    DepthStencilFormat = depthStencilFormat,
                     VertexAttributeCount = 0,
                     VertexBufferLayoutCount = 0,
                     VertexAttributes = new MetalVertexAttributeDescriptor[MaxVertexAttributes],
@@ -544,7 +552,6 @@ namespace Ryujinx.Graphics.Metal
 
                 PopulateVertexLayout(ref descriptor);
 
-                // 固定混合附件数组并设置指针（P4.3.9）
                 if (_blendAttachmentCount > 0)
                 {
                     blendHandle = GCHandle.Alloc(_blendAttachments, GCHandleType.Pinned);
@@ -557,15 +564,14 @@ namespace Ryujinx.Graphics.Metal
                     descriptor,
                     out nint pipelineHandle);
 
-                if (result == MetalResult.Ok && pipelineHandle != nint.Zero)
-                {
-                    _pipelineHandle = pipelineHandle;
-                }
-                else
+                if (result != MetalResult.Ok || pipelineHandle == nint.Zero)
                 {
                     Console.Error.WriteLine(
                         $"[MetalPipeline] CreateRenderPipeline 失败：{result}");
+                    return nint.Zero;
                 }
+
+                return pipelineHandle;
             }
             finally
             {
@@ -583,15 +589,61 @@ namespace Ryujinx.Graphics.Metal
         }
 
         /// <summary>
-        /// 释放当前管线状态句柄
+        /// 获取或创建管线，按格式缓存。
         /// </summary>
-        private void ReleasePipeline()
+        private nint GetOrCreatePipeline(MetalProgram program, MetalPixelFormat colorFormat, MetalPixelFormat depthStencilFormat)
+        {
+            var key = (colorFormat, depthStencilFormat);
+            if (_pipelineCache.TryGetValue(key, out nint cached))
+            {
+                return cached;
+            }
+
+            nint handle = CreatePipelineForFormat(program, colorFormat, depthStencilFormat);
+            if (handle != nint.Zero)
+            {
+                _pipelineCache[key] = handle;
+            }
+            return handle;
+        }
+
+        /// <summary>
+        /// 释放单个管线句柄
+        /// </summary>
+        private void ReleasePipelineHandle(nint handle)
+        {
+            if (handle != nint.Zero)
+            {
+                MetalNative.Release(handle);
+            }
+        }
+
+        /// <summary>
+        /// 释放当前活动的管线句柄
+        /// </summary>
+        private void ReleaseActivePipeline()
         {
             if (_pipelineHandle != nint.Zero)
             {
                 MetalNative.Release(_pipelineHandle);
                 _pipelineHandle = nint.Zero;
             }
+        }
+
+        /// <summary>
+        /// 释放所有缓存的管线（程序变更时调用）
+        /// </summary>
+        private void ReleaseAllPipelines()
+        {
+            foreach (var kv in _pipelineCache)
+            {
+                if (kv.Value != nint.Zero)
+                {
+                    MetalNative.Release(kv.Value);
+                }
+            }
+            _pipelineCache.Clear();
+            _pipelineHandle = nint.Zero;
         }
 
         public void SetRasterizerDiscard(bool discard)
@@ -606,18 +658,26 @@ namespace Ryujinx.Graphics.Metal
         {
             bool formatsChanged = _renderTargets.Set(colors, depthStencil, out MetalPixelFormat colorFormat, out MetalPixelFormat depthStencilFormat);
 
-            if (formatsChanged)
+            // 跟踪渲染目标维度用于 scissor 裁剪
+            if (colors.Length > 0 && colors[0] != null)
+            {
+                _renderWidth = colors[0].Width;
+                _renderHeight = colors[0].Height;
+            }
+
+            if (formatsChanged && _currentProgram != null)
             {
                 _pipelineColorFormat = colorFormat;
                 _pipelineDepthStencilFormat = depthStencilFormat;
 
-                if (_program is MetalProgram metalProgram)
+                // 从缓存获取管线，首次访问时创建
+                _pipelineHandle = GetOrCreatePipeline(_currentProgram, colorFormat, depthStencilFormat);
+
+                // 调试日志：仅首次出现的格式组合记录
+                string formatKey = $"color={colorFormat},depth={depthStencilFormat}";
+                if (_loggedFormatCombos.Add(formatKey) && _loggedFormatCombos.Count <= 10)
                 {
-                    Logger.Info?.PrintMsg(
-                        LogClass.Gpu,
-                        $"[DIAG] RenderTarget 格式变化，重建 Pipeline: color={_pipelineColorFormat}, depth={_pipelineDepthStencilFormat}");
-                    ReleasePipeline();
-                    CreatePipelineFromProgram(metalProgram);
+                    Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] Pipeline 缓存: {formatKey}");
                 }
             }
         }
@@ -628,12 +688,29 @@ namespace Ryujinx.Graphics.Metal
             for (int i = 0; i < count; i++)
             {
                 Rectangle<int> r = regions[i];
+                uint x = (uint)Math.Max(0, r.X);
+                uint y = (uint)Math.Max(0, r.Y);
+                uint width = (uint)Math.Max(0, r.Width);
+                uint height = (uint)Math.Max(0, r.Height);
+
+                // Metal 要求裁剪矩形必须在 render pass 附件范围内。
+                // Ryujinx 可能传递 65535x65535 作为"全屏"标记，
+                // 裁剪到当前渲染目标尺寸避免 Metal Validation 报错。
+                if (x + width > (uint)_renderWidth)
+                {
+                    width = (uint)Math.Max(0, _renderWidth - (int)x);
+                }
+                if (y + height > (uint)_renderHeight)
+                {
+                    height = (uint)Math.Max(0, _renderHeight - (int)y);
+                }
+
                 _scissorRects[i] = new MetalScissorRect
                 {
-                    X = (uint)Math.Max(0, r.X),
-                    Y = (uint)Math.Max(0, r.Y),
-                    Width = (uint)Math.Max(0, r.Width),
-                    Height = (uint)Math.Max(0, r.Height),
+                    X = x,
+                    Y = y,
+                    Width = width,
+                    Height = height,
                 };
             }
             _scissorCount = count;
@@ -890,10 +967,10 @@ namespace Ryujinx.Graphics.Metal
 
         private void RecreatePipelineForLayoutChange()
         {
-            if (_program is MetalProgram metalProgram)
+            if (_currentProgram != null)
             {
-                ReleasePipeline();
-                CreatePipelineFromProgram(metalProgram);
+                ReleaseAllPipelines();
+                _pipelineHandle = GetOrCreatePipeline(_currentProgram, _pipelineColorFormat, _pipelineDepthStencilFormat);
             }
         }
 
