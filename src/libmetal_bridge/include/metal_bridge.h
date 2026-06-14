@@ -45,6 +45,7 @@ typedef enum metal_handle_type
     METAL_HANDLE_TYPE_FENCE = 15,
     METAL_HANDLE_TYPE_SHARED_EVENT = 16,
     METAL_HANDLE_TYPE_HEAP = 17,
+    METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE = 18,
 } metal_handle_type;
 
 // ── 所有内部结构体的公共头部：type tag + ABI 版本校验 ──
@@ -69,6 +70,7 @@ typedef struct metal_render_encoder metal_render_encoder;
 typedef struct metal_compute_encoder metal_compute_encoder;
 typedef struct metal_blit_encoder metal_blit_encoder;
 typedef struct metal_presenter metal_presenter;
+typedef struct metal_depth_stencil_state metal_depth_stencil_state;
 typedef struct metal_fence metal_fence;
 typedef struct metal_shared_event metal_shared_event;
 typedef struct metal_heap metal_heap;
@@ -908,6 +910,64 @@ METAL_BRIDGE_EXPORT metal_result metal_commit_command_buffer(
 
 METAL_BRIDGE_EXPORT metal_result metal_wait_command_buffer(
     metal_command_buffer* command_buffer);
+
+// ════════════════════════════════════════════════════════════════
+// 深度/模板状态（P4.3.10）
+// ════════════════════════════════════════════════════════════════
+
+/// 比较函数复用上方 metal_compare_function
+
+/// 模板操作（值与 MTL::StencilOperation 对齐）
+typedef enum metal_stencil_operation
+{
+    METAL_STENCIL_OPERATION_KEEP = 0,
+    METAL_STENCIL_OPERATION_ZERO = 1,
+    METAL_STENCIL_OPERATION_REPLACE = 2,
+    METAL_STENCIL_OPERATION_INCREMENT_CLAMP = 3,
+    METAL_STENCIL_OPERATION_DECREMENT_CLAMP = 4,
+    METAL_STENCIL_OPERATION_INVERT = 5,
+    METAL_STENCIL_OPERATION_INCREMENT_WRAP = 6,
+    METAL_STENCIL_OPERATION_DECREMENT_WRAP = 7,
+} metal_stencil_operation;
+
+/// 单面模板描述符
+typedef struct metal_stencil_descriptor
+{
+    metal_compare_function compare_function;
+    metal_stencil_operation stencil_failure;       ///< 模板测试失败时操作
+    metal_stencil_operation depth_failure;          ///< 模板通过但深度失败时操作
+    metal_stencil_operation depth_stencil_pass;     ///< 模板和深度均通过时操作
+    uint32_t read_mask;                             ///< 读取掩码
+    uint32_t write_mask;                            ///< 写入掩码
+} metal_stencil_descriptor;
+
+/// 深度/模板状态描述符
+typedef struct metal_depth_stencil_descriptor
+{
+    metal_compare_function depth_compare_function;  ///< 深度比较函数
+    uint8_t depth_write_enabled;                    ///< 是否启用深度写入
+    uint8_t stencil_enabled;                        ///< 是否启用模板测试
+    uint8_t reserved_pad[2];                        ///< 对齐填充
+    metal_stencil_descriptor front_face;            ///< 正面模板状态
+    metal_stencil_descriptor back_face;             ///< 背面模板状态
+} metal_depth_stencil_descriptor;
+
+/// 创建深度/模板状态对象
+METAL_BRIDGE_EXPORT metal_result metal_create_depth_stencil_state(
+    metal_device* device,
+    const metal_depth_stencil_descriptor* descriptor,
+    metal_depth_stencil_state** out_state);
+
+/// 在渲染编码器上设置深度/模板状态
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_depth_stencil_state(
+    metal_render_encoder* encoder,
+    metal_depth_stencil_state* state);
+
+/// 设置模板引用值（对应 setStencilReferenceValue）
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_stencil_reference_value(
+    metal_render_encoder* encoder,
+    uint32_t front_value,
+    uint32_t back_value);
 
 #ifdef __cplusplus
 }

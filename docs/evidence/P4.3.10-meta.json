@@ -1,0 +1,43 @@
+{
+  "task": "P4.3.10",
+  "title": "SetDepthTest/SetStencilTest: DepthStencilState",
+  "status": "done",
+  "timestamp": "2026-06-14T12:15:00+08:00",
+  "changes": [
+    {
+      "file": "src/libmetal_bridge/include/metal_bridge.h",
+      "summary": "新增 METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE + metal_depth_stencil_state 前向声明 + metal_stencil_operation 枚举 + metal_stencil_descriptor / metal_depth_stencil_descriptor 结构体 + metal_create_depth_stencil_state / metal_render_encoder_set_depth_stencil_state / metal_render_encoder_set_stencil_reference_value 函数声明"
+    },
+    {
+      "file": "src/libmetal_bridge/include/metal_internal.h",
+      "summary": "新增 metal_depth_stencil_state 内部结构体（包装 MTL::DepthStencilState*）"
+    },
+    {
+      "file": "src/libmetal_bridge/src/MetalPipeline.cpp",
+      "summary": "实现 metal_create_depth_stencil_state（MTLDepthStencilDescriptor → MTLDepthStencilState）+ metal_render_encoder_set_depth_stencil_state + metal_render_encoder_set_stencil_reference_value"
+    },
+    {
+      "file": "src/libmetal_bridge/src/MetalDevice.cpp",
+      "summary": "metal_release 新增 METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE 分支释放 DepthStencilState"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+      "summary": "新增 MetalStencilOperation 枚举 + MetalStencilDescriptor / MetalDepthStencilDescriptor 结构体 + CreateDepthStencilState / RenderEncoderSetDepthStencilState / RenderEncoderSetStencilReferenceValue P/Invoke"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs",
+      "summary": "新增 _depthStencilStateHandle 缓存 + SetDepthTest/SetStencilTest/SetDepthMode 实现 + UpdateDepthStencilState 懒重建 + BindRenderResources 绑定 + ConvertCompareOp/ConvertStencilOp 映射"
+    }
+  ],
+  "design_decisions": [
+    "深度/模板状态通过 MTLDepthStencilState 动态绑定到 render encoder（非管线烘焙），无需重建管线",
+    "使用 _depthStencilDirty 标志懒重建状态对象，避免每次 draw 都创建新对象",
+    "metal_compare_function 复用采样器模块已有的枚举（值与 MTL::CompareFunction 对齐）",
+    "SetDepthMode（ZeroToOne/MinusOneToOne）当前为空实现，后续视口任务中扩展",
+    "模板引用值通过 setStencilReferenceValues 在 BindRenderResources 中设置"
+  ],
+  "build": {
+    "cpp": "0 警告，0 错误（仅 ranlib 空符号警告）",
+    "csharp": "113 个 CA1416 警告（macOS 平台），0 错误"
+  }
+}

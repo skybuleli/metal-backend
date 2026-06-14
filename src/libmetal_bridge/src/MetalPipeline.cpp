@@ -306,3 +306,114 @@ metal_result metal_create_render_pipeline(
     *out_pipeline = pipeline;
     return METAL_RESULT_OK;
 }
+
+// ════════════════════════════════════════════════════════════════
+// 深度/模板状态（P4.3.10）
+// ════════════════════════════════════════════════════════════════
+
+/// 内部辅助：将 metal_stencil_descriptor 转换为 MTL::StencilDescriptor
+static void apply_stencil_descriptor(
+    MTL::StencilDescriptor* dst,
+    const metal_stencil_descriptor& src)
+{
+    dst->setStencilCompareFunction(
+        static_cast<MTL::CompareFunction>(src.compare_function));
+    dst->setStencilFailureOperation(
+        static_cast<MTL::StencilOperation>(src.stencil_failure));
+    dst->setDepthFailureOperation(
+        static_cast<MTL::StencilOperation>(src.depth_failure));
+    dst->setDepthStencilPassOperation(
+        static_cast<MTL::StencilOperation>(src.depth_stencil_pass));
+    dst->setReadMask(src.read_mask);
+    dst->setWriteMask(src.write_mask);
+}
+
+metal_result metal_create_depth_stencil_state(
+    metal_device* device,
+    const metal_depth_stencil_descriptor* descriptor,
+    metal_depth_stencil_state** out_state)
+{
+    if (device == nullptr || descriptor == nullptr || out_state == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (device->device == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::DepthStencilDescriptor* dsDesc = MTL::DepthStencilDescriptor::alloc()->init();
+
+    // 深度比较函数
+    dsDesc->setDepthCompareFunction(
+        static_cast<MTL::CompareFunction>(descriptor->depth_compare_function));
+    dsDesc->setDepthWriteEnabled(descriptor->depth_write_enabled != 0);
+
+    // 模板状态
+    if (descriptor->stencil_enabled)
+    {
+        MTL::StencilDescriptor* frontStencil = MTL::StencilDescriptor::alloc()->init();
+        apply_stencil_descriptor(frontStencil, descriptor->front_face);
+        dsDesc->setFrontFaceStencil(frontStencil);
+
+        MTL::StencilDescriptor* backStencil = MTL::StencilDescriptor::alloc()->init();
+        apply_stencil_descriptor(backStencil, descriptor->back_face);
+        dsDesc->setBackFaceStencil(backStencil);
+    }
+
+    MTL::DepthStencilState* dsState = device->device->newDepthStencilState(dsDesc);
+
+    // 释放描述符（状态对象已创建）
+    dsDesc->release();
+
+    if (dsState == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    metal_depth_stencil_state* state = new (std::nothrow) metal_depth_stencil_state();
+    if (state == nullptr)
+    {
+        dsState->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    state->base.type = METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE;
+    state->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    state->depth_stencil_state = dsState;
+
+    pool->release();
+    *out_state = state;
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_set_depth_stencil_state(
+    metal_render_encoder* encoder,
+    metal_depth_stencil_state* state)
+{
+    if (encoder == nullptr || state == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (encoder->encoder == nullptr || state->depth_stencil_state == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    encoder->encoder->setDepthStencilState(state->depth_stencil_state);
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_set_stencil_reference_value(
+    metal_render_encoder* encoder,
+    uint32_t front_value,
+    uint32_t back_value)
+{
+    if (encoder == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (encoder->encoder == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    // metal-cpp 使用 setStencilReferenceValues 同时设置正反面引用值
+    encoder->encoder->setStencilReferenceValues(front_value, back_value);
+    return METAL_RESULT_OK;
+}

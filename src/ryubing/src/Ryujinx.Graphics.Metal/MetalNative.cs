@@ -270,6 +270,24 @@ namespace Ryujinx.Graphics.Metal
         [DllImport(LibraryName, EntryPoint = "metal_wait_command_buffer")]
         internal static extern MetalResult WaitCommandBuffer(
             nint commandBuffer);
+
+        // ── 深度/模板状态 P/Invoke (P4.3.10) ──
+        [DllImport(LibraryName, EntryPoint = "metal_create_depth_stencil_state")]
+        internal static extern MetalResult CreateDepthStencilState(
+            nint device,
+            in MetalDepthStencilDescriptor descriptor,
+            out nint state);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_depth_stencil_state")]
+        internal static extern MetalResult RenderEncoderSetDepthStencilState(
+            nint renderEncoder,
+            nint depthStencilState);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_stencil_reference_value")]
+        internal static extern MetalResult RenderEncoderSetStencilReferenceValue(
+            nint renderEncoder,
+            uint frontValue,
+            uint backValue);
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -747,6 +765,45 @@ namespace Ryujinx.Graphics.Metal
         public MetalBlendFactor DstAlphaFactor;
         public MetalBlendOperation AlphaOperation;
         public uint WriteMask;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // 深度/模板状态类型（P4.3.10）
+    // ══════════════════════════════════════════════════════════════════
+
+    internal enum MetalStencilOperation : uint
+    {
+        Keep = 0,
+        Zero = 1,
+        Replace = 2,
+        IncrementClamp = 3,
+        DecrementClamp = 4,
+        Invert = 5,
+        IncrementWrap = 6,
+        DecrementWrap = 7,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalStencilDescriptor
+    {
+        public MetalCompareFunction CompareFunction;
+        public MetalStencilOperation StencilFailure;
+        public MetalStencilOperation DepthFailure;
+        public MetalStencilOperation DepthStencilPass;
+        public uint ReadMask;
+        public uint WriteMask;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalDepthStencilDescriptor
+    {
+        public MetalCompareFunction DepthCompareFunction;
+        public byte DepthWriteEnabled;
+        public byte StencilEnabled;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] ReservedPad;
+        public MetalStencilDescriptor FrontFace;
+        public MetalStencilDescriptor BackFace;
     }
 
     [StructLayout(LayoutKind.Sequential)]

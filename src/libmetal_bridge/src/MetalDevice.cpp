@@ -389,6 +389,17 @@ void metal_release(void* handle)
         delete pipeline;
         break;
     }
+case METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE:
+    {
+        metal_depth_stencil_state* dsState = static_cast<metal_depth_stencil_state*>(handle);
+        if (dsState->depth_stencil_state != nullptr)
+        {
+            dsState->depth_stencil_state->release();
+            dsState->depth_stencil_state = nullptr;
+        }
+        delete dsState;
+        break;
+    }
     case METAL_HANDLE_TYPE_COMMAND_BUFFER:
     {
         metal_command_buffer* command_buffer = static_cast<metal_command_buffer*>(handle);

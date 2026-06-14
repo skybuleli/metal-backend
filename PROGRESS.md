@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T11:11:27+08:00
+# 最后更新: 2026-06-14T11:33:53+08:00
 # 当前阶段: Phase 4 — 核心 Metal 后端实现
-# 完成度: 80/144 任务 (55.6%)
+# 完成度: 81/144 任务 (56.2%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -140,7 +140,7 @@
 | P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ✅ | 2026-06-14T10:46:00+08:00 | docs/evidence/P4.3.7-meta.json：新增 metal_begin_render_encoding_with_targets C ABI + MTLRenderPassDescriptor 真实创建（多颜色附件 + 深度/模板）+ C# SetRenderTargets 实现 + MetalRenderTargetState 缓存 + ExecuteRenderDraw 路由；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
 | P4.3.8 | ClearRenderTarget: 清屏操作 | ✅ | 2026-06-14T11:15:00+08:00 | docs/evidence/P4.3.8-meta.json：ClearRenderTargetColor + ClearRenderTargetDepthStencil 实现，通过 PendingColorClear/PendingDepthStencilClear 缓存清除参数并在 ExecuteRenderDraw 中合并到 MTLRenderPassDescriptor 的 loadAction=Clear；纯 C# 变更，Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
 | P4.3.9 | SetBlendState: 混合状态映射 | ✅ | 2026-06-14T11:45:00+08:00 | docs/evidence/P4.3.9-meta.json：新增 metal_blend_factor/operation/color_write_mask 枚举 + metal_blend_attachment_descriptor + 管线描述符扩展 + C++ 混合状态应用 + C# ConvertBlendFactor/Op 映射 + SetBlendState 实现 + 管线重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
-| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ⬜ | — | — |
+| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ✅ | 2026-06-14T12:15 | docs/evidence/P4.3.10-meta.json：新增 METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE + metal_stencil_operation 枚举 + metal_depth_stencil_descriptor + 3 个 C ABI 函数 + C++ 深度/模板状态创建与绑定 + C# SetDepthTest/SetStencilTest/SetDepthMode 实现 + UpdateDepthStencilState 脏标志懒重建 + BindRenderResources 动态绑定；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（113 个 CA1416 警告，0 错误） |
 | P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ⬜ | — | — |
 | P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ⬜ | — | — |
 
@@ -273,10 +273,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 144
-- 已完成: 80 (55.6%)
+- 已完成: 81 (56.2%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 64
+- 待开始: 63
 - 当前阶段: Phase 4 — 核心 Metal 后端实现
-- 下一任务: P4.3.10 — SetDepthTest/SetStencilTest: DepthStencilState
+- 下一任务: P4.3.11 — SetScissors/SetViewports: 视口+裁剪

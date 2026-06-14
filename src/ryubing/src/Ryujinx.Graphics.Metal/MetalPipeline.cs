@@ -27,6 +27,10 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalRenderTargetState _renderTargets;
         private readonly MetalBlendAttachmentDescriptor[] _blendAttachments;
         private int _blendAttachmentCount;
+        private nint _depthStencilStateHandle;
+        private DepthTestDescriptor _depthTest;
+        private StencilTestDescriptor _stencilTest;
+        private bool _depthStencilDirty;
         private PrimitiveTopology _primitiveTopology;
         private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
@@ -51,6 +55,8 @@ namespace Ryujinx.Graphics.Metal
             _renderTargets = new MetalRenderTargetState();
             _blendAttachments = new MetalBlendAttachmentDescriptor[8];
             _blendAttachmentCount = 0;
+            _depthStencilStateHandle = nint.Zero;
+            _depthStencilDirty = false;
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
         }
@@ -277,10 +283,15 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetDepthMode(DepthMode mode)
         {
+            // DepthMode 控制深度值范围（MinusOneToOne 或 ZeroToOne），
+            // 通过管线描述符的 depthAttachmentPixelFormat 影响，
+            // 当前默认 MinusOneToOne，后续扩展时处理
         }
 
         public void SetDepthTest(DepthTestDescriptor depthTest)
         {
+            _depthTest = depthTest;
+            _depthStencilDirty = true;
         }
 
         public void SetFaceCulling(bool enable, Face face)
@@ -510,6 +521,8 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetStencilTest(StencilTestDescriptor stencilTest)
         {
+            _stencilTest = stencilTest;
+            _depthStencilDirty = true;
         }
 
         public void SetStorageBuffers(ReadOnlySpan<BufferAssignment> buffers)
@@ -824,6 +837,24 @@ namespace Ryujinx.Graphics.Metal
 
         private void BindRenderResources(nint renderEncoder)
         {
+            // 深度/模板状态更新与绑定（P4.3.10）
+            UpdateDepthStencilState();
+            if (_depthStencilStateHandle != nint.Zero)
+            {
+                MetalResult dsResult = MetalNative.RenderEncoderSetDepthStencilState(
+                    renderEncoder, _depthStencilStateHandle);
+                ThrowIfFailed(dsResult, nameof(MetalNative.RenderEncoderSetDepthStencilState));
+
+                // 设置模板引用值
+                if (_stencilTest.TestEnable)
+                {
+                    MetalResult srResult = MetalNative.RenderEncoderSetStencilReferenceValue(
+                        renderEncoder,
+                        (uint)_stencilTest.FrontFuncRef,
+                        (uint)_stencilTest.BackFuncRef);
+                    ThrowIfFailed(srResult, nameof(MetalNative.RenderEncoderSetStencilReferenceValue));
+                }
+            }
             for (int binding = 0; binding < _vertexBufferCount; binding++)
             {
                 if (!TryGetVertexBufferBinding(binding, out nint handle, out ulong offset, out _, out _, out _))
@@ -908,6 +939,120 @@ namespace Ryujinx.Graphics.Metal
                     ThrowIfFailed(samplerResult, nameof(MetalNative.RenderEncoderSetFragmentSampler));
                 }
             }
+        }
+
+        /// <summary>
+        /// 更新深度/模板状态对象（P4.3.10）。
+        /// 仅当 _depthStencilDirty 时重新创建 MTLDepthStencilState。
+        /// </summary>
+        private void UpdateDepthStencilState()
+        {
+            if (!_depthStencilDirty)
+            {
+                return;
+            }
+
+            // 释放旧的深度/模板状态
+            if (_depthStencilStateHandle != nint.Zero)
+            {
+                MetalNative.Release(_depthStencilStateHandle);
+                _depthStencilStateHandle = nint.Zero;
+            }
+
+            bool depthEnabled = _depthTest.TestEnable;
+            bool stencilEnabled = _stencilTest.TestEnable;
+
+            if (!depthEnabled && !stencilEnabled)
+            {
+                _depthStencilDirty = false;
+                return;
+            }
+
+            var descriptor = new MetalDepthStencilDescriptor
+            {
+                DepthCompareFunction = ConvertCompareOp(_depthTest.Func),
+                DepthWriteEnabled = (byte)(_depthTest.WriteEnable ? 1 : 0),
+                StencilEnabled = (byte)(stencilEnabled ? 1 : 0),
+                ReservedPad = new byte[2],
+                FrontFace = new MetalStencilDescriptor
+                {
+                    CompareFunction = ConvertCompareOp(_stencilTest.FrontFunc),
+                    StencilFailure = ConvertStencilOp(_stencilTest.FrontSFail),
+                    DepthFailure = ConvertStencilOp(_stencilTest.FrontDpFail),
+                    DepthStencilPass = ConvertStencilOp(_stencilTest.FrontDpPass),
+                    ReadMask = (uint)_stencilTest.FrontFuncMask,
+                    WriteMask = (uint)_stencilTest.FrontMask,
+                },
+                BackFace = new MetalStencilDescriptor
+                {
+                    CompareFunction = ConvertCompareOp(_stencilTest.BackFunc),
+                    StencilFailure = ConvertStencilOp(_stencilTest.BackSFail),
+                    DepthFailure = ConvertStencilOp(_stencilTest.BackDpFail),
+                    DepthStencilPass = ConvertStencilOp(_stencilTest.BackDpPass),
+                    ReadMask = (uint)_stencilTest.BackFuncMask,
+                    WriteMask = (uint)_stencilTest.BackMask,
+                },
+            };
+
+            // 深度测试未启用时使用 Always 比较 + 禁用写入
+            if (!depthEnabled)
+            {
+                descriptor.DepthCompareFunction = MetalCompareFunction.Always;
+                descriptor.DepthWriteEnabled = 0;
+            }
+
+            MetalResult result = MetalNative.CreateDepthStencilState(
+                _deviceHandle, descriptor, out nint stateHandle);
+
+            if (result == MetalResult.Ok && stateHandle != nint.Zero)
+            {
+                _depthStencilStateHandle = stateHandle;
+            }
+            else
+            {
+                Console.Error.WriteLine(
+                    $"[MetalPipeline] CreateDepthStencilState 失败：{result}");
+            }
+
+            _depthStencilDirty = false;
+        }
+
+        /// <summary>
+        /// 将 GAL CompareOp 转换为 Metal 比较函数（P4.3.10）。
+        /// </summary>
+        private static MetalCompareFunction ConvertCompareOp(CompareOp op)
+        {
+            return op switch
+            {
+                CompareOp.Never or CompareOp.NeverGl => MetalCompareFunction.Never,
+                CompareOp.Less or CompareOp.LessGl => MetalCompareFunction.Less,
+                CompareOp.Equal or CompareOp.EqualGl => MetalCompareFunction.Equal,
+                CompareOp.LessOrEqual or CompareOp.LessOrEqualGl => MetalCompareFunction.LessEqual,
+                CompareOp.Greater or CompareOp.GreaterGl => MetalCompareFunction.Greater,
+                CompareOp.NotEqual or CompareOp.NotEqualGl => MetalCompareFunction.NotEqual,
+                CompareOp.GreaterOrEqual or CompareOp.GreaterOrEqualGl => MetalCompareFunction.GreaterEqual,
+                CompareOp.Always or CompareOp.AlwaysGl => MetalCompareFunction.Always,
+                _ => MetalCompareFunction.Always,
+            };
+        }
+
+        /// <summary>
+        /// 将 GAL StencilOp 转换为 Metal 模板操作（P4.3.10）。
+        /// </summary>
+        private static MetalStencilOperation ConvertStencilOp(StencilOp op)
+        {
+            return op switch
+            {
+                StencilOp.Keep or StencilOp.KeepGl => MetalStencilOperation.Keep,
+                StencilOp.Zero or StencilOp.ZeroGl => MetalStencilOperation.Zero,
+                StencilOp.Replace or StencilOp.ReplaceGl => MetalStencilOperation.Replace,
+                StencilOp.IncrementAndClamp or StencilOp.IncrementAndClampGl => MetalStencilOperation.IncrementClamp,
+                StencilOp.DecrementAndClamp or StencilOp.DecrementAndClampGl => MetalStencilOperation.DecrementClamp,
+                StencilOp.Invert or StencilOp.InvertGl => MetalStencilOperation.Invert,
+                StencilOp.IncrementAndWrap or StencilOp.IncrementAndWrapGl => MetalStencilOperation.IncrementWrap,
+                StencilOp.DecrementAndWrap or StencilOp.DecrementAndWrapGl => MetalStencilOperation.DecrementWrap,
+                _ => MetalStencilOperation.Keep,
+            };
         }
 
         private void PopulateVertexLayout(ref MetalRenderPipelineDescriptor descriptor)

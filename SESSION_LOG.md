@@ -128,3 +128,25 @@
   - AdvancedBlendState 回退为标准混合（Metal 不原生支持 KHR_blend_equation_advanced）
   - BlendFactor 枚举值与 MTL::BlendFactor 对齐，支持 GL 后缀变体
 - **状态摘要**: P4 进度 80/144 (55.6%)，下一任务 P4.3.10 SetDepthTest/SetStencilState
+
+---
+
+### 2026-06-14 12:15 — P4.3.10 SetDepthTest/SetStencilTest: DepthStencilState
+- **Agent**: Qoder
+- **结果**: ✅ 实现深度/模板状态创建、动态绑定和释放，包含 C ABI 枚举/描述符/函数 + C++ 实现 + C# 缓存与懒重建
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE` + `metal_stencil_operation` 枚举 + `metal_stencil_descriptor` / `metal_depth_stencil_descriptor` 结构体 + 3 个新函数声明
+  - `src/libmetal_bridge/include/metal_internal.h`：新增 `metal_depth_stencil_state` 内部结构体
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`：实现 `metal_create_depth_stencil_state` + `metal_render_encoder_set_depth_stencil_state` + `metal_render_encoder_set_stencil_reference_value`
+  - `src/libmetal_bridge/src/MetalDevice.cpp`：`metal_release` 新增 `DEPTH_STENCIL_STATE` 分支
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：新增 `MetalStencilOperation` 枚举 + 描述符结构体 + 3 个 P/Invoke
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：`_depthStencilStateHandle` 缓存 + `SetDepthTest`/`SetStencilTest`/`SetDepthMode` + `UpdateDepthStencilState` 脏标志懒重建 + `BindRenderResources` 绑定
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build` ✅（0 警告，0 错误）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（113 个 CA1416 警告，0 错误）
+- **说明**:
+  - Metal 深度/模板状态通过 MTLDepthStencilState 动态绑定到 render encoder，无需重建管线
+  - 使用 `_depthStencilDirty` 标志懒重建，避免每次 draw 创建新对象
+  - `metal_compare_function` 复用采样器模块已有枚举
+  - `setStencilReferenceValues` 同时设置正反面模板引用值
+- **状态摘要**: P4 进度 81/144 (56.3%)，下一任务 P4.3.11 SetScissors/SetViewports

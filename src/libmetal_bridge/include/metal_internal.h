@@ -155,3 +155,13 @@ struct metal_render_encoder
 
 static_assert(offsetof(struct metal_render_encoder, encoder) >= sizeof(metal_handle_base),
     "metal_render_encoder.base 必须在最前面");
+
+/// metal_depth_stencil_state 内部实现（P4.3.10）
+struct metal_depth_stencil_state
+{
+    METAL_HANDLE_HEADER
+    MTL::DepthStencilState* depth_stencil_state;  // Metal 深度/模板状态对象
+};
+
+static_assert(offsetof(struct metal_depth_stencil_state, depth_stencil_state) >= sizeof(metal_handle_base),
+    "metal_depth_stencil_state.base 必须在最前面");
