@@ -486,15 +486,24 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 4. 专注于修复 endEncoding 错误
 
 #### 证据文件
-- **完整运行日志**: `docs/evidence/P4.5.8-celeste-endencoding-error.log`（126 行，6.4KB）
+- **终端日志（stdout/stderr）**: `docs/evidence/P4.5.8-celeste-endencoding-error.log`（10KB，126 行）
   - 第 124-125 行：桥接路径正确触发（`GLSL 源码强制走桥接路径（vertex/fragment）`）
-  - 第 126 行：崩溃点 `Command encoder released without endEncoding`
+  - 第 126 行：崩溃点 `Command encoder released without endEncoding`
   - exit=134（SIGABRT）
+- **Ryujinx 文件日志（最新）**: `docs/evidence/P4.5.8-celeste-endencoding-error-ryujinx-file.log`
+  - 更多上下文，包括着色器缓存、GPU 线程、音频等
+  - `EnableFileLog: True` 时 Ryujinx 自动写入 `~/Library/Logs/Ryujinx/`
+- **Ryujinx 文件日志（修复前）**: `docs/evidence/P4.5.8-celeste-varying-mismatch-ryujinx-file.log`
+  - 含完整 `user(color0/1)` 错误序列，供对比
 - **桥接中间产物**: `docs/evidence/P4.5.8-celeste-temp-files/metal_shader_bridge_ltuFJC/`（VS）和 `metal_shader_bridge_Q067Fl/`（FS）
   - 各包含 `.glsl` `.spv` `.hlsl` `.dxil` 完整链路中间文件
-  - 可通过 `metal-shaderconverter shader.dxil -o test.metallib` + `strings test.metallib | grep user(` 验证语义
+  - 可通过 `metal-shaderconverter shader.dxil -o test.metallib && strings test.metallib | grep user(` 验证语义
 - **查看命令**:
   ```bash
+  # 终端日志
   cat docs/evidence/P4.5.8-celeste-endencoding-error.log
-  strings /tmp/metal_shader_bridge_*/shader.hlsl | grep "TEXCOORD\|COLOR"
+  # Ryujinx 文件日志（更详细）
+  cat docs/evidence/P4.5.8-celeste-endencoding-error-ryujinx-file.log
+  # VS/FS HLSL varying 对比
+  grep "TEXCOORD\|COLOR" docs/evidence/P4.5.8-celeste-temp-files/metal_shader_bridge_*/shader.hlsl
   ```
