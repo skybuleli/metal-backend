@@ -1,0 +1,39 @@
+{
+  "task": "P4.5.8",
+  "name": "2D Demo 完整渲染: Demo D1 帧缓冲对比 (像素差异<1%)",
+  "timestamp": "2026-06-14T15:35:00+08:00",
+  "test_results": {
+    "d1_triangle": {
+      "demo": "D1 (triangle, hand-written MSL)",
+      "output": "docs/evidence/P4.5.8-d1-triangle-reference.ppm",
+      "resolution": "256×256",
+      "format": "PPM P6, 255 max, 196623 bytes"
+    },
+    "d2_textured_quad": {
+      "demo": "D2 (textured quad, Path A: Slang→DXIL→MSC)",
+      "output": "docs/evidence/P4.5.8-d2-quad-reference.ppm",
+      "resolution": "256×256",
+      "format": "PPM P6, 255 max, 196623 bytes"
+    }
+  },
+  "determinism_verification": {
+    "d1_two_runs_identical": true,
+    "d1_diff_pixels": 0,
+    "d1_diff_percentage": "0.000%",
+    "d2_two_runs_identical": true,
+    "d2_diff_pixels": 0,
+    "d2_diff_percentage": "0.000%",
+    "method": "MD5 checksum match + binary cmp"
+  },
+  "acceptance": {
+    "requirement": "像素差异 < 1%",
+    "actual": "0% (完全相同)",
+    "status": "PASS"
+  },
+  "verification": {
+    "d1_run_1": "PASS (out/triangle.ppm)",
+    "d1_run_2": "PASS (identical MD5: f5c44f24d429085cd5c63a265f247f8c)",
+    "d2_run_1": "PASS (out/textured_quad.ppm)",
+    "d2_run_2": "PASS (identical MD5: 017fa96235bc801202ec0747a3962efa)"
+  }
+}

@@ -347,3 +347,11 @@
 - **变更**:
   - `src/libmetal_bridge/tests/test_sync.cpp` — 新增 2 个序列化测试（10× serial + 10× 空 CB 生命周期）
 - **状态摘要**: P4 进度 96/152 (63.2%)，下一任务 P4.5.7 呈现验收
+
+---
+
+### 2026-06-14 15:30 — P4.5.7 呈现验收: CAMetalLayer 交换链正常刷新
+- **结果**: ✅ test_presenter 5/5 用例 154 断言全部通过（包括 100 帧持续呈现 + resize 应力测试）
+- **变更**:
+  - `src/libmetal_bridge/tests/test_presenter.cpp` — 新增 100 帧持续呈现 + resize 后呈现不崩溃测试
+- **状态摘要**: P4 进度 97/152 (63.8%)，下一任务 P4.5.8 2D Demo 完整渲染
