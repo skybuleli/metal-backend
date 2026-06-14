@@ -97,6 +97,27 @@
 
 ---
 
+### 2026-06-14 12:39 — P4.4.2 CreateSync/WaitSync: MTLEvent 信号量
+- **Agent**: Codex
+- **结果**: ✅ 补齐 Metal host sync 最小链路，使用 `MTLSharedEvent` 创建可查询/等待的同步点
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h` / `src/libmetal_bridge/include/metal_internal.h`：新增 `metal_shared_event` 句柄与 3 个 shared event C ABI
+  - `src/libmetal_bridge/src/MetalCommandBuffer.cpp` / `src/libmetal_bridge/src/MetalDevice.cpp`：实现 `newSharedEvent`、`encodeSignalEvent`、`signaledValue` 查询与统一释放
+  - `src/libmetal_bridge/tests/test_sync.cpp` / `src/libmetal_bridge/CMakeLists.txt`：新增原生回归测试目标，覆盖 shared event 创建、signal、查询与空参数错误路径
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs` / `MetalSync.cs` / `MetalRenderer.cs`：新增 `MetalSync` 管理器并接入 `CreateSync` / `WaitSync` / `GetCurrentSync` / `PreFrame`
+  - `docs/evidence/P4.4.2-meta.json` / `PROGRESS.md`：记录验证证据并标记任务完成
+- **验证**:
+  - `cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` ✅
+  - `cmake --build src/libmetal_bridge/build --target test_sync test_command_buffer -j 4` ✅
+  - `ctest --test-dir src/libmetal_bridge/build -R 'test_(sync|command_buffer)' --output-on-failure` ✅（2/2 通过）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` ✅（118 个既有 CA1416 警告，0 错误）
+- **说明**:
+  - 当前 `strict=true` 会额外等待该空 command buffer 完成，保持与现阶段同步 draw 路径一致的“立即可等待”语义
+  - 由于现有 Metal draw 路径已在每次提交后 `waitUntilCompleted`，本任务主要先固化 host sync ABI 和状态跟踪，为后续 presenter / 后台队列铺路
+- **状态摘要**: P4 进度 85/144 (59.0%)，下一任务 P4.4.3 Presenter/Window: CAMetalLayer + 交换链
+
+---
+
 ### 2026-06-14 11:15 — P4.3.8 ClearRenderTarget: 清屏操作
 - **Agent**: Qoder
 - **结果**: ✅ 实现颜色/深度/模板清除缓存机制，通过 MTLRenderPassDescriptor loadAction=Clear 完成清屏

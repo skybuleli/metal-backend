@@ -774,6 +774,22 @@ METAL_BRIDGE_EXPORT metal_result metal_begin_command_buffer(
     metal_queue* queue,
     metal_command_buffer** out_command_buffer);
 
+/// 创建共享事件（P4.4.2）
+METAL_BRIDGE_EXPORT metal_result metal_create_shared_event(
+    metal_device* device,
+    metal_shared_event** out_event);
+
+/// 在命令缓冲区上编码共享事件 signal
+METAL_BRIDGE_EXPORT metal_result metal_encode_signal_shared_event(
+    metal_command_buffer* command_buffer,
+    metal_shared_event* event,
+    uint64_t value);
+
+/// 读取共享事件当前 signaledValue
+METAL_BRIDGE_EXPORT metal_result metal_get_shared_event_signaled_value(
+    metal_shared_event* event,
+    uint64_t* out_value);
+
 // ════════════════════════════════════════════════════════════════════
 // 渲染目标附件描述符（P4.3.7）
 // ════════════════════════════════════════════════════════════════════

@@ -214,4 +214,17 @@ if(BUILD_TESTS)
     )
 
     add_test(NAME test_command_buffer COMMAND test_command_buffer)
+
+    add_executable(test_sync
+        tests/test_sync.cpp
+    )
+    target_link_libraries(test_sync PRIVATE
+        metal_bridge
+        Catch2::Catch2WithMain
+    )
+    target_include_directories(test_sync PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(NAME test_sync COMMAND test_sync)
 endif()

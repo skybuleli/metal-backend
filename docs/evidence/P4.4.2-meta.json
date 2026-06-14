@@ -1,0 +1,28 @@
+{
+  "task": "P4.4.2",
+  "title": "CreateSync/WaitSync: MTLEvent 信号量",
+  "completed_at": "2026-06-14T12:39:06+08:00",
+  "verification": [
+    {
+      "command": "cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON",
+      "result": "success"
+    },
+    {
+      "command": "cmake --build src/libmetal_bridge/build --target test_sync test_command_buffer -j 4",
+      "result": "success"
+    },
+    {
+      "command": "ctest --test-dir src/libmetal_bridge/build -R 'test_(sync|command_buffer)' --output-on-failure",
+      "result": "2/2 passed"
+    },
+    {
+      "command": "dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release",
+      "result": "success with existing CA1416 warnings only"
+    }
+  ],
+  "notes": [
+    "新增 metal_create_shared_event / metal_encode_signal_shared_event / metal_get_shared_event_signaled_value C ABI，并通过 metal_release 统一释放 shared event 句柄",
+    "新增 MetalSync 管理器，接入 MetalRenderer.CreateSync/WaitSync/GetCurrentSync/PreFrame，使用 command buffer + MTLSharedEvent signal 构建 host sync 点",
+    "新增 test_sync 原生回归测试，覆盖 shared event 创建、signal、查询与空参数错误路径"
+  ]
+}

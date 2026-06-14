@@ -17,6 +17,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalTextureArray _nullTextureArray;
         private readonly MetalWindow _window;
         private readonly MetalDevice _device;
+        private readonly MetalSync _sync;
         private readonly bool _hasUnifiedMemory;
         private readonly MetalStorageMode _defaultStorageMode;
         private readonly nint _queueHandle;
@@ -51,6 +52,7 @@ namespace Ryujinx.Graphics.Metal
             _shaderCompiler = new MetalShaderCompiler();
             _shaderCompiler.AttachDevice(_device); // 绑定设备，初始化编译器句柄
             _pipeline = new MetalPipeline(_device.Handle, _queueHandle, _buffers);
+            _sync = new MetalSync(_device.Handle, _queueHandle);
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
             _window = new MetalWindow();
@@ -113,6 +115,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void CreateSync(ulong id, bool strict)
         {
+            _sync.Create(id, strict);
         }
 
         public void DeleteBuffer(BufferHandle buffer)
@@ -126,6 +129,7 @@ namespace Ryujinx.Graphics.Metal
             _window.Dispose();
             _nullImageArray.Dispose();
             _nullTextureArray.Dispose();
+            _sync.Dispose();
             _shaderCompiler.Dispose();
             if (_queueHandle != nint.Zero)
             {
@@ -212,7 +216,7 @@ namespace Ryujinx.Graphics.Metal
 
         public ulong GetCurrentSync()
         {
-            return 0;
+            return _sync.GetCurrent();
         }
 
         public HardwareInfo GetHardwareInfo()
@@ -232,6 +236,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void PreFrame()
         {
+            _sync.Cleanup();
         }
 
         public ICounterEvent ReportCounter(CounterType type, EventHandler<ulong> resultHandler, float divisor, bool hostReserved)
@@ -264,6 +269,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void WaitSync(ulong id)
         {
+            _sync.Wait(id);
         }
     }
 }

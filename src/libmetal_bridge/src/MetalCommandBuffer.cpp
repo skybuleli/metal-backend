@@ -98,6 +98,78 @@ metal_result metal_begin_command_buffer(
     return METAL_RESULT_OK;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// P4.4.2 — SharedEvent 同步原语
+// 依据 metal-cpp:
+//   - MTL::Device::newSharedEvent()
+//   - MTL::CommandBuffer::encodeSignalEvent(event, value)
+//   - MTL::SharedEvent::signaledValue()
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_create_shared_event(
+    metal_device* device,
+    metal_shared_event** out_event)
+{
+    if (device == nullptr || out_event == nullptr || device->device == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+    MTL::SharedEvent* shared_event = device->device->newSharedEvent();
+    if (shared_event == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    metal_shared_event* handle = new (std::nothrow) metal_shared_event();
+    if (handle == nullptr)
+    {
+        shared_event->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    handle->base.type = METAL_HANDLE_TYPE_SHARED_EVENT;
+    handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    handle->event = shared_event;
+
+    *out_event = handle;
+    pool->release();
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_encode_signal_shared_event(
+    metal_command_buffer* command_buffer,
+    metal_shared_event* event,
+    uint64_t value)
+{
+    if (command_buffer == nullptr ||
+        command_buffer->command_buffer == nullptr ||
+        event == nullptr ||
+        event->event == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    command_buffer->command_buffer->encodeSignalEvent(event->event, value);
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_get_shared_event_signaled_value(
+    metal_shared_event* event,
+    uint64_t* out_value)
+{
+    if (event == nullptr || event->event == nullptr || out_value == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    *out_value = event->event->signaledValue();
+    return METAL_RESULT_OK;
+}
+
 metal_result metal_begin_render_encoding(
     metal_command_buffer* command_buffer,
     metal_render_pipeline* pipeline,

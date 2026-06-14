@@ -138,6 +138,16 @@ struct metal_command_buffer
 static_assert(offsetof(struct metal_command_buffer, command_buffer) >= sizeof(metal_handle_base),
     "metal_command_buffer.base 必须在最前面");
 
+/// metal_shared_event 内部实现（P4.4.2）
+struct metal_shared_event
+{
+    METAL_HANDLE_HEADER
+    MTL::SharedEvent* event;                   // Metal 共享事件对象
+};
+
+static_assert(offsetof(struct metal_shared_event, event) >= sizeof(metal_handle_base),
+    "metal_shared_event.base 必须在最前面");
+
 /// metal_render_encoder 内部实现（P4.3.6 + P4.3.7）
 ///
 /// P4.3.6：内部创建临时 1x1 颜色附件，color_target_count=1 且 color_targets[0] 为临时纹理。

@@ -1,14 +1,14 @@
-# 下一任务 — P4.4.2 CreateSync/WaitSync: MTLEvent 信号量
+# 下一任务 — P4.4.3 Presenter/Window: CAMetalLayer + 交换链
 
-> 生成时间：2026-06-14 12:25:50
+> 生成时间：2026-06-14 12:40:20
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.4.2 |
-| 任务名称 | CreateSync/WaitSync: MTLEvent 信号量 |
+| 任务 ID | P4.4.3 |
+| 任务名称 | Presenter/Window: CAMetalLayer + 交换链 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.4.2 → ✅
+- 更新 PROGRESS.md：P4.4.3 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

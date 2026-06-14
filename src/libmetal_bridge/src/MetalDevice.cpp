@@ -411,6 +411,17 @@ case METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE:
         delete command_buffer;
         break;
     }
+    case METAL_HANDLE_TYPE_SHARED_EVENT:
+    {
+        metal_shared_event* shared_event = static_cast<metal_shared_event*>(handle);
+        if (shared_event->event != nullptr)
+        {
+            shared_event->event->release();
+            shared_event->event = nullptr;
+        }
+        delete shared_event;
+        break;
+    }
     case METAL_HANDLE_TYPE_RENDER_ENCODER:
     {
         metal_render_encoder* encoder = static_cast<metal_render_encoder*>(handle);

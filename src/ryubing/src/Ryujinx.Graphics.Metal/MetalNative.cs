@@ -161,6 +161,22 @@ namespace Ryujinx.Graphics.Metal
             nint queue,
             out nint commandBuffer);
 
+        [DllImport(LibraryName, EntryPoint = "metal_create_shared_event")]
+        internal static extern MetalResult CreateSharedEvent(
+            nint device,
+            out nint sharedEvent);
+
+        [DllImport(LibraryName, EntryPoint = "metal_encode_signal_shared_event")]
+        internal static extern MetalResult EncodeSignalSharedEvent(
+            nint commandBuffer,
+            nint sharedEvent,
+            ulong value);
+
+        [DllImport(LibraryName, EntryPoint = "metal_get_shared_event_signaled_value")]
+        internal static extern MetalResult GetSharedEventSignaledValue(
+            nint sharedEvent,
+            out ulong value);
+
         [DllImport(LibraryName, EntryPoint = "metal_begin_render_encoding_with_targets")]
         internal static extern MetalResult BeginRenderEncodingWithTargets(
             nint commandBuffer,
