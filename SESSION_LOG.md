@@ -484,3 +484,17 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 2. 部署：`cp src/libmetal_bridge/build/libmetal_bridge.dylib src/ryubing/src/Ryujinx/bin/Release/net10.0/`
 3. 测试：`SWITCH_METAL_KEEP_FAILED_SHADER_TEMP=1 src/ryubing/src/Ryujinx/bin/Release/net10.0/Ryujinx --graphics-backend metal "/Users/liliang/games/蔚蓝1.3/Celeste [01002B30028F6000][v0] (TurboSnail).nsp"`
 4. 专注于修复 endEncoding 错误
+
+#### 证据文件
+- **完整运行日志**: `docs/evidence/P4.5.8-celeste-endencoding-error.log`（126 行，6.4KB）
+  - 第 124-125 行：桥接路径正确触发（`GLSL 源码强制走桥接路径（vertex/fragment）`）
+  - 第 126 行：崩溃点 `Command encoder released without endEncoding`
+  - exit=134（SIGABRT）
+- **桥接中间产物**: `docs/evidence/P4.5.8-celeste-temp-files/metal_shader_bridge_ltuFJC/`（VS）和 `metal_shader_bridge_Q067Fl/`（FS）
+  - 各包含 `.glsl` `.spv` `.hlsl` `.dxil` 完整链路中间文件
+  - 可通过 `metal-shaderconverter shader.dxil -o test.metallib` + `strings test.metallib | grep user(` 验证语义
+- **查看命令**:
+  ```bash
+  cat docs/evidence/P4.5.8-celeste-endencoding-error.log
+  strings /tmp/metal_shader_bridge_*/shader.hlsl | grep "TEXCOORD\|COLOR"
+  ```
