@@ -1,0 +1,18 @@
+{
+  "task": "P4.5.2",
+  "name": "着色器编译验收: ≥5 测试着色器 Path A 编译通过",
+  "timestamp": "2026-06-14T15:05:00+08:00",
+  "test_results": {
+    "test_real_vs_path_a.sh": "11/11 Path A PASS (vertex shaders)",
+    "test_real_fs_path_a.sh": "11/11 Path A PASS (fragment shaders)",
+    "total_path_a_shaders": 22,
+    "requirement": "≥5",
+    "status": "PASS"
+  },
+  "verification": {
+    "path_a_pass": 22,
+    "path_a_fail": 0,
+    "msl_skipped": 14,
+    "note": "仅统计 Path A (Slang→DXIL→MSC→metallib) 编译通过数，MSL 跳过项需完整 Xcode"
+  }
+}
