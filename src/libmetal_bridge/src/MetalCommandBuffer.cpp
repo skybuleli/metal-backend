@@ -156,7 +156,246 @@ metal_result metal_begin_render_encoding(
     handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
     handle->owner = command_buffer;
     handle->encoder = encoder;
-    handle->color_target = color_target;
+    handle->color_targets[0] = color_target;
+    handle->color_target_count = 1;
+    for (uint32_t i = 1; i < 8; i++)
+        handle->color_targets[i] = nullptr;
+    handle->depth_stencil_target = nullptr;
+
+    *out_render_encoder = handle;
+    pool->release();
+    return METAL_RESULT_OK;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_begin_render_encoding_with_targets(
+    metal_command_buffer* command_buffer,
+    metal_render_pipeline* pipeline,
+    const metal_color_attachment_descriptor* color_attachments,
+    uint32_t color_attachment_count,
+    const metal_depth_stencil_attachment_descriptor* depth_stencil,
+    metal_render_encoder** out_render_encoder)
+{
+    if (command_buffer == nullptr ||
+        pipeline == nullptr ||
+        out_render_encoder == nullptr ||
+        command_buffer->command_buffer == nullptr ||
+        pipeline->pipeline_state == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    // 校验颜色附件数
+    if (color_attachment_count > 8)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    // color_attachments 可以为 nullptr（当 count==0 时），但 count>0 时必须提供
+    if (color_attachment_count > 0 && color_attachments == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::RenderPassDescriptor* pass_desc = MTL::RenderPassDescriptor::alloc()->init();
+
+    // ── 配置颜色附件 ──
+    for (uint32_t i = 0; i < color_attachment_count; i++)
+    {
+        const metal_color_attachment_descriptor& src = color_attachments[i];
+
+        if (src.texture == nullptr || src.texture->texture == nullptr)
+        {
+            // 跳过空的颜色附件槽位
+            continue;
+        }
+
+        MTL::RenderPassColorAttachmentDescriptor* attachment =
+            pass_desc->colorAttachments()->object(i);
+        attachment->setTexture(src.texture->texture);
+        attachment->setLevel(src.level);
+        attachment->setSlice(src.slice);
+
+        // 加载动作
+        switch (src.load_action)
+        {
+        case METAL_LOAD_ACTION_DONT_CARE:
+            attachment->setLoadAction(MTL::LoadActionDontCare);
+            break;
+        case METAL_LOAD_ACTION_LOAD:
+            attachment->setLoadAction(MTL::LoadActionLoad);
+            break;
+        case METAL_LOAD_ACTION_CLEAR:
+            attachment->setLoadAction(MTL::LoadActionClear);
+            attachment->setClearColor(MTL::ClearColor(
+                src.clear_color.red,
+                src.clear_color.green,
+                src.clear_color.blue,
+                src.clear_color.alpha));
+            break;
+        }
+
+        // 存储动作
+        switch (src.store_action)
+        {
+        case METAL_STORE_ACTION_DONT_CARE:
+            attachment->setStoreAction(MTL::StoreActionDontCare);
+            break;
+        case METAL_STORE_ACTION_STORE:
+            attachment->setStoreAction(MTL::StoreActionStore);
+            break;
+        case METAL_STORE_ACTION_MULTISAMPLE_RESOLVE:
+            attachment->setStoreAction(MTL::StoreActionMultisampleResolve);
+            break;
+        }
+    }
+
+    // ── 配置深度/模板附件 ──
+    if (depth_stencil != nullptr && depth_stencil->texture != nullptr &&
+        depth_stencil->texture->texture != nullptr)
+    {
+        const metal_depth_stencil_attachment_descriptor& ds = *depth_stencil;
+
+        // 判断是否为纯深度格式（不含模板）
+        metal_pixel_format_info fmt_info = metal_pixel_format_get_info(ds.texture->pixel_format);
+        bool has_stencil = !fmt_info.is_depth;
+        // 如果 is_depth 为 true 但格式名包含 "Stencil" 或 "S8"，也有模板
+        // 安全做法：检查像素格式本身
+        if (ds.texture->pixel_format == METAL_PIXEL_FORMAT_D24_UNORM_S8_UINT ||
+            ds.texture->pixel_format == METAL_PIXEL_FORMAT_D32_FLOAT_S8_UINT)
+        {
+            has_stencil = true;
+        }
+
+        // 深度附件
+        MTL::RenderPassDepthAttachmentDescriptor* depth_attach =
+            pass_desc->depthAttachment();
+        depth_attach->setTexture(ds.texture->texture);
+        depth_attach->setLevel(ds.level);
+        depth_attach->setSlice(ds.slice);
+
+        switch (ds.depth_load_action)
+        {
+        case METAL_LOAD_ACTION_DONT_CARE:
+            depth_attach->setLoadAction(MTL::LoadActionDontCare);
+            break;
+        case METAL_LOAD_ACTION_LOAD:
+            depth_attach->setLoadAction(MTL::LoadActionLoad);
+            break;
+        case METAL_LOAD_ACTION_CLEAR:
+            depth_attach->setLoadAction(MTL::LoadActionClear);
+            depth_attach->setClearDepth(ds.clear_value.depth);
+            break;
+        }
+
+        switch (ds.depth_store_action)
+        {
+        case METAL_STORE_ACTION_DONT_CARE:
+            depth_attach->setStoreAction(MTL::StoreActionDontCare);
+            break;
+        case METAL_STORE_ACTION_STORE:
+            depth_attach->setStoreAction(MTL::StoreActionStore);
+            break;
+        default:
+            depth_attach->setStoreAction(MTL::StoreActionDontCare);
+            break;
+        }
+
+        // 模板附件（仅当纹理包含模板分量时）
+        if (has_stencil)
+        {
+            MTL::RenderPassStencilAttachmentDescriptor* stencil_attach =
+                pass_desc->stencilAttachment();
+            stencil_attach->setTexture(ds.texture->texture);
+            stencil_attach->setLevel(ds.level);
+            stencil_attach->setSlice(ds.slice);
+
+            switch (ds.stencil_load_action)
+            {
+            case METAL_LOAD_ACTION_DONT_CARE:
+                stencil_attach->setLoadAction(MTL::LoadActionDontCare);
+                break;
+            case METAL_LOAD_ACTION_LOAD:
+                stencil_attach->setLoadAction(MTL::LoadActionLoad);
+                break;
+            case METAL_LOAD_ACTION_CLEAR:
+                stencil_attach->setLoadAction(MTL::LoadActionClear);
+                stencil_attach->setClearStencil(ds.clear_value.stencil);
+                break;
+            }
+
+            switch (ds.stencil_store_action)
+            {
+            case METAL_STORE_ACTION_DONT_CARE:
+                stencil_attach->setStoreAction(MTL::StoreActionDontCare);
+                break;
+            case METAL_STORE_ACTION_STORE:
+                stencil_attach->setStoreAction(MTL::StoreActionStore);
+                break;
+            default:
+                stencil_attach->setStoreAction(MTL::StoreActionDontCare);
+                break;
+            }
+        }
+    }
+
+    // ── 创建编码器 ──
+    MTL::RenderCommandEncoder* encoder =
+        command_buffer->command_buffer->renderCommandEncoder(pass_desc);
+    pass_desc->release();
+
+    if (encoder == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    encoder->setRenderPipelineState(pipeline->pipeline_state);
+
+    metal_render_encoder* handle = new (std::nothrow) metal_render_encoder();
+    if (handle == nullptr)
+    {
+        encoder->endEncoding();
+        encoder->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    handle->base.type = METAL_HANDLE_TYPE_RENDER_ENCODER;
+    handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    handle->owner = command_buffer;
+    handle->encoder = encoder;
+    handle->color_target_count = color_attachment_count;
+
+    // 保留颜色附件纹理引用
+    for (uint32_t i = 0; i < color_attachment_count && i < 8; i++)
+    {
+        if (color_attachments[i].texture != nullptr &&
+            color_attachments[i].texture->texture != nullptr)
+        {
+            handle->color_targets[i] = color_attachments[i].texture->texture;
+            handle->color_targets[i]->retain();
+        }
+        else
+        {
+            handle->color_targets[i] = nullptr;
+        }
+    }
+    for (uint32_t i = color_attachment_count; i < 8; i++)
+        handle->color_targets[i] = nullptr;
+
+    // 保留深度/模板纹理引用
+    if (depth_stencil != nullptr && depth_stencil->texture != nullptr &&
+        depth_stencil->texture->texture != nullptr)
+    {
+        handle->depth_stencil_target = depth_stencil->texture->texture;
+        handle->depth_stencil_target->retain();
+    }
+    else
+    {
+        handle->depth_stencil_target = nullptr;
+    }
 
     *out_render_encoder = handle;
     pool->release();

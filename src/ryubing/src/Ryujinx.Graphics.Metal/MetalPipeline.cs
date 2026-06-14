@@ -24,6 +24,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalBufferBinding[] _uniformBuffers;
         private readonly MetalStorageBufferBinding[] _storageBuffers;
         private readonly MetalTextureBinding[,] _textureBindings;
+        private readonly MetalRenderTargetState _renderTargets;
         private PrimitiveTopology _primitiveTopology;
         private MetalIndexBufferBinding _indexBuffer;
         private int _vertexAttribCount;
@@ -45,6 +46,7 @@ namespace Ryujinx.Graphics.Metal
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
             _storageBuffers = new MetalStorageBufferBinding[MaxStorageBufferBindings];
             _textureBindings = new MetalTextureBinding[MaxShaderStages, MaxTextureBindings];
+            _renderTargets = new MetalRenderTargetState();
             _primitiveTopology = PrimitiveTopology.Triangles;
             _indexBuffer = default;
         }
@@ -406,6 +408,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetRenderTargets(Span<ITexture> colors, ITexture depthStencil)
         {
+            _renderTargets.Set(colors, depthStencil);
         }
 
         public void SetScissors(ReadOnlySpan<Rectangle<int>> regions)
@@ -664,7 +667,35 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
-                result = MetalNative.BeginRenderEncoding(commandBuffer, _pipelineHandle, out renderEncoder);
+                if (_renderTargets.HasTargets)
+                {
+                    // 使用真实的渲染目标创建 render encoding
+                    MetalColorAttachmentDescriptor[] colorDescs = _renderTargets.BuildColorDescriptors();
+                    uint colorCount = (uint)_renderTargets.ColorCount;
+
+                    if (_renderTargets.HasDepthStencil)
+                    {
+                        MetalDepthStencilAttachmentDescriptor dsDesc = _renderTargets.BuildDepthStencilDescriptor();
+                        result = MetalNative.BeginRenderEncodingWithTargets(
+                            commandBuffer, _pipelineHandle,
+                            colorDescs, colorCount,
+                            dsDesc, out renderEncoder);
+                    }
+                    else
+                    {
+                        result = MetalNative.BeginRenderEncodingWithTargets(
+                            commandBuffer, _pipelineHandle,
+                            colorDescs, colorCount,
+                            out renderEncoder);
+                    }
+                }
+                else
+                {
+                    // 无渲染目标时使用内部临时 1x1 附件（P4.3.6 回退路径）
+                    result = MetalNative.BeginRenderEncoding(
+                        commandBuffer, _pipelineHandle, out renderEncoder);
+                }
+
                 if (result != MetalResult.Ok || renderEncoder == nint.Zero)
                 {
                     ThrowIfFailed(result, nameof(MetalNative.BeginRenderEncoding));
@@ -1099,6 +1130,121 @@ namespace Ryujinx.Graphics.Metal
             public ulong Offset;
             public ulong Size;
             public IndexType Type;
+        }
+
+        /// <summary>
+        /// 渲染目标状态缓存（P4.3.7）。
+        /// 由 SetRenderTargets 更新，ExecuteRenderDraw 读取以创建 MTLRenderPassDescriptor。
+        /// </summary>
+        private sealed class MetalRenderTargetState
+        {
+            private const int MaxColorAttachments = 8;
+
+            private readonly nint[] _colorHandles;
+            private int _colorCount;
+            private nint _depthStencilHandle;
+
+            public int ColorCount => _colorCount;
+            public bool HasTargets => _colorCount > 0;
+            public bool HasDepthStencil => _depthStencilHandle != nint.Zero;
+
+            public MetalRenderTargetState()
+            {
+                _colorHandles = new nint[MaxColorAttachments];
+                _colorCount = 0;
+                _depthStencilHandle = nint.Zero;
+            }
+
+            /// <summary>
+            /// 从 GAL 接口更新渲染目标状态。
+            /// 提取 ITexture 中的原生 Metal 纹理句柄以供后续 P/Invoke 使用。
+            /// </summary>
+            public void Set(Span<ITexture> colors, ITexture depthStencil)
+            {
+                int count = Math.Min(colors.Length, MaxColorAttachments);
+                int validCount = 0;
+
+                for (int i = 0; i < count; i++)
+                {
+                    ITexture texture = colors[i];
+                    if (texture != null && MetalTexture.TryGetNativeHandle(texture, out nint handle))
+                    {
+                        _colorHandles[i] = handle;
+                        validCount++;
+                    }
+                    else
+                    {
+                        _colorHandles[i] = nint.Zero;
+                    }
+                }
+
+                // 清空剩余的槽位
+                for (int i = count; i < MaxColorAttachments; i++)
+                {
+                    _colorHandles[i] = nint.Zero;
+                }
+
+                _colorCount = validCount;
+
+                // 解析深度/模板纹理句柄
+                if (depthStencil != null && MetalTexture.TryGetNativeHandle(depthStencil, out nint dsHandle))
+                {
+                    _depthStencilHandle = dsHandle;
+                }
+                else
+                {
+                    _depthStencilHandle = nint.Zero;
+                }
+            }
+
+            /// <summary>
+            /// 构建 C ABI 颜色附件描述符数组。
+            /// 默认使用 LoadAction::Load + StoreAction::Store 保留已有内容。
+            /// </summary>
+            public MetalColorAttachmentDescriptor[] BuildColorDescriptors()
+            {
+                var descriptors = new MetalColorAttachmentDescriptor[MaxColorAttachments];
+
+                for (int i = 0; i < MaxColorAttachments; i++)
+                {
+                    if (_colorHandles[i] != nint.Zero)
+                    {
+                        descriptors[i] = new MetalColorAttachmentDescriptor
+                        {
+                            Texture = _colorHandles[i],
+                            Level = 0,
+                            Slice = 0,
+                            LoadAction = MetalLoadAction.Load,
+                            StoreAction = MetalStoreAction.Store,
+                            ClearColor = default,
+                        };
+                    }
+                    else
+                    {
+                        descriptors[i] = default;
+                    }
+                }
+
+                return descriptors;
+            }
+
+            /// <summary>
+            /// 构建 C ABI 深度/模板附件描述符。
+            /// </summary>
+            public MetalDepthStencilAttachmentDescriptor BuildDepthStencilDescriptor()
+            {
+                return new MetalDepthStencilAttachmentDescriptor
+                {
+                    Texture = _depthStencilHandle,
+                    Level = 0,
+                    Slice = 0,
+                    DepthLoadAction = MetalLoadAction.Load,
+                    DepthStoreAction = MetalStoreAction.Store,
+                    StencilLoadAction = MetalLoadAction.Load,
+                    StencilStoreAction = MetalStoreAction.Store,
+                    ClearValue = default,
+                };
+            }
         }
     }
 }

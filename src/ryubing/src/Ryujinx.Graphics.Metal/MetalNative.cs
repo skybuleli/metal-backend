@@ -161,6 +161,51 @@ namespace Ryujinx.Graphics.Metal
             nint queue,
             out nint commandBuffer);
 
+        [DllImport(LibraryName, EntryPoint = "metal_begin_render_encoding_with_targets")]
+        internal static extern MetalResult BeginRenderEncodingWithTargets(
+            nint commandBuffer,
+            nint pipeline,
+            [MarshalAs(UnmanagedType.LPArray, SizeConst = 8)] MetalColorAttachmentDescriptor[] colorAttachments,
+            uint colorAttachmentCount,
+            nint depthStencilPtr,
+            out nint renderEncoder);
+
+        // BeginRenderEncodingWithTargets 的便捷重载：不带深度/模板附件
+        internal static MetalResult BeginRenderEncodingWithTargets(
+            nint commandBuffer,
+            nint pipeline,
+            MetalColorAttachmentDescriptor[] colorAttachments,
+            uint colorAttachmentCount,
+            out nint renderEncoder)
+        {
+            return BeginRenderEncodingWithTargets(
+                commandBuffer, pipeline, colorAttachments, colorAttachmentCount,
+                nint.Zero, out renderEncoder);
+        }
+
+        // BeginRenderEncodingWithTargets 的便捷重载：带深度/模板附件
+        internal static MetalResult BeginRenderEncodingWithTargets(
+            nint commandBuffer,
+            nint pipeline,
+            MetalColorAttachmentDescriptor[] colorAttachments,
+            uint colorAttachmentCount,
+            in MetalDepthStencilAttachmentDescriptor depthStencil,
+            out nint renderEncoder)
+        {
+            // 固定 depthStencil 结构以避免 GC 移动引用类型参数
+            GCHandle dsHandle = GCHandle.Alloc(depthStencil, GCHandleType.Pinned);
+            try
+            {
+                return BeginRenderEncodingWithTargets(
+                    commandBuffer, pipeline, colorAttachments, colorAttachmentCount,
+                    dsHandle.AddrOfPinnedObject(), out renderEncoder);
+            }
+            finally
+            {
+                dsHandle.Free();
+            }
+        }
+
         [DllImport(LibraryName, EntryPoint = "metal_begin_render_encoding")]
         internal static extern MetalResult BeginRenderEncoding(
             nint commandBuffer,
@@ -604,5 +649,64 @@ namespace Ryujinx.Graphics.Metal
         public bool NormalizedCoordinates;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
         public uint[] Reserved;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // 渲染目标附件类型（P4.3.7）
+    // ════════════════════════════════════════════════════════════════════
+
+    internal enum MetalLoadAction : uint
+    {
+        DontCare = 0,
+        Load = 1,
+        Clear = 2,
+    }
+
+    internal enum MetalStoreAction : uint
+    {
+        DontCare = 0,
+        Store = 1,
+        MultisampleResolve = 2,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalClearColor
+    {
+        public double Red;
+        public double Green;
+        public double Blue;
+        public double Alpha;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalClearDepthStencil
+    {
+        public double Depth;
+        public uint Stencil;
+        public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalColorAttachmentDescriptor
+    {
+        public nint Texture;
+        public uint Level;
+        public uint Slice;
+        public MetalLoadAction LoadAction;
+        public MetalStoreAction StoreAction;
+        public MetalClearColor ClearColor;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalDepthStencilAttachmentDescriptor
+    {
+        public nint Texture;
+        public uint Level;
+        public uint Slice;
+        public MetalLoadAction DepthLoadAction;
+        public MetalStoreAction DepthStoreAction;
+        public MetalLoadAction StencilLoadAction;
+        public MetalStoreAction StencilStoreAction;
+        public MetalClearDepthStencil ClearValue;
     }
 }

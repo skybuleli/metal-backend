@@ -1,0 +1,38 @@
+{
+  "task_id": "P4.3.7",
+  "task_name": "SetRenderTargets: MTLRenderPassDescriptor",
+  "status": "done",
+  "timestamp": "2026-06-14T10:46:00+08:00",
+  "summary": "实现真实渲染目标 MTLRenderPassDescriptor 创建，替换 P4.3.6 临时 1x1 颜色附件",
+  "changes": {
+    "c++": [
+      "src/libmetal_bridge/include/metal_bridge.h — 新增 metal_load_action/metal_store_action 枚举、metal_clear_color/metal_clear_depth_stencil 结构体、metal_color_attachment_descriptor/metal_depth_stencil_attachment_descriptor 描述符、metal_begin_render_encoding_with_targets C ABI",
+      "src/libmetal_bridge/include/metal_internal.h — 更新 metal_render_encoder 为 color_targets[8] 数组 + depth_stencil_target + color_target_count",
+      "src/libmetal_bridge/src/MetalCommandBuffer.cpp — 实现 metal_begin_render_encoding_with_targets：创建 MTLRenderPassDescriptor，配置多颜色附件 load/store 动作、深度/模板附件配置、纹理引用保留",
+      "src/libmetal_bridge/src/MetalDevice.cpp — 更新 metal_release METAL_HANDLE_TYPE_RENDER_ENCODER 分支，释放所有颜色附件和深度/模板附件纹理"
+    ],
+    "c#": [
+      "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs — 新增 MetalLoadAction/MetalStoreAction 枚举、MetalClearColor/MetalClearDepthStencil/MetalColorAttachmentDescriptor/MetalDepthStencilAttachmentDescriptor 结构体、BeginRenderEncodingWithTargets P/Invoke（含深度/无深度两个便捷重载）",
+      "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs — 实现 SetRenderTargets 方法（提取 ITexture 原生句柄并缓存）、新增 MetalRenderTargetState 内部类（状态管理/BuildColorDescriptors/BuildDepthStencilDescriptor）、修改 ExecuteRenderDraw 在有渲染目标时使用 BeginRenderEncodingWithTargets 创建真实 MTLRenderPassDescriptor"
+    ]
+  },
+  "build_results": {
+    "libmetal_bridge": {
+      "status": "pass",
+      "warnings": 0,
+      "errors": 0
+    },
+    "ryujinx_graphics_metal": {
+      "status": "pass",
+      "warnings": 109,
+      "errors": 0,
+      "notes": "109 个 CA1416 平台兼容性警告（macOS-only Metal API 在跨平台 .NET 项目中的正常预期）"
+    }
+  },
+  "design_notes": {
+    "color_attachments": "最多 8 个颜色附件，与 Metal 硬件限制对齐（METAL_MAX_COLOR_ATTACHMENTS = 8）",
+    "depth_stencil_detection": "通过 pixel_format 枚举判断是否含模板分量（D24_UNORM_S8_UINT / D32_FLOAT_S8_UINT）",
+    "backward_compat": "保留 metal_begin_render_encoding 作为回退路径，当 SetRenderTargets 未被调用时使用临时 1x1 附件",
+    "load_store_defaults": "C# 侧默认 LoadAction::Load + StoreAction::Store，保留已有渲染内容"
+  }
+}

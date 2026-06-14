@@ -138,13 +138,19 @@ struct metal_command_buffer
 static_assert(offsetof(struct metal_command_buffer, command_buffer) >= sizeof(metal_handle_base),
     "metal_command_buffer.base 必须在最前面");
 
-/// metal_render_encoder 内部实现（P4.3.6）
+/// metal_render_encoder 内部实现（P4.3.6 + P4.3.7）
+///
+/// P4.3.6：内部创建临时 1x1 颜色附件，color_target_count=1 且 color_targets[0] 为临时纹理。
+/// P4.3.7：通过 metal_begin_render_encoding_with_targets 传入真实渲染目标纹理，
+///         color_target_count 为实际颜色附件数，color_targets 指向真实纹理。
 struct metal_render_encoder
 {
     METAL_HANDLE_HEADER
     metal_command_buffer* owner;              // 所属命令缓冲区
     MTL::RenderCommandEncoder* encoder;       // Metal 渲染编码器
-    MTL::Texture* color_target;               // 当前最小链路使用的临时颜色附件
+    MTL::Texture* color_targets[8];           // 颜色附件纹理（最多 8 个）
+    uint32_t color_target_count;              // 实际颜色附件数
+    MTL::Texture* depth_stencil_target;       // 深度/模板附件纹理（nullptr 表示无）
 };
 
 static_assert(offsetof(struct metal_render_encoder, encoder) >= sizeof(metal_handle_base),

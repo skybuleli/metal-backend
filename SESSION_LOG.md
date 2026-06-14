@@ -22,8 +22,8 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 4 — 核心 Metal 后端实现
-- 当前进度：77/144 任务完成
-- 下一任务：P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor
+- 当前进度：78/144 任务完成
+- 下一任务：P4.3.8 — ClearRenderTarget: 清屏操作
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
@@ -74,3 +74,23 @@
   - 当前 render encoder 使用内部临时 `1x1` 颜色附件，仅用于打通 `P4.3.6` 的真实 draw 路径
   - 下一任务 `P4.3.7` 将把该临时附件替换为 `SetRenderTargets` 驱动的真实 `MTLRenderPassDescriptor`
 - **下一任务**: P4.3.7 — SetRenderTargets: MTLRenderPassDescriptor
+
+### 2026-06-14 | P4.3.7 SetRenderTargets — MTLRenderPassDescriptor | ✅ 完成
+
+- **Agent**: Qoder
+- **结果**: ✅ 实现真实渲染目标 MTLRenderPassDescriptor 创建，替换 P4.3.6 临时 1x1 颜色附件
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `metal_load_action`/`metal_store_action` 枚举、`metal_clear_color`/`metal_clear_depth_stencil` 结构体、`metal_color_attachment_descriptor`/`metal_depth_stencil_attachment_descriptor` 描述符、`metal_begin_render_encoding_with_targets` C ABI
+  - `src/libmetal_bridge/include/metal_internal.h`：更新 `metal_render_encoder` 为 `color_targets[8]` 数组 + `depth_stencil_target` + `color_target_count`
+  - `src/libmetal_bridge/src/MetalCommandBuffer.cpp`：实现 `metal_begin_render_encoding_with_targets`（MTLRenderPassDescriptor 配置多颜色附件 + 深度/模板附件 + 纹理引用保留）
+  - `src/libmetal_bridge/src/MetalDevice.cpp`：更新 `metal_release` METAL_HANDLE_TYPE_RENDER_ENCODER 释放所有颜色/深度附件
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：新增 P/Invoke 类型 + `BeginRenderEncodingWithTargets`（含深度/无深度两个便捷重载）
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：实现 `SetRenderTargets`、新增 `MetalRenderTargetState`、修改 `ExecuteRenderDraw` 路由
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build` ✅（0 警告，0 错误）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（109 个既有 CA1416 警告，0 错误）
+- **说明**:
+  - 最多 8 颜色附件，通过 `pixel_format` 判断深度/模板格式
+  - 保留 `metal_begin_render_encoding` 作为回退路径（无渲染目标时）
+  - 默认 `LoadAction::Load + StoreAction::Store` 保留已有渲染内容
+- **下一任务**: P4.3.8 — ClearRenderTarget: 清屏操作

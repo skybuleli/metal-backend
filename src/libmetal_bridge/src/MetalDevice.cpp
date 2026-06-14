@@ -408,10 +408,18 @@ void metal_release(void* handle)
             encoder->encoder->release();
             encoder->encoder = nullptr;
         }
-        if (encoder->color_target != nullptr)
+        for (uint32_t i = 0; i < encoder->color_target_count && i < 8; i++)
         {
-            encoder->color_target->release();
-            encoder->color_target = nullptr;
+            if (encoder->color_targets[i] != nullptr)
+            {
+                encoder->color_targets[i]->release();
+                encoder->color_targets[i] = nullptr;
+            }
+        }
+        if (encoder->depth_stencil_target != nullptr)
+        {
+            encoder->depth_stencil_target->release();
+            encoder->depth_stencil_target = nullptr;
         }
         delete encoder;
         break;

@@ -704,12 +704,91 @@ METAL_BRIDGE_EXPORT metal_result metal_begin_command_buffer(
     metal_queue* queue,
     metal_command_buffer** out_command_buffer);
 
+// ════════════════════════════════════════════════════════════════════
+// 渲染目标附件描述符（P4.3.7）
+// ════════════════════════════════════════════════════════════════════
+
+/// 加载动作
+typedef enum metal_load_action
+{
+    METAL_LOAD_ACTION_DONT_CARE = 0,
+    METAL_LOAD_ACTION_LOAD = 1,
+    METAL_LOAD_ACTION_CLEAR = 2,
+} metal_load_action;
+
+/// 存储动作
+typedef enum metal_store_action
+{
+    METAL_STORE_ACTION_DONT_CARE = 0,
+    METAL_STORE_ACTION_STORE = 1,
+    METAL_STORE_ACTION_MULTISAMPLE_RESOLVE = 2,
+} metal_store_action;
+
+/// 清除颜色（与 MTL::ClearColor 匹配，使用 double 分量）
+typedef struct metal_clear_color
+{
+    double red;
+    double green;
+    double blue;
+    double alpha;
+} metal_clear_color;
+
+/// 清除深度/模板值
+typedef struct metal_clear_depth_stencil
+{
+    double depth;
+    uint32_t stencil;
+    uint32_t reserved;
+} metal_clear_depth_stencil;
+
+/// 颜色附件描述符
+/// 传递给 metal_begin_render_encoding_with_targets 定义每个颜色附件的纹理与行为
+typedef struct metal_color_attachment_descriptor
+{
+    metal_texture* texture;           ///< 颜色附件纹理句柄
+    uint32_t level;                   ///< mip 层级
+    uint32_t slice;                   ///< 数组切片/cube面索引
+    metal_load_action load_action;    ///< 加载动作（DontCare/Load/Clear）
+    metal_store_action store_action;  ///< 存储动作（DontCare/Store）
+    metal_clear_color clear_color;    ///< 清除颜色（仅 load_action==CLEAR 时使用）
+} metal_color_attachment_descriptor;
+
+/// 深度/模板附件描述符
+typedef struct metal_depth_stencil_attachment_descriptor
+{
+    metal_texture* texture;                  ///< 深度/模板纹理句柄（nullptr 表示无）
+    uint32_t level;                          ///< mip 层级
+    uint32_t slice;                          ///< 数组切片
+    metal_load_action depth_load_action;     ///< 深度加载动作
+    metal_store_action depth_store_action;   ///< 深度存储动作
+    metal_load_action stencil_load_action;   ///< 模板加载动作
+    metal_store_action stencil_store_action; ///< 模板存储动作
+    metal_clear_depth_stencil clear_value;   ///< 清除值
+} metal_depth_stencil_attachment_descriptor;
+
 /// 基于内部临时 1x1 颜色附件开始一次最小 render encoding。
 /// 当前仅用于 P4.3.6 打通 Draw/DrawIndexed 链路；
 /// 后续 P4.3.7 将由真实的 SetRenderTargets 提供 MTLRenderPassDescriptor。
 METAL_BRIDGE_EXPORT metal_result metal_begin_render_encoding(
     metal_command_buffer* command_buffer,
     metal_render_pipeline* pipeline,
+    metal_render_encoder** out_render_encoder);
+
+/// 使用指定的渲染目标开始 render encoding（P4.3.7）
+/// 替代 metal_begin_render_encoding 的临时 1x1 附件，创建真实的
+/// MTLRenderPassDescriptor 并绑定颜色附件和可选的深度/模板附件。
+/// @param command_buffer       命令缓冲区句柄
+/// @param pipeline              渲染管线句柄
+/// @param color_attachments     颜色附件描述符数组
+/// @param color_attachment_count 颜色附件数（0 ~ METAL_MAX_COLOR_ATTACHMENTS）
+/// @param depth_stencil         深度/模板附件描述符（传 nullptr 表示无）
+/// @param out_render_encoder    输出：渲染编码器句柄
+METAL_BRIDGE_EXPORT metal_result metal_begin_render_encoding_with_targets(
+    metal_command_buffer* command_buffer,
+    metal_render_pipeline* pipeline,
+    const metal_color_attachment_descriptor* color_attachments,
+    uint32_t color_attachment_count,
+    const metal_depth_stencil_attachment_descriptor* depth_stencil,
     metal_render_encoder** out_render_encoder);
 
 METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_vertex_buffer(
