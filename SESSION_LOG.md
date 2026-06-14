@@ -310,3 +310,13 @@
   - `bash tools/test_real_fs_path_a.sh` → 11 Path A PASS
   - 覆盖 VS（位置/纹理/矩阵/分支/循环/位运算）和 FS（纹理/光照/MRT/丢弃/数学）特性
 - **状态摘要**: P4 进度 92/152 (60.5%)，下一任务 P4.5.3 资源生命周期验收
+
+---
+
+### 2026-06-14 15:10 — P4.5.3 资源生命周期验收: 100 次无泄漏
+- **结果**: ✅ test_lifecycle_100 5/5 用例 2110 断言全部通过 = 500 次创建→使用→销毁无泄漏
+- **变更**:
+  - `src/libmetal_bridge/tests/test_lifecycle_100.cpp` — 新增 100 次循环验收测试（Buffer map/get_info、Texture get_info/多格式、混合）
+  - `src/libmetal_bridge/CMakeLists.txt` — 注册 test_lifecycle_100 目标 + CTest
+  - `docs/evidence/P4.5.3-meta.json` — 证据文件
+- **状态摘要**: P4 进度 93/152 (61.2%)，下一任务 P4.5.4 基础 Draw 验收

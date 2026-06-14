@@ -1,14 +1,14 @@
-# 下一任务 — P4.5.4 基础 Draw 验收: Triangle + 纹理四边形绘制正确
+# 下一任务 — P4.5.5 管线状态验收: Blend/Depth/Stencil/Scissor 状态切换正确
 
-> 生成时间：2026-06-14 15:06:27
+> 生成时间：2026-06-14 15:09:21
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.5.4 |
-| 任务名称 | 基础 Draw 验收: Triangle + 纹理四边形绘制正确 |
+| 任务 ID | P4.5.5 |
+| 任务名称 | 管线状态验收: Blend/Depth/Stencil/Scissor 状态切换正确 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.5.4 → ✅
+- 更新 PROGRESS.md：P4.5.5 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

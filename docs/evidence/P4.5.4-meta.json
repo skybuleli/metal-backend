@@ -1,0 +1,24 @@
+{
+  "task": "P4.5.4",
+  "name": "基础 Draw 验收: Triangle + 纹理四边形绘制正确",
+  "timestamp": "2026-06-14T15:15:00+08:00",
+  "test_results": {
+    "d1_triangle": {
+      "demo": "src/demos/d1",
+      "compiler": "手写 MSL",
+      "output": "out/triangle.ppm (196623 bytes, 256×256 PPM)",
+      "status": "PASS"
+    },
+    "d2_textured_quad": {
+      "demo": "src/demos/d2",
+      "compiler": "Path A: Slang→DXIL→MSC→metallib",
+      "output": "src/demos/d2/out/textured_quad.ppm (196623 bytes, 256×256 PPM)",
+      "status": "PASS"
+    }
+  },
+  "verification": {
+    "d1_run": "d1_triangle: D1 离屏渲染完成: out/triangle.ppm",
+    "d2_build_run": "d2_textured_quad: D2 离屏渲染完成: out/textured_quad.ppm",
+    "file_format": "Netpbm image data, size = 256 x 256, rawbits, pixmap"
+  }
+}
