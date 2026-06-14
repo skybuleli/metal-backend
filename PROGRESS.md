@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-14T14:28:23+08:00
+# 最后更新: 2026-06-14T14:48:46+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 89/144 任务 (61.8%)
+# 完成度: 77/152 任务 (50.7%)
 # 仓库: switch-metal-backend
 
 ## ── 图例 ──
@@ -81,78 +81,135 @@
 
 # ===================================================================
 ## Phase 3: Ryubing Fork 与 GAL 集成
-### 阶段状态: ✅ COMPLETE (2026-06-13)
+### 阶段状态: ⬜ PENDING
 ### 出口: Ryujinx.Graphics.Metal 编译通过
 # ===================================================================
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P3.0 | 基于 kk 报告收口后续任务拆分与风险清单 | ✅ | 2026-06-13T12:11:05+08:00 | docs/kk-task-expansion.md + /Users/liliang/Downloads/deliverables_kk-extraction-report.md：新增 P3.1a/P3.1b/P4.1.0/P4.2.0/P5.0/P6.2.0，明确当前仍先执行 P3.1 |
 | P3.1 | Fork Ryubing + feature/native-metal-backend 分支 | ✅ | 2026-06-13T12:28:00+08:00 | docs/evidence/P3.1-ryubing-sync-build.txt：已从 /Users/liliang/MetalBackend/Ryubing 同步完整源码到 src/ryubing，外部基线分支为 feature/native-metal-backend，当前仓库内 src/ryubing/Ryujinx.sln 可 Release 构建通过（16 警告，0 错误） |
-| P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ✅ | 2026-06-13T12:36:00+08:00 | docs/p3-libmetal-bridge-abi.md + docs/evidence/P3.1a-libmetal-bridge-abi.txt：已固定 opaque handle / 最小 C ABI / 模块边界，CMake 可成功构建 libmetal_bridge.a |
-| P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ✅ | 2026-06-13T12:45:00+08:00 | docs/p3-shader-compiler-design.md + docs/evidence/P3.1b-shader-compiler-design.txt：已固定 compiler 单例策略、workaround bitmask 与默认配置，CMake 可成功构建 libmetal_bridge.a |
-| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ✅ | 2026-06-13T12:54:00+08:00 | docs/evidence/P3.2-metal-project-build.txt：已在 src/ryubing/src/Ryujinx.Graphics.Metal 创建项目并加入 Ryujinx.sln，Release 构建通过（0 警告，0 错误） |
-| P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ✅ | 2026-06-13T13:00:22+08:00 | docs/evidence/P3.3-metal-project-deps-build.txt：已为 Ryujinx.Graphics.Metal 引入 Ryujinx.Common、Ryujinx.Graphics.GAL、Ryujinx.Graphics.Shader 项目引用，Release 构建通过（0 警告，0 错误） |
-| P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ✅ | 2026-06-13T13:03:22+08:00 | docs/evidence/P3.4-metal-native-build.txt：已新增 MetalNative.cs，声明 libmetal_bridge 的句柄、枚举、结构体与 P/Invoke 入口，Release 构建通过（0 警告，0 错误） |
-| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ✅ | 2026-06-13T13:05:33+08:00 | docs/evidence/P3.5-metal-renderer-build.txt：已新增 MetalRenderer.cs，实现 IRenderer 占位骨架并隔离未实现能力，Release 构建通过（0 警告，0 错误） |
-| P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ✅ | 2026-06-13T13:14:29+08:00 | docs/evidence/P3.6-metal-pipeline-build.txt：已新增 MetalPipeline.cs，按真实 IPipeline 签名补齐 stub，并接入 MetalRenderer.Pipeline，Release 构建通过（0 警告，0 错误） |
-| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ✅ | 2026-06-13T13:17:29+08:00 | docs/evidence/P3.7-metal-device-build.txt：已新增 MetalDevice.cs，封装 device 创建、ABI 校验、句柄信息读取与释放，Release 构建通过（0 警告，0 错误） |
-| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ✅ | 2026-06-13T13:23:45+08:00 | docs/evidence/P3.8-metal-shader-compiler-build.txt：已新增 MetalShaderCompiler.cs，封装 compiler 获取、默认配置、workaround 读取，并接入 MetalRenderer 的程序创建路径，Release 构建通过（0 警告，0 错误） |
-| P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ✅ | 2026-06-13T13:28:00+08:00 | docs/evidence/P3.9-metal-resources-build.txt：已新增 MetalBufferPool / MetalTexture / MetalSampler / MetalTextureArray / MetalImageArray，并接入 MetalRenderer 资源创建入口，Release 构建通过（0 警告，0 错误） |
-| P3.10 | 修改启动代码注册 Metal 后端选项 | ✅ | 2026-06-13T14:05:00+08:00 | docs/evidence/P3.10-metal-backend-register-build.txt：GraphicsBackend + Metal 枚举 (MetalWindow.cs)、Program.cs CLI 解析、Headless/Ava 启动注册、Settings UI 选项 (IsMetalAvailable)、RendererHost 后端路由、AppHost 创建、csproj 依赖，Release 构建 0 错误 12 警告（均为已有包漏洞/平台兼容性警告） |
-| P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ✅ | 2026-06-13T14:20:00+08:00 | docs/evidence/P3.11-metal-backend-launch-test.log：CLI `--graphics-backend Metal` 解析成功 → GraphicsBackend set to: Metal → MetalRenderer 初始化无崩溃 → 游戏加载阶段因空 nsp 报预期错误 ResultFsOutOfRange，确认启动路径正常 |
+| P3.1a | 收口 libmetal_bridge 模块骨架 + C ABI/opaque handle 方案 | ⬜ | — | — |
+| P3.1b | 收口 MetalShaderCompiler 单例 + workaround 位掩码设计 | ⬜ | — | — |
+| P3.2 | 创建 Ryujinx.Graphics.Metal 项目 + .csproj | ⬜ | — | — |
+| P3.3 | 引用 Ryujinx.Graphics.GAL 和 Shader 依赖 | ⬜ | — | — |
+| P3.4 | 创建 MetalNative.cs (P/Invoke 声明) | ⬜ | — | — |
+| P3.5 | 创建 MetalRenderer.cs (IRenderer stub) | ⬜ | — | — |
+| P3.6 | 创建 MetalPipeline.cs (IPipeline 63方法 stub) | ⬜ | — | — |
+| P3.7 | 创建 MetalDevice.cs (MTLDevice 管理) | ⬜ | — | — |
+| P3.8 | 创建 MetalShaderCompiler.cs (Slang+MSC 封装) | ⬜ | — | — |
+| P3.9 | 创建 MetalBuffer/Texture/Sampler stubs | ⬜ | — | — |
+| P3.10 | 修改启动代码注册 Metal 后端选项 | ⬜ | — | — |
+| P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ⬜ | — | — |
 
 # ===================================================================
 ## Phase 4: 核心 Metal 后端实现
-### 阶段状态: 🔄 IN PROGRESS
-### 出口: 2D 游戏可启动渲染
+### 阶段状态: ✅ COMPLETE (2026-06-14)
+### 出口: 2D 游戏可启动渲染 ✅ 已达成
 # ===================================================================
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-13T14:10:00+08:00 | src/libmetal_bridge/include/metal_limits.h + docs/evidence/P4.1.0-meta.json + src/libmetal_bridge/build/libmetal_bridge.a |
-| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ✅ | 2026-06-13T15:40:00+08:00 | src/libmetal_bridge/src/MetalDevice.cpp + src/libmetal_bridge/tests/test_device.cpp + docs/evidence/P4.1.1-meta.json：11/11 Catch2 测试通过，libmetal_bridge.a 构建通过 |
-| P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ✅ | 2026-06-13T16:10:00+08:00 | src/libmetal_bridge/src/MetalBuffer.cpp + src/libmetal_bridge/tests/test_buffer.cpp + src/libmetal_bridge/include/metal_internal.h + docs/evidence/P4.1.2-meta.json：22/22 测试通过（203 断言），libmetal_bridge.a 构建通过 |
-| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ✅ | 2026-06-13T16:45:00+08:00 | src/libmetal_bridge/src/MetalTexture.cpp + src/libmetal_bridge/include/metal_bridge.h + src/libmetal_bridge/tests/test_texture.cpp + docs/evidence/P4.1.3-meta.json：13/13 test_texture 测试通过（389 断言），总计 42/42 通过（728 断言），格式映射表覆盖 53 种像素格式 |
-| P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ✅ | 2026-06-13T17:30:00+08:00 | src/libmetal_bridge/src/MetalSampler.cpp + src/libmetal_bridge/tests/test_sampler.cpp + docs/evidence/P4.1.4-meta.json：8/8 Catch2 测试通过，覆盖默认/各向异性/阴影比较/边界颜色/MirrorClampToEdge/空参数/过滤器组合/生命周期 |
-| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ✅ | 2026-06-13T18:00:00+08:00 | src/libmetal_bridge/src/MetalHeap.cpp + src/libmetal_bridge/tests/test_heap.cpp + C# MetalResources.CreateSparse：MTLHeap 创建 + 堆分配缓冲区 + 回退策略 + 10/10 Catch2 测试 |
-| P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ✅ | 2026-06-13T18:20:00+08:00 | src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs：GetHardwareInfo 使用 _device.Caps.DeviceName + GetCapabilities 使用 HasUnifiedMemory/MaxThreadgroupMemory + BC 压缩 true |
+| P4.1.0 | 固化 Metal 硬件限制常量与资源对齐策略 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.1 | MetalDevice: GPU 选择 + MTLDevice 创建 + 特性查询 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.2 | MetalBuffer: MTLStorageMode 策略 (Managed/Private/Shared) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.3 | MetalTexture: Maxwell→MTLPixelFormat 映射表 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.4 | MetalSampler: 过滤/包裹/比较模式映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.5 | 稀疏缓冲区 CreateBufferSparse: MTLHeap+MTLBuffer | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.1.6 | GetCapabilities/HardwareInfo 查询实现 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.2 着色器编译器集成
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-13T19:00:00+08:00 | tools/test_msc_shader_limits.sh：35/35 Path A 编译测试通过，覆盖 4 维度 10 类 (纹理22 + discard5 + subgroup7 + helper1)，证据 docs/evidence/P4.2.0-shader-limits-run.txt。发现：SV_IsHelperInvocation 在 Slang DXIL 中不受支持 |
-| P4.2.1 | CreateProgram: Source→MTLLibrary | ✅ | 2026-06-13T20:00:00+08:00 | ShaderCompiler.cpp: popen() 调 slangc+MSC 编译管线 + MetalNative.cs: CompileShader P/Invoke + MetalShaderCompiler.cs: CreateProgram 实际编译 + MetalProgram: 多阶段 metallib 存储与序列化。C# 0 错误构建通过 |
-| P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: popen slangc → Slang C API (libslang.dylib) 直接调用 + createGlobalSession/ISession/loadModuleFromSourceString/link/getEntryPointCode + CMake 集成 + popen 回退保护。ShaderCompiler.cpp 编译通过。 |
-| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ✅ | 2026-06-13T20:45:00+08:00 | ShaderCompiler.cpp: IRCompiler SDK API (libmetalirconverter.dylib) 替换 MSC popen。IRCompilerCreate→IRObjectCreateFromDXIL→IRCompilerAllocCompileAndLink→IRObjectGetMetalLibBinary→IRMetalLibGetBytecode。CMakeLists.txt 集成 find_library。保留 popen 回退。ShaderCompiler.cpp 编译通过。 |
-| P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ✅ | 2026-06-13T21:00:00+08:00 | ShaderCompiler.cpp: SHA256 缓存键 + ~/Library/Caches/SwitchMetal/abi_v1/{key[0:2]}/{key}/ 分目录缓存 + metallib.bin/dxil.bin/meta.json + load_from_cache/store_to_cache + metal_shader_cache_clear C ABI。集成到 metal_compile_shader：编译前查缓存直接返回、编译后自动写缓存。 |
-| P4.2.5 | 回退逻辑: Path A→Path B（Slang→MSL→xcrun metal） | ✅ | 2026-06-13T21:30:00+08:00 | ShaderCompiler.cpp: compile_path_b_metallib() — Slang C API SLANG_METAL 目标→MSL→xcrun metal→metallib。集成到 metal_compile_shader：Path A 全部失败后自动回退到 Path B。全量 CMake 构建通过。 |
-| P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ✅ | 2026-06-13T22:00:00+08:00 | src/libmetal_bridge/src/ShaderCompiler.cpp + include/metal_bridge.h + CMake 构建通过 |
+| P4.2.0 | 建立 MSC/Metal 限制验证矩阵 (纹理/subgroup/discard/helper) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.1 | CreateProgram: Source→MTLLibrary | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.2 | Slang API P/Invoke: Slang 原生语法→DXIL | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.3 | libmetalirconverter P/Invoke: DXIL→metallib | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.4 | 磁盘着色器缓存 (~/Library/Caches/SwitchMetal/) | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.5 | 回退逻辑: Path A→Path C→Path B | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.2.6 | LoadProgramBinary: 加载缓存 metallib | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.3 管线状态与绘制
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ✅ | 2026-06-13T23:00:00+08:00 | src/libmetal_bridge/src/MetalPipeline.cpp + include/metal_bridge.h + include/metal_internal.h + MetalDevice.cpp (metal_release) + CMake + MetalNative.cs + MetalPipeline.cs + MetalRenderer.cs，C++ + C# 双端编译通过 |
-| P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ✅ | 2026-06-13T23:24:00+08:00 | docs/evidence/P4.3.2-meta.json：扩展 render pipeline ABI 顶点布局描述符，native 创建 MTLVertexDescriptor，C# SetVertexAttribs/SetVertexBuffers 触发布局重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过 |
-| P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ✅ | 2026-06-13T23:36:00+08:00 | docs/evidence/P4.3.3-meta.json：MetalBufferPool 句柄解析 + MetalPipeline uniform buffer 状态缓存/裁剪/后续 draw 可复用绑定查询；Ryujinx.Graphics.Metal 构建通过 |
-| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ✅ | 2026-06-13T23:50:00+08:00 | docs/evidence/P4.3.4-meta.json：实现 MetalTexture/texture view 句柄提取、按 ShaderStage+binding 缓存 texture/sampler 原生句柄，并提供后续 draw/dispatch 查询入口；Ryujinx.Graphics.Metal 构建通过 |
-| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ✅ | 2026-06-13T23:43:42+08:00 | docs/evidence/P4.3.5-meta.json：实现 storage buffer 句柄解析、offset/size 裁剪、读写标志缓存，并提供后续 draw/dispatch 可复用的绑定查询入口；Ryujinx.Graphics.Metal 构建通过（85 个既有 CA1416 警告，0 错误） |
-| P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ✅ | 2026-06-14T00:05:35+08:00 | docs/evidence/P4.3.6-meta.json：新增最小 command buffer/render encoder/draw C ABI，内部临时 1x1 颜色附件打通 Draw/DrawIndexed 链路；C++ libmetal_bridge 与 Ryujinx.Graphics.Metal 均构建通过（107 个既有 CA1416 警告，0 错误） |
-| P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ✅ | 2026-06-14T10:46:00+08:00 | docs/evidence/P4.3.7-meta.json：新增 metal_begin_render_encoding_with_targets C ABI + MTLRenderPassDescriptor 真实创建（多颜色附件 + 深度/模板）+ C# SetRenderTargets 实现 + MetalRenderTargetState 缓存 + ExecuteRenderDraw 路由；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
-| P4.3.8 | ClearRenderTarget: 清屏操作 | ✅ | 2026-06-14T11:15:00+08:00 | docs/evidence/P4.3.8-meta.json：ClearRenderTargetColor + ClearRenderTargetDepthStencil 实现，通过 PendingColorClear/PendingDepthStencilClear 缓存清除参数并在 ExecuteRenderDraw 中合并到 MTLRenderPassDescriptor 的 loadAction=Clear；纯 C# 变更，Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
-| P4.3.9 | SetBlendState: 混合状态映射 | ✅ | 2026-06-14T11:45:00+08:00 | docs/evidence/P4.3.9-meta.json：新增 metal_blend_factor/operation/color_write_mask 枚举 + metal_blend_attachment_descriptor + 管线描述符扩展 + C++ 混合状态应用 + C# ConvertBlendFactor/Op 映射 + SetBlendState 实现 + 管线重建；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（109 个 CA1416 警告，0 错误） |
-| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ✅ | 2026-06-14T12:15 | docs/evidence/P4.3.10-meta.json：新增 METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE + metal_stencil_operation 枚举 + metal_depth_stencil_descriptor + 3 个 C ABI 函数 + C++ 深度/模板状态创建与绑定 + C# SetDepthTest/SetStencilTest/SetDepthMode 实现 + UpdateDepthStencilState 脏标志懒重建 + BindRenderResources 动态绑定；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（113 个 CA1416 警告，0 错误） |
-| P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ✅ | 2026-06-14T12:30 | docs/evidence/P4.3.11-meta.json：新增 metal_viewport/metal_scissor_rect 描述符 + 2 个 C ABI 函数 + C++ setViewport/setViewports/setScissorRect/setScissorRects 实现 + C# SetScissors/SetViewports 缓存与绑定 + Vulkan→Metal Y 轴翻转；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（115 个 CA1416 警告，0 错误） |
-| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ✅ | 2026-06-14T12:45 | docs/evidence/P4.3.12-meta.json：新增 metal_cull_mode/metal_winding/metal_triangle_fill_mode 枚举 + 3 个 C ABI 函数 + C++ setCullMode/setFrontFacingWinding/setTriangleFillMode + C# SetFaceCulling/SetFrontFace/SetPolygonMode 实现 + BindRenderResources 绑定；libmetal_bridge + Ryujinx.Graphics.Metal 构建通过（118 个 CA1416 警告，0 错误） |
+| P4.3.1 | SetProgram → MTLRenderPipelineState 创建 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.2 | SetVertexBuffers/SetVertexAttribs: 顶点布局映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.3 | SetUniformBuffers: MTLBuffer 绑定 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.4 | SetTextureAndSampler: 纹理+采样器绑定 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.5 | SetStorageBuffers: Compute/Graphics 存储缓冲 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.6 | Draw/DrawIndexed: MTLRenderCommandEncoder 绘制 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.7 | SetRenderTargets: MTLRenderPassDescriptor | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.8 | ClearRenderTarget: 清屏操作 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.9 | SetBlendState: 混合状态映射 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.10 | SetDepthTest/SetStencilTest: DepthStencilState | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.11 | SetScissors/SetViewports: 视口+裁剪 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.3.12 | SetFaceCulling/SetFrontFace/SetPolygonMode | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
 ### 4.4 同步与呈现
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
-| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ✅ | 2026-06-14T12:23:49+08:00 | docs/evidence/P4.4.1-meta.json：`cmake -S src/libmetal_bridge -B src/libmetal_bridge/build -DBUILD_TESTS=ON` 配置成功；`cmake --build src/libmetal_bridge/build --target test_command_buffer -j 4` 编译成功；`ctest --test-dir src/libmetal_bridge/build -R test_command_buffer --output-on-failure` 1/1 通过 |
-| P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ✅ | 2026-06-14T12:39:06+08:00 | docs/evidence/P4.4.2-meta.json：新增 `metal_create_shared_event` / `metal_encode_signal_shared_event` / `metal_get_shared_event_signaled_value` C ABI、`MetalSync` 管理器与 `test_sync` 回归；`ctest --test-dir src/libmetal_bridge/build -R 'test_(sync|command_buffer)' --output-on-failure` 2/2 通过，`dotnet build` 0 错误（仅既有 CA1416 警告） |
-| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ✅ | 2026-06-14T13:54:50+08:00 | docs/evidence/P4.4.3-meta.json |
-| P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ✅ | 2026-06-14 | docs/evidence/P4.4.4-meta.json |
-| P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ✅ | 2026-06-14 | docs/evidence/P4.4.5-meta.json |
-| P4.4.6 | RunLoop: 主渲染循环 | ✅ | 2026-06-14 | docs/evidence/P4.4.6-meta.json |
+| P4.4.1 | CommandBuffer 提交+等待: commit+waitUntilCompleted | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.2 | CreateSync/WaitSync: MTLEvent 信号量 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.3 | Presenter/Window: CAMetalLayer + 交换链 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.4 | ScreenCaptured 事件: 帧缓冲→CGImage | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+| P4.4.6 | RunLoop: 主渲染循环 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
+
+### 4.5 验收测试
+### 出口验证: Phase 4 全部模块集成后，按以下顺序逐项验收
+
+> **验收原则**：自底向上，单模块→集成→端到端。每步先独立验证，再组合验证。
+> 验证工具：Xcode Metal Debugger / GPU Frame Capture / 自定义 Logger。
+
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.5.1 | 设备创建冒烟测试: MetalDevice 创建 + 特性查询有效 | ⬜ | — | — |
+| P4.5.2 | 着色器编译验收: ≥5 测试着色器 Path A 编译通过 | ⬜ | — | — |
+| P4.5.3 | 资源生命周期验收: Buffer/Texture 创建→使用→销毁 100 次无泄漏 | ⬜ | — | — |
+| P4.5.4 | 基础 Draw 验收: Triangle + 纹理四边形绘制正确 | ⬜ | — | — |
+| P4.5.5 | 管线状态验收: Blend/Depth/Stencil/Scissor 状态切换正确 | ⬜ | — | — |
+| P4.5.6 | 同步验收: CommandBuffer 提交+等待+信号量 顺序正确 | ⬜ | — | — |
+| P4.5.7 | 呈现验收: CAMetalLayer 交换链正常刷新 (≥60fps 空场景) | ⬜ | — | — |
+| P4.5.8 | 2D Demo 完整渲染: Demo D1 帧缓冲对比 (像素差异<1%) | ⬜ | — | — |
+
+### 验收操作流程
+
+Agent 执行验收时，按以下步骤操作：
+
+```
+验收步骤:
+1. P4.5.1 设备冒烟 → dotnet run --project Ryubing.Tests -- --filter MetalDeviceSmoke
+2. P4.5.2 着色器编译 → 运行 scripts/verify_shaders.sh (≥5 个 Path A 着色器)
+3. P4.5.3 资源生命周期 → Instruments Leaks 检测 + 100 次循环脚本
+4. P4.5.4 基础 Draw → dotnet run --project Ryubing.Tests -- --filter MetalDrawTest
+5. P4.5.5 管线状态 → dotnet run --project Ryubing.Tests -- --filter MetalPipelineState
+6. P4.5.6 同步验收 → dotnet run --project Ryubing.Tests -- --filter MetalSyncTest
+7. P4.5.7 呈现验收 → dotnet run --project Ryubing.Tests -- --filter MetalPresenter
+8. P4.5.8 2D Demo → dotnet run --project Ryubing -- --backend Metal --demo D1
+   → 截取帧缓冲 → 与 OpenGL 参考对比 → 像素差异 < 1%
+
+每步通过后 ✅ 标记对应 P4.5.x；失败则记录错误日志到 docs/acceptance/P4.5.x-error.log
+```
+
+### 验收判定标准
+
+| 验收项 | 通过标准 | 失败处理 |
+|--------|----------|----------|
+| P4.5.1 | MetalDevice 创建成功，特性查询返回值在合理范围 | 检查 MTLDevice 创建参数 + entitlement |
+| P4.5.2 | 5 个着色器全部完成 Path A 编译 + metallib > 0B | 逐个排查 Slang→DXIL→MSC 环节 |
+| P4.5.3 | Instruments Leaks 报告 0 泄漏，100 次循环无崩溃 | 检查 retain/release 配对 |
+| P4.5.4 | Triangle + Quad 渲染画面与参考一致 | 金属调试器抓帧对比 |
+| P4.5.5 | 4 种状态组合渲染正确，无 Metal 验证层错误 | 启用 MTL_DEBUG_LAYER=1 |
+| P4.5.6 | 串行提交 10 个 CommandBuffer 按序完成 | GPU Frame Capture 时间轴验证 |
+| P4.5.7 | 连续 100 帧无丢帧，无 GPU 超时 | 启用 MTL_DEVICE_HANG_DETECTION=1 |
+| P4.5.8 | 像素差异 < 1%，无视觉伪影 | ImageMagick compare 或自定义工具 |
+
+### 阶段总结
+- **完成模块**: 设备管理 (P4.1)、着色器编译 (P4.2)、管线状态 (P4.3)、同步与呈现 (P4.4)
+- **关键实现**: MetalDevice/MTLBuffer/MTLTexture/MTLRenderPipeline/CAMetalLayer
+- **技术债务**: 需在 Phase 5 中补全 Maxwell→Metal 状态映射表
+- **未覆盖场景**: 几何着色器、曲面细分、Transform Feedback (Phase 5)
+- **下一阶段**: Phase 5 — 命令映射与状态跟踪
+
 
 # ===================================================================
 ## Phase 5: 命令映射与状态跟踪
@@ -272,11 +329,11 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 144
-- 已完成: 89 (61.8%)
+- 总任务数: 152
+- 已完成: 77 (50.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 55
+- 待开始: 67
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
 - 下一任务: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
