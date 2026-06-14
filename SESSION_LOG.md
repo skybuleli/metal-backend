@@ -109,3 +109,22 @@
   - componentMask 部分清除回退为全通道清除（Metal 限制）
   - 纯 C# 变更，复用 P4.3.7 已有的 C ABI 描述符机制
 - **状态摘要**: P4 进度 79/144 (54.9%)，下一任务 P4.3.9 SetBlendState
+
+---
+
+### 2026-06-14 11:45 — P4.3.9 SetBlendState: 混合状态映射
+- **Agent**: Qoder
+- **结果**: ✅ 实现完整混合状态映射，包含 C ABI 枚举/描述符 + C++ 管线创建应用 + C# 缓存与重建
+- **变更**:
+  - `src/libmetal_bridge/include/metal_bridge.h`：新增 `metal_blend_factor`/`metal_blend_operation`/`metal_color_write_mask` 枚举 + `metal_blend_attachment_descriptor` + 管线描述符替换 `reserved[2]` 为 `blend_attachments` 指针
+  - `src/libmetal_bridge/src/MetalPipeline.cpp`：`metal_create_render_pipeline` 应用混合状态到每个颜色附件
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs`：新增 `MetalBlendFactor`/`MetalBlendOperation`/`MetalColorWriteMask` 枚举 + `MetalBlendAttachmentDescriptor` + 描述符更新
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：缓存 `_blendAttachments` + 实现 `SetBlendState` + `ConvertBlendFactor`/`ConvertBlendOp` 映射 + `CreatePipelineFromProgram` 固定混合数组传递
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build` ✅（0 错误）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（109 个 CA1416 警告，0 错误）
+- **说明**:
+  - Metal 混合状态烘焙在管线创建时，SetBlendState 触发 RecreatePipelineForLayoutChange
+  - AdvancedBlendState 回退为标准混合（Metal 不原生支持 KHR_blend_equation_advanced）
+  - BlendFactor 枚举值与 MTL::BlendFactor 对齐，支持 GL 后缀变体
+- **状态摘要**: P4 进度 80/144 (55.6%)，下一任务 P4.3.10 SetDepthTest/SetStencilState

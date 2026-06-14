@@ -641,6 +641,69 @@ typedef struct metal_vertex_buffer_layout_descriptor
     uint32_t step_rate;
 } metal_vertex_buffer_layout_descriptor;
 
+/// 混合因子（P4.3.9）
+/// 值与 MTL::BlendFactor 对齐
+/// 参考：Metal Shading Language Specification - Table 5.3
+typedef enum metal_blend_factor
+{
+    METAL_BLEND_FACTOR_ZERO = 0,
+    METAL_BLEND_FACTOR_ONE = 1,
+    METAL_BLEND_FACTOR_SRC_COLOR = 2,
+    METAL_BLEND_FACTOR_ONE_MINUS_SRC_COLOR = 3,
+    METAL_BLEND_FACTOR_SRC_ALPHA = 4,
+    METAL_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA = 5,
+    METAL_BLEND_FACTOR_DST_ALPHA = 6,
+    METAL_BLEND_FACTOR_ONE_MINUS_DST_ALPHA = 7,
+    METAL_BLEND_FACTOR_DST_COLOR = 8,
+    METAL_BLEND_FACTOR_ONE_MINUS_DST_COLOR = 9,
+    METAL_BLEND_FACTOR_SRC_ALPHA_SATURATE = 10,
+    METAL_BLEND_FACTOR_BLEND_COLOR = 11,
+    METAL_BLEND_FACTOR_ONE_MINUS_BLEND_COLOR = 12,
+    METAL_BLEND_FACTOR_BLEND_ALPHA = 13,
+    METAL_BLEND_FACTOR_ONE_MINUS_BLEND_ALPHA = 14,
+    METAL_BLEND_FACTOR_SRC1_COLOR = 15,
+    METAL_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR = 16,
+    METAL_BLEND_FACTOR_SRC1_ALPHA = 17,
+    METAL_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA = 18,
+} metal_blend_factor;
+
+/// 混合操作（P4.3.9）
+/// 值与 MTL::BlendOperation 对齐
+typedef enum metal_blend_operation
+{
+    METAL_BLEND_OPERATION_ADD = 0,
+    METAL_BLEND_OPERATION_SUBTRACT = 1,
+    METAL_BLEND_OPERATION_REVERSE_SUBTRACT = 2,
+    METAL_BLEND_OPERATION_MIN = 3,
+    METAL_BLEND_OPERATION_MAX = 4,
+} metal_blend_operation;
+
+/// 颜色写入掩码（P4.3.9）
+/// 值与 MTL::ColorWriteMask 对齐
+typedef enum metal_color_write_mask
+{
+    METAL_COLOR_WRITE_MASK_NONE = 0,
+    METAL_COLOR_WRITE_MASK_RED = 1u << 3,
+    METAL_COLOR_WRITE_MASK_GREEN = 1u << 2,
+    METAL_COLOR_WRITE_MASK_BLUE = 1u << 1,
+    METAL_COLOR_WRITE_MASK_ALPHA = 1u << 0,
+    METAL_COLOR_WRITE_MASK_ALL = (1u << 3) | (1u << 2) | (1u << 1) | (1u << 0),
+} metal_color_write_mask;
+
+/// 单个颜色附件的混合状态描述符（P4.3.9）
+typedef struct metal_blend_attachment_descriptor
+{
+    uint8_t blending_enabled;              ///< 是否启用混合（0=禁用，1=启用）
+    uint8_t reserved_pad[3];               ///< 对齐填充
+    metal_blend_factor src_rgb_factor;     ///< RGB 源混合因子
+    metal_blend_factor dst_rgb_factor;     ///< RGB 目标混合因子
+    metal_blend_operation rgb_operation;   ///< RGB 混合操作
+    metal_blend_factor src_alpha_factor;   ///< Alpha 源混合因子
+    metal_blend_factor dst_alpha_factor;   ///< Alpha 目标混合因子
+    metal_blend_operation alpha_operation; ///< Alpha 混合操作
+    uint32_t write_mask;                   ///< 颜色写入掩码（metal_color_write_mask 按位或）
+} metal_blend_attachment_descriptor;
+
 /// 渲染管线描述符
 /// 从 metallib 数据和基本像素格式创建 MTLRenderPipelineState
 typedef struct metal_render_pipeline_descriptor
@@ -672,7 +735,12 @@ typedef struct metal_render_pipeline_descriptor
     metal_vertex_attribute_descriptor vertex_attributes[METAL_MAX_VERTEX_ATTRIBUTES];
     metal_vertex_buffer_layout_descriptor vertex_buffer_layouts[METAL_MAX_VERTEX_BUFFER_BINDINGS];
 
-    uint32_t reserved[2];
+    /// 混合附件描述符数组指针（P4.3.9）
+    /// 传 nullptr 表示使用默认混合（禁用混合，全写入）
+    const metal_blend_attachment_descriptor* blend_attachments;
+    /// 混合附件数量（最多 8）
+    uint32_t blend_attachment_count;
+    uint32_t reserved;
 } metal_render_pipeline_descriptor;
 
 typedef enum metal_primitive_type

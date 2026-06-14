@@ -1,0 +1,35 @@
+{
+  "task": "P4.3.9",
+  "title": "SetBlendState: 混合状态映射",
+  "status": "done",
+  "timestamp": "2026-06-14T11:45:00+08:00",
+  "changes": [
+    {
+      "file": "src/libmetal_bridge/include/metal_bridge.h",
+      "summary": "新增 metal_blend_factor / metal_blend_operation / metal_color_write_mask 枚举、metal_blend_attachment_descriptor 结构体；metal_render_pipeline_descriptor 替换 reserved[2] 为 blend_attachments 指针 + blend_attachment_count"
+    },
+    {
+      "file": "src/libmetal_bridge/src/MetalPipeline.cpp",
+      "summary": "metal_create_render_pipeline 中应用混合状态：遍历 blend_attachments 配置每个颜色附件的 blendingEnabled/blendFactor/blendOperation/writeMask"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalNative.cs",
+      "summary": "新增 MetalBlendFactor / MetalBlendOperation / MetalColorWriteMask 枚举、MetalBlendAttachmentDescriptor 结构体；MetalRenderPipelineDescriptor 替换 Reserved[2] 为 BlendAttachments + BlendAttachmentCount"
+    },
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs",
+      "summary": "新增 _blendAttachments 缓存 + SetBlendState(AdvancedBlendDescriptor) / SetBlendState(int, BlendDescriptor) 实现；ConvertBlendFactor/ConvertBlendOp 映射 GAL→Metal；CreatePipelineFromProgram 固定混合数组传递到 C 层"
+    }
+  ],
+  "design_decisions": [
+    "Metal 混合状态烘焙在 MTLRenderPipelineState 中（非动态），SetBlendState 触发 RecreatePipelineForLayoutChange",
+    "blend_attachments 使用指针+计数而非固定数组，避免管线描述符过大",
+    "BlendFactor 枚举值与 MTL::BlendFactor 对齐，GL 后缀变体共享同一映射",
+    "AdvancedBlendState (KHR_blend_equation_advanced) 回退为标准混合（Metal 不原生支持）",
+    "混合常量颜色（blendColor）当前未实现（Metal 需通过 setBlendColorRed/Green/Blue/Alpha 在 encoder 上设置，待 P4.3.10+ 扩展）"
+  ],
+  "build": {
+    "cpp": "0 警告，0 错误（仅 ranlib 空符号警告）",
+    "csharp": "109 个 CA1416 警告（macOS 平台），0 错误"
+  }
+}

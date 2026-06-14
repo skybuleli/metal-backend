@@ -292,8 +292,9 @@ namespace Ryujinx.Graphics.Metal
         public MetalVertexAttributeDescriptor[] VertexAttributes;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 31)]
         public MetalVertexBufferLayoutDescriptor[] VertexBufferLayouts;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public uint[] Reserved;
+        public nint BlendAttachments;
+        public uint BlendAttachmentCount;
+        public uint Reserved;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -684,6 +685,68 @@ namespace Ryujinx.Graphics.Metal
         public double Depth;
         public uint Stencil;
         public uint Reserved;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // 混合状态类型（P4.3.9）
+    // ══════════════════════════════════════════════════════════════════
+
+    internal enum MetalBlendFactor : uint
+    {
+        Zero = 0,
+        One = 1,
+        SrcColor = 2,
+        OneMinusSrcColor = 3,
+        SrcAlpha = 4,
+        OneMinusSrcAlpha = 5,
+        DstAlpha = 6,
+        OneMinusDstAlpha = 7,
+        DstColor = 8,
+        OneMinusDstColor = 9,
+        SrcAlphaSaturate = 10,
+        BlendColor = 11,
+        OneMinusBlendColor = 12,
+        BlendAlpha = 13,
+        OneMinusBlendAlpha = 14,
+        Src1Color = 15,
+        OneMinusSrc1Color = 16,
+        Src1Alpha = 17,
+        OneMinusSrc1Alpha = 18,
+    }
+
+    internal enum MetalBlendOperation : uint
+    {
+        Add = 0,
+        Subtract = 1,
+        ReverseSubtract = 2,
+        Min = 3,
+        Max = 4,
+    }
+
+    [Flags]
+    internal enum MetalColorWriteMask : uint
+    {
+        None = 0,
+        Red = 1u << 3,
+        Green = 1u << 2,
+        Blue = 1u << 1,
+        Alpha = 1u << 0,
+        All = Red | Green | Blue | Alpha,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MetalBlendAttachmentDescriptor
+    {
+        public byte BlendingEnabled;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+        public byte[] ReservedPad;
+        public MetalBlendFactor SrcRgbFactor;
+        public MetalBlendFactor DstRgbFactor;
+        public MetalBlendOperation RgbOperation;
+        public MetalBlendFactor SrcAlphaFactor;
+        public MetalBlendFactor DstAlphaFactor;
+        public MetalBlendOperation AlphaOperation;
+        public uint WriteMask;
     }
 
     [StructLayout(LayoutKind.Sequential)]

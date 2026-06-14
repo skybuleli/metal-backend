@@ -221,6 +221,44 @@ metal_result metal_create_render_pipeline(
     }
     rpDesc->colorAttachments()->object(0)->setPixelFormat(colorFormat);
 
+    // 应用混合状态（P4.3.9）
+    if (descriptor->blend_attachments != nullptr && descriptor->blend_attachment_count > 0)
+    {
+        uint32_t blendCount = descriptor->blend_attachment_count;
+        if (blendCount > METAL_MAX_COLOR_ATTACHMENTS)
+        {
+            blendCount = METAL_MAX_COLOR_ATTACHMENTS;
+        }
+
+        for (uint32_t i = 0; i < blendCount; i++)
+        {
+            const metal_blend_attachment_descriptor& blend = descriptor->blend_attachments[i];
+            MTL::RenderPipelineColorAttachmentDescriptor* colorAtt = rpDesc->colorAttachments()->object(i);
+
+            // 设置像素格式（与 colorAttachment(0) 一致）
+            colorAtt->setPixelFormat(colorFormat);
+            colorAtt->setBlendingEnabled(blend.blending_enabled != 0);
+
+            if (blend.blending_enabled)
+            {
+                colorAtt->setSourceRGBBlendFactor(
+                    static_cast<MTL::BlendFactor>(blend.src_rgb_factor));
+                colorAtt->setDestinationRGBBlendFactor(
+                    static_cast<MTL::BlendFactor>(blend.dst_rgb_factor));
+                colorAtt->setRgbBlendOperation(
+                    static_cast<MTL::BlendOperation>(blend.rgb_operation));
+                colorAtt->setSourceAlphaBlendFactor(
+                    static_cast<MTL::BlendFactor>(blend.src_alpha_factor));
+                colorAtt->setDestinationAlphaBlendFactor(
+                    static_cast<MTL::BlendFactor>(blend.dst_alpha_factor));
+                colorAtt->setAlphaBlendOperation(
+                    static_cast<MTL::BlendOperation>(blend.alpha_operation));
+            }
+
+            colorAtt->setWriteMask(blend.write_mask);
+        }
+    }
+
     // 设置深度模板格式
     if (descriptor->depth_stencil_format != METAL_PIXEL_FORMAT_INVALID)
     {
