@@ -330,3 +330,12 @@
   - `src/demos/d2/build/d2_textured_quad` → `out/textured_quad.ppm` (196623 bytes)
   - D2 使用 Path A: Slang→DXIL→MSC→metallib 全链路
 - **状态摘要**: P4 进度 94/152 (61.8%)，下一任务 P4.5.5 管线状态验收
+
+---
+
+### 2026-06-14 15:20 — P4.5.5 管线状态验收: Blend/Depth/Stencil/Scissor
+- **结果**: ✅ test_pipeline_state 10/10 用例 62 断言全部通过 + D4 深度测试集成验证
+- **变更**:
+  - `src/libmetal_bridge/tests/test_pipeline_state.cpp` — 新增 C++ 验收测试（深度/模板/混合/裁剪）
+  - `src/libmetal_bridge/CMakeLists.txt` — 注册 test_pipeline_state 目标 + CTest
+- **状态摘要**: P4 进度 95/152 (62.5%)，下一任务 P4.5.6 同步验收
