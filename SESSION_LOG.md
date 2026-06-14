@@ -339,3 +339,11 @@
   - `src/libmetal_bridge/tests/test_pipeline_state.cpp` — 新增 C++ 验收测试（深度/模板/混合/裁剪）
   - `src/libmetal_bridge/CMakeLists.txt` — 注册 test_pipeline_state 目标 + CTest
 - **状态摘要**: P4 进度 95/152 (62.5%)，下一任务 P4.5.6 同步验收
+
+---
+
+### 2026-06-14 15:25 — P4.5.6 同步验收: CommandBuffer 提交+等待+信号量
+- **结果**: ✅ test_sync + test_command_buffer 全部通过，总计 20 个命令缓冲区串行提交验证顺序正确
+- **变更**:
+  - `src/libmetal_bridge/tests/test_sync.cpp` — 新增 2 个序列化测试（10× serial + 10× 空 CB 生命周期）
+- **状态摘要**: P4 进度 96/152 (63.2%)，下一任务 P4.5.7 呈现验收

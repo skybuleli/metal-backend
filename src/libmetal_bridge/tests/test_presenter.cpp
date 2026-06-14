@@ -107,3 +107,87 @@ TEST_CASE("Presenter 对不支持的纹理格式返回 UNSUPPORTED", "[presenter
     metal_release(texture);
     metal_release(presenter);
 }
+
+TEST_CASE("Presenter 100 帧持续呈现不超时", "[presenter][fps][stress]")
+{
+    DeviceGuard dev_guard;
+
+    CA::MetalLayer* layer = CA::MetalLayer::layer();
+    REQUIRE(layer != nullptr);
+
+    metal_presenter* presenter = nullptr;
+    REQUIRE(metal_create_presenter(dev_guard.dev, layer, &presenter) == METAL_RESULT_OK);
+    REQUIRE(metal_presenter_resize(presenter, 64, 64) == METAL_RESULT_OK);
+
+    // 创建与 layer 像素格式匹配的纹理（BGRA8Unorm）
+    metal_texture* texture = nullptr;
+    REQUIRE(metal_create_texture(
+        dev_guard.dev,
+        METAL_PIXEL_FORMAT_BGRA8_UNORM,
+        64, 64, 1, 1, 1,
+        METAL_TEXTURE_TYPE_2D,
+        METAL_TEXTURE_USAGE_RENDER_TARGET,
+        METAL_STORAGE_MODE_SHARED,
+        &texture) == METAL_RESULT_OK);
+    REQUIRE(texture != nullptr);
+
+    constexpr int kFrameCount = 100;
+
+    for (int i = 0; i < kFrameCount; ++i)
+    {
+        metal_result result = metal_presenter_present_texture(presenter, texture);
+        REQUIRE(result == METAL_RESULT_OK);
+    }
+
+    metal_release(texture);
+    metal_release(presenter);
+}
+
+TEST_CASE("Presenter resize 后呈现不崩溃", "[presenter][resize][stress]")
+{
+    DeviceGuard dev_guard;
+
+    CA::MetalLayer* layer = CA::MetalLayer::layer();
+    REQUIRE(layer != nullptr);
+
+    metal_presenter* presenter = nullptr;
+    REQUIRE(metal_create_presenter(dev_guard.dev, layer, &presenter) == METAL_RESULT_OK);
+
+    // resize 到 256×256 → 创建匹配纹理 → 呈现
+    REQUIRE(metal_presenter_resize(presenter, 256, 256) == METAL_RESULT_OK);
+    {
+        metal_texture* tex = nullptr;
+        REQUIRE(metal_create_texture(dev_guard.dev, METAL_PIXEL_FORMAT_BGRA8_UNORM,
+            256, 256, 1, 1, 1, METAL_TEXTURE_TYPE_2D,
+            METAL_TEXTURE_USAGE_RENDER_TARGET, METAL_STORAGE_MODE_SHARED, &tex) == METAL_RESULT_OK);
+        REQUIRE(tex != nullptr);
+        REQUIRE(metal_presenter_present_texture(presenter, tex) == METAL_RESULT_OK);
+        metal_release(tex);
+    }
+
+    // resize 到 128×64 → 对应纹理 → 呈现
+    REQUIRE(metal_presenter_resize(presenter, 128, 64) == METAL_RESULT_OK);
+    {
+        metal_texture* tex = nullptr;
+        REQUIRE(metal_create_texture(dev_guard.dev, METAL_PIXEL_FORMAT_BGRA8_UNORM,
+            128, 64, 1, 1, 1, METAL_TEXTURE_TYPE_2D,
+            METAL_TEXTURE_USAGE_RENDER_TARGET, METAL_STORAGE_MODE_SHARED, &tex) == METAL_RESULT_OK);
+        REQUIRE(tex != nullptr);
+        REQUIRE(metal_presenter_present_texture(presenter, tex) == METAL_RESULT_OK);
+        metal_release(tex);
+    }
+
+    // resize 到 32×32 → 对应纹理 → 呈现
+    REQUIRE(metal_presenter_resize(presenter, 32, 32) == METAL_RESULT_OK);
+    {
+        metal_texture* tex = nullptr;
+        REQUIRE(metal_create_texture(dev_guard.dev, METAL_PIXEL_FORMAT_BGRA8_UNORM,
+            32, 32, 1, 1, 1, METAL_TEXTURE_TYPE_2D,
+            METAL_TEXTURE_USAGE_RENDER_TARGET, METAL_STORAGE_MODE_SHARED, &tex) == METAL_RESULT_OK);
+        REQUIRE(tex != nullptr);
+        REQUIRE(metal_presenter_present_texture(presenter, tex) == METAL_RESULT_OK);
+        metal_release(tex);
+    }
+
+    metal_release(presenter);
+}
