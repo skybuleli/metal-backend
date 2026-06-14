@@ -447,3 +447,40 @@
   - 若语义规范化仍不解决，考虑实现 MSL 直接编译路径（GLSL→SPIR-V→spirv-cross→MSL→MSC）作为 fallback
   - 参考 Ryujinx.Graphics.Shader 中 user-defined I/O 的生成逻辑，确保 GLSL 中显式声明 location
 
+
+
+### 2026-06-14 20:00 — 《蔚蓝》varying 不匹配修复 + 下一阻塞：endEncoding
+- **Agent**: DeepSeek V4 (原生思考)
+- **上下文**: 基于上一轮分析（三管齐下修复）实施并验证
+
+#### 根因确认
+Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR 语义，经 MSC 转为 `user(color{N})`；而桥接路径（GLSL→SPIR-V→spirv-cross→HLSL→slangc→DXIL）产出 TEXCOORD 语义→ `user(texcoord{N})`。当 VS 和 FS 经过不同编译路径时，语义不匹配导致 Metal 管线创建失败：
+`Fragment input(s) `user(color1),user(color0)` mismatching vertex shader output type(s) or not written by vertex shader`
+
+#### 修复
+- **`ShaderCompiler.cpp`**: GLSL 源码强制跳过 Slang 直接编译路径（C API + CLI popen），仅走桥接路径，确保 spirv-opt + normalize_hlsl_varying_semantics 始终生效。
+  - `goto glsl_bridge` 在 `is_glsl_source` 成立时跳过步骤 1
+  - popen 回退条件增加 `&& !is_glsl_source`
+  - 修改文件：`src/libmetal_bridge/src/ShaderCompiler.cpp`
+
+#### 验证
+- `cmake --build libmetal_bridge`: ✅ 全部目标通过
+- 运行 Celeste 后：**不再出现 `user(color0/1)` 管线创建错误** ✅
+
+#### 新阻塞
+- **错误**: `Command encoder released without endEncoding`
+- **时间**: 00:00:04.874 | 所有着色器编译完成后立即触发
+- **原因**: 渲染管线创建成功后，`MTLRenderCommandEncoder` 被 `metal_release` 释放前未调用 `endEncoding()`
+- **位置**:
+  - C#: `MetalPipeline.cs` L860-930 — `DrawRenderPass` 方法的 `try/finally` 块
+  - C++: `MetalCommandBuffer.cpp` L590-600 — `metal_end_render_encoding`（已实现，但 finally 中未保证调用）
+- **修复方向**:
+  - `MetalPipeline.cs`:`DrawRenderPass` 的 `finally` 块中应先调用 `EndRenderEncoding` 再 `Release`
+  - 或 `MetalCommandBuffer.cpp`:`metal_release` 中为 render encoder 类型自动 `endEncoding`
+  - 注意：`metal_end_render_encoding` 应在 `drawAction` 可能抛异常前也被保护
+
+#### 下一执行者入口
+1. 构建：`cmake --build src/libmetal_bridge/build --config Release`
+2. 部署：`cp src/libmetal_bridge/build/libmetal_bridge.dylib src/ryubing/src/Ryujinx/bin/Release/net10.0/`
+3. 测试：`SWITCH_METAL_KEEP_FAILED_SHADER_TEMP=1 src/ryubing/src/Ryujinx/bin/Release/net10.0/Ryujinx --graphics-backend metal "/Users/liliang/games/蔚蓝1.3/Celeste [01002B30028F6000][v0] (TurboSnail).nsp"`
+4. 专注于修复 endEncoding 错误

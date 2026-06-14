@@ -851,12 +851,20 @@ metal_shader_compile_result metal_compile_shader(
         return result;
     }
 
-    // ── 步骤 1：Slang → DXIL（使用 Slang C API，每次编译新建 ISession）──
+    // ── 步骤 1：Slang → DXIL ──
     std::vector<uint8_t> dxil_data;
+    bool is_glsl_source = (strcmp(source_language, "glsl") == 0);
+
+    // GLSL 源码跳过 Slang 直接编译路径：Slang 编译 GLSL 产出 COLOR 语义，
+    // 与桥接路径的 TEXCOORD 语义不一致，导致 varyings 不匹配。
+    // 通过 spirv-opt + normalize_hlsl_varying_semantics 确保语义对齐。
+    if (is_glsl_source)
+    {
+        goto glsl_bridge;
+    }
 
 #if METAL_SLANG_FOUND
     {
-        bool is_glsl_source = strcmp(source_language, "glsl") == 0;
         slang::IGlobalSession* globalSession = acquire_global_session();
         if (!globalSession)
         {
@@ -991,8 +999,8 @@ metal_shader_compile_result metal_compile_shader(
     (void)profile;
 #endif
 
-    // Slang API 失败或库未链接时，回退到 popen
-    if (dxil_data.empty())
+    // Slang API 失败或库未链接时，回退到 popen（仅非 GLSL，GLSL 走桥接）
+    if (dxil_data.empty() && !is_glsl_source)
     {
         // ── 回退：popen slangc CLI ──
         char tmpdir_template[] = "/tmp/metal_shader_XXXXXX";
@@ -1084,6 +1092,7 @@ metal_shader_compile_result metal_compile_shader(
         }
     }
 
+glsl_bridge:
     if (dxil_data.empty() && strcmp(source_language, "glsl") == 0)
     {
         if (!compile_glsl_via_spirv_hlsl_bridge(
