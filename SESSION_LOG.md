@@ -263,3 +263,16 @@
   - `ctest --test-dir src/libmetal_bridge/build --output-on-failure` ✅（7/8 通过，test_heap OUT_OF_MEMORY 为既有问题，与本变更无关）
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（仅既有 CA1416 警告，0 错误）
 - **状态摘要**: P4 进度 87/144 (60.4%)，下一任务 P4.4.5 BackgroundContextAction: 后台 MTLCommandQueue
+
+---
+
+### 2026-06-14 14:35 — P4.4.5 BackgroundContextAction: 后台 MTLCommandQueue
+- **结果**: ✅ 创建后台 MTLCommandQueue + BackgroundContextAction 改为后台/同步双路径
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`：添加 `_backgroundQueueHandle` 字段；构造函数中创建第二个 MTLCommandQueue（后台队列）；`BackgroundContextAction` 根据 `alwaysBackground` 分派到 `ThreadPool.QueueUserWorkItem`（后台）或同步执行；`Dispose` 释放后台队列
+- **设计**: ThreadedRenderer 路由到 `alwaysBackground=true` 时确保在后台线程执行 action，不阻塞渲染线程；`alwaysBackground=false` 时同步执行（调用者期望阻塞）。后台队列可供需要独立 GPU 提交路径的代码使用
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build -j 4` ✅
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（0 错误，仅既有 CA1416 警告）
+  - `ctest --test-dir src/libmetal_bridge/build --output-on-failure` ✅（7/8 通过，test_heap 失败为既有问题）
+- **状态摘要**: P4 进度 88/144 (61.1%)，下一任务 P4.4.6 RunLoop: 主渲染循环

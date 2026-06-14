@@ -1,3 +1,4 @@
+using System.Threading;
 using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
@@ -66,12 +67,25 @@ namespace Ryujinx.Graphics.Metal
             _sync = new MetalSync(_device.Handle, _queueHandle);
             _nullTextureArray = new MetalTextureArray(0, false);
             _nullImageArray = new MetalImageArray(0, false);
-            _window = new MetalWindow();
+            _window = new MetalWindow(_device.Handle);
             _window.ScreenCapturedCallback = info => ScreenCaptured?.Invoke(this, info);
 
         }
 
         public IWindow Window => _window;
+
+        /// <summary>
+        /// 设置 CAMetalLayer 指针（由 AppHost 层传入）。
+        /// </summary>
+        internal void SetLayer(nint metalLayer)
+        {
+            _window.SetLayer(metalLayer);
+        }
+
+        public void RunLoop(ThreadStart gpuLoop)
+        {
+            gpuLoop();
+        }
 
         public uint ProgramCount => _programCount;
         public void BackgroundContextAction(Action action, bool alwaysBackground = false)

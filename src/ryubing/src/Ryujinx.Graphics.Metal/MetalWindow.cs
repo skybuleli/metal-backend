@@ -10,20 +10,71 @@ namespace Ryujinx.Graphics.Metal
         internal bool ScreenCaptureRequested { get; set; }
         internal Action<ScreenCaptureImageInfo> ScreenCapturedCallback { get; set; }
 
+        private readonly nint _deviceHandle;
+        private nint _metalLayer;
+        private nint _presenterHandle;
+        private uint _presenterWidth;
+        private uint _presenterHeight;
+
+        internal MetalWindow(nint deviceHandle)
+        {
+            _deviceHandle = deviceHandle;
+        }
+
+        /// <summary>
+        /// 设置 CAMetalLayer 指针（由 AppHost/窗口系统层传入）。
+        /// </summary>
+        internal void SetLayer(nint metalLayer)
+        {
+            _metalLayer = metalLayer;
+        }
+
         public void ChangeVSyncMode(VSyncMode vSyncMode)
         {
         }
 
         public void Dispose()
         {
+            if (_presenterHandle != nint.Zero)
+            {
+                MetalNative.Release(_presenterHandle);
+                _presenterHandle = nint.Zero;
+            }
         }
 
         public void Present(ITexture texture, ImageCrop crop, Action swapBuffersCallback)
         {
-            if (ScreenCaptureRequested && texture is MetalTexture metalTexture && ScreenCapturedCallback != null)
+            // 延迟创建 Presenter：需要 CAMetalLayer 就绪
+            if (_presenterHandle == nint.Zero && _deviceHandle != nint.Zero && _metalLayer != nint.Zero)
             {
-                CaptureFrame(metalTexture, crop);
+                MetalResult result = MetalNative.CreatePresenter(_deviceHandle, _metalLayer, out nint presenter);
+                if (result == MetalResult.Ok)
+                {
+                    _presenterHandle = presenter;
+                    if (_presenterWidth > 0 && _presenterHeight > 0)
+                    {
+                        MetalNative.PresenterResize(presenter, _presenterWidth, _presenterHeight);
+                    }
+                }
+            }
+
+            // 截屏：在 Present 前读取帧缓冲
+            if (ScreenCaptureRequested && texture is MetalTexture captureTexture && ScreenCapturedCallback != null)
+            {
+                CaptureFrame(captureTexture, crop);
                 ScreenCaptureRequested = false;
+            }
+
+            // Present 到 Metal 屏幕
+            if (_presenterHandle != nint.Zero && texture is MetalTexture presentTexture)
+            {
+                if (_presenterWidth == 0 || _presenterHeight == 0)
+                {
+                    _presenterWidth = (uint)presentTexture.Width;
+                    _presenterHeight = (uint)presentTexture.Height;
+                    MetalNative.PresenterResize(_presenterHandle, _presenterWidth, _presenterHeight);
+                }
+                MetalNative.PresenterPresentTexture(_presenterHandle, presentTexture.Handle);
             }
 
             swapBuffersCallback?.Invoke();
@@ -108,6 +159,12 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetSize(int width, int height)
         {
+            _presenterWidth = (uint)width;
+            _presenterHeight = (uint)height;
+            if (_presenterHandle != nint.Zero)
+            {
+                MetalNative.PresenterResize(_presenterHandle, _presenterWidth, _presenterHeight);
+            }
         }
     }
 }

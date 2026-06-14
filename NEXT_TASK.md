@@ -1,14 +1,14 @@
-# 下一任务 — P4.4.6 RunLoop: 主渲染循环
+# 下一任务 — P5.0 搭建 Maxwell/GAL→Metal 状态映射表骨架
 
-> 生成时间：2026-06-14 14:23:57
-> 所属阶段：Phase 4 — 核心 Metal 后端实现
+> 生成时间：2026-06-14 14:28:23
+> 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.4.6 |
-| 任务名称 | RunLoop: 主渲染循环 |
+| 任务 ID | P5.0 |
+| 任务名称 | 搭建 Maxwell/GAL→Metal 状态映射表骨架 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.4.6 → ✅
+- 更新 PROGRESS.md：P5.0 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

@@ -1,0 +1,34 @@
+{
+  "task": "P4.4.6",
+  "name": "RunLoop: 主渲染循环",
+  "timestamp": "2026-06-14T14:45:00+08:00",
+  "files_changed": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalWindow.cs",
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs"
+  ],
+  "implementation": {
+    "MetalWindow": {
+      "additions": [
+        "构造函数接收 _deviceHandle",
+        "SetLayer(nint) — 设置 CAMetalLayer 指针",
+        "_metalLayer / _presenterHandle / _presenterWidth / _presenterHeight 字段",
+        "Present(): 延迟创建 Presenter → 截屏 → PresenterPresentTexture → swapBuffersCallback",
+        "SetSize(): 缓存尺寸 + 转发到 PresenterResize",
+        "Dispose(): 释放 presenter handle"
+      ]
+    },
+    "MetalRenderer": {
+      "additions": [
+        "MetalWindow 构造传入 _device.Handle",
+        "SetLayer(nint) — 委托给 _window.SetLayer",
+        "RunLoop 显式重写（调用 gpuLoop()）"
+      ]
+    }
+  },
+  "design": "RunLoop 重写确保 Metal 渲染循环入口正确。Presenter 延迟初始化（需 CAMetalLayer 就绪），Present() 时将帧缓冲纹理呈现到 CAMetalLayer drawable。SetLayer/SetSize/Dispose 完整生命周期管理",
+  "verification": {
+    "libmetal_bridge_build": "PASS (0 error)",
+    "dotnet_build": "PASS (0 error, only existing CA1416 warnings)",
+    "ctest": "7/8 PASS (test_heap OUT_OF_MEMORY failure is pre-existing)"
+  }
+}
