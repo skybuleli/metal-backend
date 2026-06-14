@@ -248,3 +248,18 @@
   - `ctest --test-dir src/libmetal_bridge/build -R 'test_(command_buffer|sync|presenter)' --output-on-failure` ✅（3/3 通过）
   - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（仅既有 CA1416 警告）
 - **状态摘要**: P4 进度 86/144 (59.7%)，下一任务 P4.4.4 ScreenCaptured 事件: 帧缓冲→CGImage
+
+---
+
+### 2026-06-14 14:30 — P4.4.4 ScreenCaptured 事件: 帧缓冲→CGImage
+- **Agent**: Qoder
+- **结果**: ✅ 截图功能从空存根升级为真实帧缓冲回读→ScreenCaptureImageInfo 事件触发
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalWindow.cs`：添加 `ScreenCaptureRequested` 标志 + `ScreenCapturedCallback` 委托 + `CaptureFrame()` 方法（`texture.GetData` → `metal_texture_readback` → 内存映射 → 裁剪 → `ScreenCaptureImageInfo`）
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs`：构造函数注册 `_window.ScreenCapturedCallback`；`Screenshot()` 改为设置 `_window.ScreenCaptureRequested = true`（延迟截图模式）
+- **设计**: 参照 Vulkan 后端的延迟截图模式；`Screenshot()` 仅设标志，下一帧 `Present()` 时从当前帧缓冲 `ITexture` 回读像素，按 `ImageCrop` 裁剪区域，构造 `ScreenCaptureImageInfo` 并触发事件
+- **验证**:
+  - `cmake --build src/libmetal_bridge/build -j 4 --target metal_bridge test_buffer test_command_buffer test_device test_heap test_presenter test_sampler test_sync test_texture` ✅
+  - `ctest --test-dir src/libmetal_bridge/build --output-on-failure` ✅（7/8 通过，test_heap OUT_OF_MEMORY 为既有问题，与本变更无关）
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（仅既有 CA1416 警告，0 错误）
+- **状态摘要**: P4 进度 87/144 (60.4%)，下一任务 P4.4.5 BackgroundContextAction: 后台 MTLCommandQueue

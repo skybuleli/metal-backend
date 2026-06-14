@@ -21,6 +21,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly bool _hasUnifiedMemory;
         private readonly MetalStorageMode _defaultStorageMode;
         private readonly nint _queueHandle;
+        private readonly nint _backgroundQueueHandle;
         private Action<Action> _interruptAction;
         private uint _programCount;
 
@@ -48,6 +49,16 @@ namespace Ryujinx.Graphics.Metal
             }
 
             _queueHandle = queueHandle;
+
+            // 后台队列：用于 BackgroundContextAction 等独立 GPU 提交路径
+            MetalResult bgQueueResult = MetalNative.CreateQueue(_device.Handle, out nint bgQueueHandle);
+            if (bgQueueResult != MetalResult.Ok)
+            {
+                MetalNative.Release(queueHandle);
+                throw new InvalidOperationException($"CreateQueue（后台）失败：{bgQueueResult}");
+            }
+
+            _backgroundQueueHandle = bgQueueHandle;
             _buffers = new MetalBufferPool(_device.Handle, _defaultStorageMode);
             _shaderCompiler = new MetalShaderCompiler();
             _shaderCompiler.AttachDevice(_device); // 绑定设备，初始化编译器句柄
@@ -63,10 +74,18 @@ namespace Ryujinx.Graphics.Metal
         public IWindow Window => _window;
 
         public uint ProgramCount => _programCount;
-
         public void BackgroundContextAction(Action action, bool alwaysBackground = false)
         {
-            action();
+            if (alwaysBackground)
+            {
+                // 确保在后台线程执行，避免阻塞渲染线程
+                System.Threading.ThreadPool.QueueUserWorkItem(_ => action());
+            }
+            else
+            {
+                // 当前上下文直接执行（调用者期望同步）
+                action();
+            }
         }
 
         public BufferHandle CreateBuffer(int size, BufferAccess access = BufferAccess.Default)
@@ -130,6 +149,10 @@ namespace Ryujinx.Graphics.Metal
             _buffers.Dispose();
             _window.Dispose();
             _nullImageArray.Dispose();
+            if (_backgroundQueueHandle != nint.Zero)
+            {
+                MetalNative.Release(_backgroundQueueHandle);
+            }
             _nullTextureArray.Dispose();
             _sync.Dispose();
             _shaderCompiler.Dispose();

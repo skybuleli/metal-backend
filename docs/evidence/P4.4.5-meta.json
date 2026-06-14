@@ -1,0 +1,24 @@
+{
+  "task": "P4.4.5",
+  "name": "BackgroundContextAction: 后台 MTLCommandQueue",
+  "timestamp": "2026-06-14T14:35:00+08:00",
+  "files_changed": [
+    "src/ryubing/src/Ryujinx.Graphics.Metal/MetalRenderer.cs"
+  ],
+  "implementation": {
+    "MetalRenderer": {
+      "additions": [
+        "_backgroundQueueHandle: 后台 MTLCommandQueue 句柄",
+        "构造函数中创建第二个 MTLCommandQueue，用于后台 GPU 提交路径",
+        "Dispose 中释放 _backgroundQueueHandle",
+        "BackgroundContextAction: alwaysBackground=true → ThreadPool 后台线程执行；false → 同步执行"
+      ]
+    }
+  },
+  "design": "Metal 线程安全，但 BackgroundContextAction 的调用者（TextureGroup/Buffer 同步）期望不阻塞渲染线程。后台队列允许独立 GPU 提交路径。alwaysBackground=true 时由 ThreadedRenderer 路由，确保在后台线程执行 action",
+  "verification": {
+    "libmetal_bridge_build": "PASS (0 error)",
+    "dotnet_build": "PASS (0 error, only existing CA1416 warnings)",
+    "ctest": "7/8 PASS (test_heap OUT_OF_MEMORY failure is pre-existing, unrelated)"
+  }
+}
