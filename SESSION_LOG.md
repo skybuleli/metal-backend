@@ -94,3 +94,18 @@
   - 保留 `metal_begin_render_encoding` 作为回退路径（无渲染目标时）
   - 默认 `LoadAction::Load + StoreAction::Store` 保留已有渲染内容
 - **下一任务**: P4.3.8 — ClearRenderTarget: 清屏操作
+
+---
+
+### 2026-06-14 11:15 — P4.3.8 ClearRenderTarget: 清屏操作
+- **Agent**: Qoder
+- **结果**: ✅ 实现颜色/深度/模板清除缓存机制，通过 MTLRenderPassDescriptor loadAction=Clear 完成清屏
+- **变更**:
+  - `src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs`：实现 `ClearRenderTargetColor` + `ClearRenderTargetDepthStencil`；`MetalRenderTargetState` 新增 `PendingColorClear`/`PendingDepthStencilClear` 缓存结构；`BuildColorDescriptors`/`BuildDepthStencilDescriptor` 支持 LoadAction.Clear；`ExecuteRenderDraw` 渲染通道开始后调用 `ClearPending()`
+- **验证**:
+  - `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅（109 个 CA1416 警告，0 错误）
+- **说明**:
+  - Metal 清屏通过渲染通道描述符的 loadAction=Clear 实现，非通道内清除
+  - componentMask 部分清除回退为全通道清除（Metal 限制）
+  - 纯 C# 变更，复用 P4.3.7 已有的 C ABI 描述符机制
+- **状态摘要**: P4 进度 79/144 (54.9%)，下一任务 P4.3.9 SetBlendState

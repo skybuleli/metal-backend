@@ -65,10 +65,24 @@ namespace Ryujinx.Graphics.Metal
 
         public void ClearRenderTargetColor(int index, int layer, int layerCount, uint componentMask, ColorF color)
         {
+            // 缓存颜色清除参数，下次 ExecuteRenderDraw 时合并到 MTLRenderPassDescriptor
+            if (componentMask == 0 || (uint)index >= 8)
+            {
+                return;
+            }
+
+            _renderTargets.SetPendingColorClear(index, color, componentMask);
         }
 
         public void ClearRenderTargetDepthStencil(int layer, int layerCount, float depthValue, bool depthMask, int stencilValue, int stencilMask)
         {
+            // 缓存深度/模板清除参数，下次 ExecuteRenderDraw 时合并到 MTLRenderPassDescriptor
+            if (!depthMask && stencilMask == 0)
+            {
+                return;
+            }
+
+            _renderTargets.SetPendingDepthStencilClear(depthValue, depthMask, stencilValue, stencilMask);
         }
 
         public void CommandBufferBarrier()
@@ -702,6 +716,10 @@ namespace Ryujinx.Graphics.Metal
                     return;
                 }
 
+                // 渲染通道开始后立即清除挂起的清除请求
+                // （清除参数已合并到描述符的 loadAction=Clear 中）
+                _renderTargets.ClearPending();
+
                 BindRenderResources(renderEncoder);
                 drawAction(renderEncoder);
 
@@ -1133,8 +1151,9 @@ namespace Ryujinx.Graphics.Metal
         }
 
         /// <summary>
-        /// 渲染目标状态缓存（P4.3.7）。
-        /// 由 SetRenderTargets 更新，ExecuteRenderDraw 读取以创建 MTLRenderPassDescriptor。
+        /// 渲染目标状态缓存（P4.3.7 / P4.3.8）。
+        /// 由 SetRenderTargets 更新，ClearRenderTarget* 缓存清除参数，
+        /// ExecuteRenderDraw 读取以创建带清除动作的 MTLRenderPassDescriptor。
         /// </summary>
         private sealed class MetalRenderTargetState
         {
@@ -1143,6 +1162,10 @@ namespace Ryujinx.Graphics.Metal
             private readonly nint[] _colorHandles;
             private int _colorCount;
             private nint _depthStencilHandle;
+
+            // P4.3.8：挂起的清除参数
+            private readonly PendingColorClear[] _pendingColorClears;
+            private PendingDepthStencilClear _pendingDepthClear;
 
             public int ColorCount => _colorCount;
             public bool HasTargets => _colorCount > 0;
@@ -1153,6 +1176,56 @@ namespace Ryujinx.Graphics.Metal
                 _colorHandles = new nint[MaxColorAttachments];
                 _colorCount = 0;
                 _depthStencilHandle = nint.Zero;
+                _pendingColorClears = new PendingColorClear[MaxColorAttachments];
+                _pendingDepthClear = default;
+            }
+
+            /// <summary>
+            /// 缓存指定颜色附件的清除参数（P4.3.8）。
+            /// componentMask 为 0xF 时使用渲染通道描述符的全通道清除；
+            /// 部分清除当前回退为全通道清除（Metal 不支持按通道清除）。
+            /// </summary>
+            public void SetPendingColorClear(int index, ColorF color, uint componentMask)
+            {
+                if ((uint)index >= MaxColorAttachments)
+                {
+                    return;
+                }
+
+                _pendingColorClears[index] = new PendingColorClear
+                {
+                    Active = true,
+                    Color = color,
+                    ComponentMask = componentMask,
+                };
+            }
+
+            /// <summary>
+            /// 缓存深度/模板清除参数（P4.3.8）。
+            /// </summary>
+            public void SetPendingDepthStencilClear(float depth, bool depthMask, int stencil, int stencilMask)
+            {
+                _pendingDepthClear = new PendingDepthStencilClear
+                {
+                    Active = true,
+                    Depth = depth,
+                    DepthMask = depthMask,
+                    Stencil = stencil,
+                    StencilMask = stencilMask,
+                };
+            }
+
+            /// <summary>
+            /// 渲染通道开始后调用，重置所有挂起的清除请求。
+            /// </summary>
+            public void ClearPending()
+            {
+                for (int i = 0; i < MaxColorAttachments; i++)
+                {
+                    _pendingColorClears[i] = default;
+                }
+
+                _pendingDepthClear = default;
             }
 
             /// <summary>
@@ -1198,8 +1271,9 @@ namespace Ryujinx.Graphics.Metal
             }
 
             /// <summary>
-            /// 构建 C ABI 颜色附件描述符数组。
+            /// 构建 C ABI 颜色附件描述符数组（P4.3.7 / P4.3.8）。
             /// 默认使用 LoadAction::Load + StoreAction::Store 保留已有内容。
+            /// 如果有挂起的清除请求，对应附件使用 LoadAction::Clear。
             /// </summary>
             public MetalColorAttachmentDescriptor[] BuildColorDescriptors()
             {
@@ -1209,15 +1283,39 @@ namespace Ryujinx.Graphics.Metal
                 {
                     if (_colorHandles[i] != nint.Zero)
                     {
-                        descriptors[i] = new MetalColorAttachmentDescriptor
+                        PendingColorClear pending = _pendingColorClears[i];
+
+                        if (pending.Active)
                         {
-                            Texture = _colorHandles[i],
-                            Level = 0,
-                            Slice = 0,
-                            LoadAction = MetalLoadAction.Load,
-                            StoreAction = MetalStoreAction.Store,
-                            ClearColor = default,
-                        };
+                            // Metal 渲染通道清除作用于所有分量，忽略 componentMask 的部分清除语义
+                            descriptors[i] = new MetalColorAttachmentDescriptor
+                            {
+                                Texture = _colorHandles[i],
+                                Level = 0,
+                                Slice = 0,
+                                LoadAction = MetalLoadAction.Clear,
+                                StoreAction = MetalStoreAction.Store,
+                                ClearColor = new MetalClearColor
+                                {
+                                    Red = pending.Color.Red,
+                                    Green = pending.Color.Green,
+                                    Blue = pending.Color.Blue,
+                                    Alpha = pending.Color.Alpha,
+                                },
+                            };
+                        }
+                        else
+                        {
+                            descriptors[i] = new MetalColorAttachmentDescriptor
+                            {
+                                Texture = _colorHandles[i],
+                                Level = 0,
+                                Slice = 0,
+                                LoadAction = MetalLoadAction.Load,
+                                StoreAction = MetalStoreAction.Store,
+                                ClearColor = default,
+                            };
+                        }
                     }
                     else
                     {
@@ -1229,10 +1327,40 @@ namespace Ryujinx.Graphics.Metal
             }
 
             /// <summary>
-            /// 构建 C ABI 深度/模板附件描述符。
+            /// 构建 C ABI 深度/模板附件描述符（P4.3.7 / P4.3.8）。
+            /// 如果有挂起的深度/模板清除请求，使用对应的 Clear load action。
             /// </summary>
             public MetalDepthStencilAttachmentDescriptor BuildDepthStencilDescriptor()
             {
+                PendingDepthStencilClear pending = _pendingDepthClear;
+
+                if (pending.Active)
+                {
+                    // 根据 depthMask 和 stencilMask 决定各通道的 load action
+                    MetalLoadAction depthLoad = pending.DepthMask
+                        ? MetalLoadAction.Clear
+                        : MetalLoadAction.Load;
+                    MetalLoadAction stencilLoad = (pending.StencilMask != 0)
+                        ? MetalLoadAction.Clear
+                        : MetalLoadAction.Load;
+
+                    return new MetalDepthStencilAttachmentDescriptor
+                    {
+                        Texture = _depthStencilHandle,
+                        Level = 0,
+                        Slice = 0,
+                        DepthLoadAction = depthLoad,
+                        DepthStoreAction = MetalStoreAction.Store,
+                        StencilLoadAction = stencilLoad,
+                        StencilStoreAction = MetalStoreAction.Store,
+                        ClearValue = new MetalClearDepthStencil
+                        {
+                            Depth = pending.Depth,
+                            Stencil = (uint)pending.Stencil,
+                        },
+                    };
+                }
+
                 return new MetalDepthStencilAttachmentDescriptor
                 {
                     Texture = _depthStencilHandle,
@@ -1245,6 +1373,28 @@ namespace Ryujinx.Graphics.Metal
                     ClearValue = default,
                 };
             }
+        }
+
+        /// <summary>
+        /// 挂起的颜色清除参数（P4.3.8）
+        /// </summary>
+        private struct PendingColorClear
+        {
+            public bool Active;
+            public ColorF Color;
+            public uint ComponentMask;
+        }
+
+        /// <summary>
+        /// 挂起的深度/模板清除参数（P4.3.8）
+        /// </summary>
+        private struct PendingDepthStencilClear
+        {
+            public bool Active;
+            public float Depth;
+            public bool DepthMask;
+            public int Stencil;
+            public int StencilMask;
         }
     }
 }

@@ -1,14 +1,14 @@
-# 下一任务 — P4.3.8 ClearRenderTarget: 清屏操作
+# 下一任务 — P4.3.9 SetBlendState: 混合状态映射
 
-> 生成时间：2026-06-14 10:49:19
+> 生成时间：2026-06-14 11:00:52
 > 所属阶段：Phase 4 — 核心 Metal 后端实现
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P4.3.8 |
-| 任务名称 | ClearRenderTarget: 清屏操作 |
+| 任务 ID | P4.3.9 |
+| 任务名称 | SetBlendState: 混合状态映射 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P4.3.8 → ✅
+- 更新 PROGRESS.md：P4.3.9 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

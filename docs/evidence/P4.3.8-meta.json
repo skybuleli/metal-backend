@@ -1,0 +1,23 @@
+{
+  "task": "P4.3.8",
+  "title": "ClearRenderTarget: 清屏操作",
+  "status": "done",
+  "timestamp": "2026-06-14T11:15:00+08:00",
+  "changes": [
+    {
+      "file": "src/ryubing/src/Ryujinx.Graphics.Metal/MetalPipeline.cs",
+      "summary": "实现 ClearRenderTargetColor + ClearRenderTargetDepthStencil；MetalRenderTargetState 新增 PendingColorClear/PendingDepthStencilClear 缓存结构；BuildColorDescriptors/BuildDepthStencilDescriptor 支持 LoadAction.Clear；ExecuteRenderDraw 在渲染通道开始后调用 ClearPending()"
+    }
+  ],
+  "design_decisions": [
+    "Metal 清屏通过 MTLRenderPassDescriptor 的 loadAction=Clear 实现，而非 vkCmdClearAttachments 式的通道内清除",
+    "清除参数缓存在 MetalRenderTargetState 中，由 ClearRenderTarget* 写入、ExecuteRenderDraw 读取并合并到渲染通道描述符，渲染通道开始后立刻重置",
+    "componentMask 部分清除语义当前回退为全通道清除（Metal 渲染通道 clear 作用于所有分量）",
+    "depthMask=false 时深度使用 LoadAction.Load 而非 Clear；stencilMask=0 时模板同理",
+    "纯 C# 变更，无需修改 C++ 层（复用 P4.3.7 已有的 metal_color_attachment_descriptor.clear_color + metal_load_action 机制）"
+  ],
+  "build": {
+    "cpp": "无需重新编译（无 C++ 变更）",
+    "csharp": "109 个 CA1416 警告（macOS 平台），0 错误"
+  }
+}
