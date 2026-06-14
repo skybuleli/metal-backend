@@ -256,6 +256,7 @@ namespace Ryujinx.Graphics.Metal
 
         private nint _handle;
         private readonly nint _deviceHandle;
+        private readonly nint _queueHandle;
         private readonly MetalTextureInfo _textureInfo;
         private readonly MetalStorageMode _storageMode;
         private bool _released;
@@ -269,32 +270,63 @@ namespace Ryujinx.Graphics.Metal
         public int Height => Info.Height;
 
         internal nint Handle => _handle;
-
-        private static bool ShouldSkipCpuTextureUpload(TextureCreateInfo info)
+        /// <summary>
+        /// 上传纹理数据到 GPU。
+        /// 普通格式通过 CPU-side replaceRegion，深度/模板通过 GPU blit。
+        /// </summary>
+        private void UploadTextureToGpu(
+            nint textureHandle, nint bufferHandle, ulong bufferOffset,
+            uint layer, uint level,
+            uint regionX, uint regionY, uint regionZ,
+            uint regionWidth, uint regionHeight, uint bytesPerRow)
         {
-            if (!info.Format.IsDepthOrStencil)
+            if (Info.Format.IsDepthOrStencil)
             {
-                return false;
+                ulong count = ++_diagnosticDepthUploadSkipCount;
+                if (count <= 5 || (count % 100) == 0)
+                {
+                    Logger.Warning?.PrintMsg(
+                        LogClass.Gpu,
+                        $"[DIAG] Blit 上传 depth/stencil 纹理: count={count}, format={Info.Format}, size={Info.Width}x{Info.Height}, level={level}");
+                }
+
+                MetalResult result = MetalNative.TextureUploadViaBlit(
+                    _queueHandle,
+                    textureHandle,
+                    bufferHandle,
+                    bufferOffset,
+                    layer, level,
+                    regionX, regionY, regionZ,
+                    regionWidth, regionHeight,
+                    bytesPerRow);
+
+                if (result != MetalResult.Ok)
+                {
+                    Logger.Error?.PrintMsg(
+                        LogClass.Gpu,
+                        $"[DIAG] Blit 上传 depth/stencil 纹理失败: result={result}");
+                }
             }
-
-            ulong count = ++_diagnosticDepthUploadSkipCount;
-
-            if (count <= 5 || (count % 100) == 0)
+            else
             {
-                Logger.Warning?.PrintMsg(
-                    LogClass.Gpu,
-                    $"[DIAG] 跳过 depth/stencil 纹理 CPU 上传，等待后续 Blit 路径: count={count}, format={info.Format}, size={info.Width}x{info.Height}, levels={info.Levels}");
+                MetalNative.TextureUpload(
+                    textureHandle,
+                    bufferHandle,
+                    bufferOffset,
+                    layer, level,
+                    regionX, regionY, regionZ,
+                    regionWidth, regionHeight,
+                    bytesPerRow);
             }
-
-            return true;
         }
 
         /// <summary>
         /// 创建 Metal 原生纹理。格式通过 MetalFormatMapping 映射表转换为 MetalPixelFormat。
         /// </summary>
-        public MetalTexture(nint deviceHandle, TextureCreateInfo info, MetalStorageMode storageMode)
+        public MetalTexture(nint deviceHandle, nint queueHandle, TextureCreateInfo info, MetalStorageMode storageMode)
         {
             _deviceHandle = deviceHandle;
+            _queueHandle = queueHandle;
             _storageMode = storageMode;
             Info = info;
 
@@ -441,7 +473,7 @@ namespace Ryujinx.Graphics.Metal
                     $"[DIAG] CreateTextureView 失败，回退为独立纹理: result={result}, format={info.Format}, target={info.Target}, size={info.Width}x{info.Height}, firstLayer={firstLayer}, firstLevel={firstLevel}, layers={numLayers}, levels={numLevels}");
 
                 // 回退：创建全新的纹理（不支持 view 的格式/类型组合时）
-                return new MetalTexture(_deviceHandle, info, _storageMode);
+                return new MetalTexture(_deviceHandle, _queueHandle, info, _storageMode);
             }
 
             // 创建轻量封装：传递 firstLayer/firstLevel 供区域上传计算父纹理偏移
@@ -574,10 +606,9 @@ namespace Ryujinx.Graphics.Metal
 
                 try
                 {
-                    if (ShouldSkipCpuTextureUpload(Info))
-                    {
-                        return;
-                    }
+
+
+
 
                     int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                     int safeLayer = Math.Clamp(layer, 0, Math.Max(Info.GetDepthOrLayers() - 1, 0));
@@ -606,7 +637,7 @@ namespace Ryujinx.Graphics.Metal
                             try
                             {
                                 // 使用父纹理 handle + 父纹理相对坐标
-                                MetalNative.TextureUpload(
+                                _parent.UploadTextureToGpu(
                                     _parent._handle, tempBuf, 0,
                                     (uint)parentLayer, (uint)parentLevel,
                                     0, 0, 0,
@@ -636,10 +667,11 @@ namespace Ryujinx.Graphics.Metal
 
                 try
                 {
-                    if (ShouldSkipCpuTextureUpload(Info))
-                    {
-                        return;
-                    }
+
+
+
+
+
 
                     int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                     int safeLayer = Math.Clamp(layer, 0, Math.Max(Info.GetDepthOrLayers() - 1, 0));
@@ -679,7 +711,7 @@ namespace Ryujinx.Graphics.Metal
                             try
                             {
                                 // 使用父纹理 handle + 父纹理相对坐标
-                                MetalNative.TextureUpload(
+                                _parent.UploadTextureToGpu(
                                     _parent._handle,
                                     tempBuf,
                                     0,
@@ -841,10 +873,11 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
-                if (ShouldSkipCpuTextureUpload(Info))
-                {
-                    return;
-                }
+
+
+
+
+
 
                 int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                 int safeLayer = Math.Clamp(layer, 0, Math.Max((int)_textureInfo.Depth - 1, 0));
@@ -876,7 +909,7 @@ namespace Ryujinx.Graphics.Metal
 
                         try
                         {
-                            MetalNative.TextureUpload(
+                            this.UploadTextureToGpu(
                                 _handle,
                                 tempBuf,
                                 0,
@@ -910,10 +943,11 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
-                if (ShouldSkipCpuTextureUpload(Info))
-                {
-                    return;
-                }
+
+
+
+
+
 
                 int safeLevel = Math.Clamp(level, 0, Info.Levels - 1);
                 int safeLayer = Math.Clamp(layer, 0, Math.Max((int)_textureInfo.Depth - 1, 0));
@@ -955,7 +989,7 @@ namespace Ryujinx.Graphics.Metal
 
                         try
                         {
-                            MetalNative.TextureUpload(
+                            this.UploadTextureToGpu(
                                 _handle,
                                 tempBuf,
                                 0,

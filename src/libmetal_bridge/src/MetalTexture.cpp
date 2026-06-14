@@ -556,7 +556,7 @@ metal_result metal_texture_upload(
 // ════════════════════════════════════════════════════════════════════
 
 metal_result metal_texture_upload_via_blit(
-    metal_device* device,
+    metal_queue* queue,
     metal_texture* texture,
     metal_buffer* buffer,
     uint64_t buffer_offset,
@@ -569,7 +569,7 @@ metal_result metal_texture_upload_via_blit(
     uint32_t region_height,
     uint32_t bytes_per_row)
 {
-    if (device == nullptr || texture == nullptr || buffer == nullptr)
+    if (queue == nullptr || texture == nullptr || buffer == nullptr)
         return METAL_RESULT_INVALID_ARGUMENT;
 
     if (texture->base.type != METAL_HANDLE_TYPE_TEXTURE)
@@ -578,7 +578,7 @@ metal_result metal_texture_upload_via_blit(
     if (buffer->base.type != METAL_HANDLE_TYPE_BUFFER)
         return METAL_RESULT_INVALID_ARGUMENT;
 
-    if (texture->texture == nullptr || buffer->buffer == nullptr || device->device == nullptr)
+    if (texture->texture == nullptr || buffer->buffer == nullptr || queue->queue == nullptr)
         return METAL_RESULT_RUNTIME_ERROR;
 
     // 验证 mip level 范围
@@ -606,18 +606,10 @@ metal_result metal_texture_upload_via_blit(
 
     NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
 
-    // 创建临时命令队列 + 命令缓冲 + blit 编码器
-    MTL::CommandQueue* tempQueue = device->device->newCommandQueue();
-    if (tempQueue == nullptr)
-    {
-        pool->release();
-        return METAL_RESULT_RUNTIME_ERROR;
-    }
-
-    MTL::CommandBuffer* cmdBuffer = tempQueue->commandBuffer();
+    // 使用传入的共享队列创建命令缓冲（避免临时创建队列导致的死锁）
+    MTL::CommandBuffer* cmdBuffer = queue->queue->commandBuffer();
     if (cmdBuffer == nullptr)
     {
-        tempQueue->release();
         pool->release();
         return METAL_RESULT_RUNTIME_ERROR;
     }
@@ -626,7 +618,6 @@ metal_result metal_texture_upload_via_blit(
     if (blitEncoder == nullptr)
     {
         cmdBuffer->release();
-        tempQueue->release();
         pool->release();
         return METAL_RESULT_RUNTIME_ERROR;
     }
@@ -660,7 +651,6 @@ metal_result metal_texture_upload_via_blit(
     // 清理
     blitEncoder->release();
     cmdBuffer->release();
-    tempQueue->release();
     pool->release();
 
     return METAL_RESULT_OK;

@@ -162,8 +162,9 @@ typedef struct metal_device_caps
 /// 通过 GPU blit 编码器上传纹理数据（P4.5.12）
 /// 替代 replaceRegion 用于 depth/stencil 纹理，因 Apple Silicon 上
 /// 深度/模板格式不支持 CPU-side replaceRegion。
+/// 使用已有的 metal_queue（而非临时创建队列）以避免 GPU 同步死锁。
 METAL_BRIDGE_EXPORT metal_result metal_texture_upload_via_blit(
-    metal_device* device,
+    metal_queue* queue,
     metal_texture* texture,
     metal_buffer* buffer,
     uint64_t buffer_offset,

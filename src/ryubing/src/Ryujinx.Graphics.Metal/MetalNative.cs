@@ -109,7 +109,7 @@ namespace Ryujinx.Graphics.Metal
 
         [DllImport(LibraryName, EntryPoint = "metal_texture_upload_via_blit")]
         internal static extern MetalResult TextureUploadViaBlit(
-            nint device,
+            nint queue,
             nint texture,
             nint buffer,
             ulong bufferOffset,
