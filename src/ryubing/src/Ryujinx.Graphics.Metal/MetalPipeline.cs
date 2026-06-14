@@ -67,6 +67,12 @@ namespace Ryujinx.Graphics.Metal
         private readonly HashSet<string> _loggedFormatCombos = new();
         private int _renderWidth;
         private int _renderHeight;
+        // 帧级 CommandBuffer 批处理：减少每 Draw 创建/提交开销
+        private nint _currentCommandBuffer;
+        private nint _currentRenderEncoder;
+        private bool _encoderActive;
+        private bool _renderTargetsChanged;
+
         /// <summary>
         /// 当前活动的渲染管线句柄（由 metal_create_render_pipeline 返回）
         /// </summary>
@@ -680,6 +686,11 @@ namespace Ryujinx.Graphics.Metal
                     Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] Pipeline 缓存: {formatKey}");
                 }
             }
+
+            if (formatsChanged && _encoderActive)
+            {
+                _renderTargetsChanged = true;
+            }
         }
 
         public void SetScissors(ReadOnlySpan<Rectangle<int>> regions)
@@ -992,72 +1003,77 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
-            MetalResult result = MetalNative.BeginCommandBuffer(_queueHandle, out nint commandBuffer);
-            if (result != MetalResult.Ok || commandBuffer == nint.Zero)
-            {
-                ThrowIfFailed(result, nameof(MetalNative.BeginCommandBuffer));
-                return;
-            }
-
-            nint renderEncoder = nint.Zero;
-
             try
             {
-                if (_renderTargets.HasTargets)
+                // 当 encoder 已激活但有待处理的清除操作或渲染目标变更时，需重建 encoder
+                if (_encoderActive && (_renderTargetsChanged || _renderTargets.HasPending()))
                 {
-                    MetalColorAttachmentDescriptor[] colorDescs = _renderTargets.BuildColorDescriptors();
-                    uint colorCount = (uint)_renderTargets.ColorCount;
+                    Flush();
+                }
 
-                    if (_renderTargets.HasDepthStencil)
+                // 延迟创建 CommandBuffer + RenderEncoder
+                if (!_encoderActive)
+                {
+                    MetalResult result = MetalNative.BeginCommandBuffer(
+                        _queueHandle, out _currentCommandBuffer);
+                    if (result != MetalResult.Ok || _currentCommandBuffer == nint.Zero)
                     {
-                        MetalDepthStencilAttachmentDescriptor dsDesc = _renderTargets.BuildDepthStencilDescriptor();
-                        result = MetalNative.BeginRenderEncodingWithTargets(
-                            commandBuffer, _pipelineHandle,
-                            colorDescs, colorCount,
-                            dsDesc, out renderEncoder);
+                        ThrowIfFailed(result, nameof(MetalNative.BeginCommandBuffer));
+                        return;
+                    }
+
+                    if (_renderTargets.HasTargets)
+                    {
+                        MetalColorAttachmentDescriptor[] colorDescs = _renderTargets.BuildColorDescriptors();
+                        uint colorCount = (uint)_renderTargets.ColorCount;
+
+                        if (_renderTargets.HasDepthStencil)
+                        {
+                            MetalDepthStencilAttachmentDescriptor dsDesc = _renderTargets.BuildDepthStencilDescriptor();
+                            result = MetalNative.BeginRenderEncodingWithTargets(
+                                _currentCommandBuffer, _pipelineHandle,
+                                colorDescs, colorCount,
+                                dsDesc, out _currentRenderEncoder);
+                        }
+                        else
+                        {
+                            result = MetalNative.BeginRenderEncodingWithTargets(
+                                _currentCommandBuffer, _pipelineHandle,
+                                colorDescs, colorCount,
+                                out _currentRenderEncoder);
+                        }
                     }
                     else
                     {
-                        result = MetalNative.BeginRenderEncodingWithTargets(
-                            commandBuffer, _pipelineHandle,
-                            colorDescs, colorCount,
-                            out renderEncoder);
+                        result = MetalNative.BeginRenderEncoding(
+                            _currentCommandBuffer, _pipelineHandle,
+                            out _currentRenderEncoder);
                     }
+
+                    if (result != MetalResult.Ok || _currentRenderEncoder == nint.Zero)
+                    {
+                        ThrowIfFailed(result, nameof(MetalNative.BeginRenderEncoding));
+                        Flush(); // 清理已创建的 CB
+                        return;
+                    }
+
+                    _renderTargets.ClearPending();
+                    _renderTargetsChanged = false;
+                    _encoderActive = true;
                 }
-                else
-                {
-                    result = MetalNative.BeginRenderEncoding(
-                        commandBuffer, _pipelineHandle, out renderEncoder);
-                }
 
-                if (result != MetalResult.Ok || renderEncoder == nint.Zero)
-                {
-                    ThrowIfFailed(result, nameof(MetalNative.BeginRenderEncoding));
-                    return;
-                }
-
-                _renderTargets.ClearPending();
-                BindRenderResources(renderEncoder);
-                drawAction(renderEncoder);
-
-                result = MetalNative.EndRenderEncoding(renderEncoder);
-                ThrowIfFailed(result, nameof(MetalNative.EndRenderEncoding));
-
-                result = MetalNative.CommitCommandBuffer(commandBuffer);
-                ThrowIfFailed(result, nameof(MetalNative.CommitCommandBuffer));
+                // 绑定渲染资源和绘制
+                BindRenderResources(_currentRenderEncoder);
+                drawAction(_currentRenderEncoder);
             }
-            finally
+            catch
             {
-                if (renderEncoder != nint.Zero)
-                {
-                    MetalNative.EndRenderEncoding(renderEncoder);
-                    MetalNative.Release(renderEncoder);
-                }
-                if (commandBuffer != nint.Zero)
-                {
-                    MetalNative.Release(commandBuffer);
-                }
+                // 异常时清理，避免悬挂
+                Flush();
+                throw;
             }
+
+            // _encoderActive 保持 true，下次 Draw 复用 encoder
         }
 
         private void BindRenderResources(nint renderEncoder)
@@ -1219,10 +1235,30 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
-        /// <summary>
-        /// 更新深度/模板状态对象（P4.3.10）。
-        /// 仅当 _depthStencilDirty 时重新创建 MTLDepthStencilState。
+        /// 提交当前帧的 CommandBuffer：结束编码器 + 提交命令缓冲。
+        /// 由 Present 或渲染目标变更时调用。
         /// </summary>
+        public void Flush()
+        {
+            if (_currentRenderEncoder != nint.Zero)
+            {
+                MetalResult endResult = MetalNative.EndRenderEncoding(_currentRenderEncoder);
+                _ = endResult; // 静默忽略错误（后续 Commands 已提交）
+                MetalNative.Release(_currentRenderEncoder);
+                _currentRenderEncoder = nint.Zero;
+            }
+
+            if (_currentCommandBuffer != nint.Zero)
+            {
+                MetalResult commitResult = MetalNative.CommitCommandBuffer(_currentCommandBuffer);
+                _ = commitResult;
+                MetalNative.Release(_currentCommandBuffer);
+                _currentCommandBuffer = nint.Zero;
+            }
+
+            _encoderActive = false;
+        }
+
         private void UpdateDepthStencilState()
         {
             if (!_depthStencilDirty)
@@ -1915,6 +1951,22 @@ namespace Ryujinx.Graphics.Metal
                 }
 
                 _pendingDepthClear = default;
+            }
+
+            /// <summary>
+            /// 是否存在未处理的清除操作。
+            /// </summary>
+            public bool HasPending()
+            {
+                for (int i = 0; i < MaxColorAttachments; i++)
+                {
+                    if (_pendingColorClears[i].Active)
+                    {
+                        return true;
+                    }
+                }
+
+                return _pendingDepthClear.Active;
             }
 
             /// <summary>
