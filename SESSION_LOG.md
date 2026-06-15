@@ -21,12 +21,32 @@
 
 ## 当前状态摘要
 
-- 当前阶段：Phase 4 — 核心 Metal 后端实现
-- 当前进度：78/144 任务完成
-- 下一任务：P4.3.8 — ClearRenderTarget: 清屏操作
+- 当前阶段：Phase 5 — 命令映射与状态跟踪
+- 当前进度：108/165 任务完成
+- 下一任务：P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-15 | P4.6.10 窗口版 2D smoke — `NSWindow + CAMetalLayer + Presenter` 呈现 smoke 首帧 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 打通窗口呈现链路，`presents=64`，同时导出首帧 PPM/PNG 作为证据
+- **变更**:
+  - `src/demos/p4_6d/src/main.mm`：新增窗口 smoke demo，CPU 生成 2D 画面后通过 `metal_texture_upload` + `metal_presenter_present_texture` 呈现
+  - `src/demos/p4_6d/Makefile` / `src/demos/p4_6d/README.md`：新增构建、运行、证据入口与说明
+  - `src/demos/Makefile`：补齐 `p4_6d` 构建/运行入口
+  - `PROGRESS.md` / `NEXT_TASK.md` / `SESSION_LOG.md`：同步任务定义、统计和阶段流转
+- **验证**:
+  - `make -C src/demos/p4_6d build` ✅
+  - `make -C src/demos/p4_6d evidence` ✅
+  - `python3 tools/verify_progress.py` ✅
+- **证据**:
+  - `docs/evidence/P4.6.10-run.txt`
+  - `docs/evidence/P4.6.10-window-smoke.ppm`
+  - `docs/evidence/P4.6.10-window-smoke.png`
+  - `docs/evidence/P4.6.10-meta.json`
+- **下一任务**: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
 
 ### 2026-06-13 | P4.3.2 SetVertexBuffers/SetVertexAttribs — 顶点布局映射 | ✅ 完成
 

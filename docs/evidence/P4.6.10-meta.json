@@ -1,0 +1,8 @@
+{
+  "task": "P4.6.10",
+  "demo": "p4_6d_window_smoke",
+  "scene": "NSWindow + CAMetalLayer + metal_presenter_present_texture",
+  "frames": "CPU generated 2D smoke frame uploaded through bridge texture",
+  "artifacts": ["docs/evidence/P4.6.10-run.txt", "docs/evidence/P4.6.10-window-smoke.ppm", "docs/evidence/P4.6.10-window-smoke.png"],
+  "notes": "该任务用于验证窗口呈现链路，不再依赖离屏终帧作为主证据。"
+}

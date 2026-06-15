@@ -1,0 +1,2 @@
+已导出窗口 smoke PPM: "out/p4_6d_window_smoke.ppm"
+P4.6.10 窗口 smoke 完成: presents=64
