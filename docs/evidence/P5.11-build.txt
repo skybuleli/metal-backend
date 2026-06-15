@@ -1,0 +1,14 @@
+P5.11 几何着色器路径: Maxwell GS→Vertex+Compute 解构
+
+构建命令:
+dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug
+
+结果:
+- 构建成功
+- 错误: 0
+- 警告: 177
+
+说明:
+- `MetalStateMapping` 新增 geometry-as-compute 记录，明确几何阶段由上游 `VtgAsCompute` 解构
+- `SetProgram` 注释已补充 vertex/geometry-as-compute 的 compute 变体说明
+- Metal 侧仍沿用已有 compute 管线承接机制，不新增原生 geometry 着色器实现

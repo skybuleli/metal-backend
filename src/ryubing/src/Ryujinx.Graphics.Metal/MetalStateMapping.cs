@@ -12,7 +12,7 @@ namespace Ryujinx.Graphics.Metal
     {
         private static readonly MetalStateMappingEntry[] s_entries =
         [
-            new("SetProgram", "MTLRenderPipelineState / MTLComputePipelineState", MetalStateDomain.Program, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前由 MetalPipeline 直接持有程序与管线缓存。"),
+            new("SetProgram", "MTLRenderPipelineState / MTLComputePipelineState", MetalStateDomain.Program, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前由 MetalPipeline 直接持有程序与管线缓存，包含 vertex/geometry-as-compute 的 compute 变体。"),
             new("SetRenderTargets", "MTLRenderPassDescriptor", MetalStateDomain.RenderTarget, "MetalPipeline / MetalWindow", "P5.0", MetalStateMaturity.Skeleton, "当前由 MetalRenderTargetState 汇总颜色/深度附件。"),
             new("SetViewports", "setViewport", MetalStateDomain.ViewportScissor, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "现有实现已在 MetalPipeline 中保存视口数组。"),
             new("SetScissors", "setScissorRect", MetalStateDomain.ViewportScissor, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "现有实现已裁剪到当前渲染目标尺寸。"),
@@ -32,6 +32,7 @@ namespace Ryujinx.Graphics.Metal
             new("SetTextureAndSampler", "setFragmentTexture + setFragmentSamplerState", MetalStateDomain.ResourceBinding, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前只做 fragment 绑定，后续再扩展 stage-aware 路径。"),
             new("SetImage", "setTexture", MetalStateDomain.ResourceBinding, "MetalPipeline", "P5.8", MetalStateMaturity.Implemented, "compute 图像与纹理数组现在会展开到连续 binding 槽位。"),
             new("DispatchCompute", "MTLComputeCommandEncoder", MetalStateDomain.Compute, "MetalPipeline / 后续 ComputeEncoder", "P5.0", MetalStateMaturity.Skeleton, "计算路径暂未接通，但状态入口已经预留。"),
+            new("GeometryAsCompute", "VtgAsCompute + compute metallib", MetalStateDomain.Geometry, "Gpu ShaderCache / MetalPipeline", "P5.11", MetalStateMaturity.Partial, "Ryubing 已在 GPU 侧把几何阶段解构成可选 compute 变体；Metal 侧只需消费 host program 的 compute metallib。"),
             new("CopyBuffer", "MTLBlitCommandEncoder.copyFromBuffer", MetalStateDomain.Copy, "MetalPipeline / MetalResources", "P5.9", MetalStateMaturity.Implemented, "buffer→buffer 复制已接到真实 blit 命令编码器。"),
             new("ClearBuffer", "MTLBlitCommandEncoder.fillBuffer", MetalStateDomain.Clear, "MetalPipeline / MetalResources", "P5.0", MetalStateMaturity.Skeleton, "当前以缓冲区清零/填充的状态入口预留。"),
             new("ClearRenderTargetColor", "MTLRenderPassDescriptor.loadAction = Clear", MetalStateDomain.Clear, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "现有清除参数已缓存到渲染目标状态。"),
@@ -75,6 +76,7 @@ namespace Ryujinx.Graphics.Metal
         VertexInput,
         ResourceBinding,
         Compute,
+        Geometry,
         Copy,
         Clear,
         Sync,

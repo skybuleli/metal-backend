@@ -1144,3 +1144,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.10 已完成，纹理上传/下载的 Buffer↔Texture 主链路已经打通
 - 下一步将进入 `P5.11` 的后续命令映射任务
+
+## 2026-06-15 下午 | P5.11 几何着色器路径: Maxwell GS→Vertex+Compute 解构 | ✅ 完成
+
+#### 任务目标
+- 把 Maxwell 几何着色器在 Metal 后端里的落点从“隐式存在”收敛为“显式状态”
+- 让上游 `VtgAsCompute` 的 geometry-as-compute 路线在 Metal 侧有清晰的责任边界
+
+#### 本轮实现
+- 在 `MetalStateMapping` 中新增 `GeometryAsCompute` 记录，注明由 `VtgAsCompute` 解构 GS
+- 将 `SetProgram` 注释补充为包含 vertex/geometry-as-compute 的 compute 变体
+- 保持 Metal 侧沿用既有 compute pipeline 承接机制，不额外引入原生 geometry 着色器实现
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug` ✅
+- 证据文件：`docs/evidence/P5.11-build.txt`
+
+#### 结论
+- P5.11 已完成，geometry-as-compute 路线已正式落到状态映射层
+- 下一步进入 `P5.12` 曲面细分路径
