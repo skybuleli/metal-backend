@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T16:41:54+08:00
+# 最后更新: 2026-06-15T16:52:44+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 118/166 任务 (71.1%)
+# 完成度: 119/166 任务 (71.7%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
@@ -216,7 +216,7 @@
 | P5.6 | NVN SetViewport/SetScissor → Metal viewport/scissor | ✅ | 2026-06-15T15:57:45+08:00 | docs/evidence/P5.6-build.txt |
 | P5.7 | DispatchCompute: MTLComputeCommandEncoder | ✅ | 2026-06-15T16:26:02+08:00 | docs/evidence/P5.7-build.txt |
 | P5.8 | SetStorageBuffers + SetImage: Compute 资源绑定 | ✅ | 2026-06-15T16:39:00+08:00 | docs/evidence/P5.8-build.txt |
-| P5.9 | CopyBuffer: MTLBlitCommandEncoder 数据拷贝 | ⬜ | — | — |
+| P5.9 | CopyBuffer: MTLBlitCommandEncoder 数据拷贝 | ✅ | 2026-06-15T16:51:30+08:00 | docs/evidence/P5.9-build.txt |
 | P5.10 | 纹理数据上传/下载: Buffer↔Texture | ⬜ | — | — |
 | P5.11 | 几何着色器路径: Maxwell GS→Vertex+Compute 解构 | ⬜ | — | — |
 | P5.12 | 曲面细分路径: Maxwell Tess→Compute+Post-TCS | ⬜ | — | — |
@@ -321,10 +321,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 166
-- 已完成: 118 (71.1%)
+- 已完成: 119 (71.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 48
+- 待开始: 47
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.9 — CopyBuffer: MTLBlitCommandEncoder 数据拷贝
+- 下一任务: P5.10 — 纹理数据上传/下载: Buffer↔Texture

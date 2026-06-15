@@ -164,6 +164,45 @@ namespace Ryujinx.Graphics.Metal
 
         public void CopyBuffer(BufferHandle source, BufferHandle destination, int srcOffset, int dstOffset, int size)
         {
+            if (size <= 0)
+            {
+                return;
+            }
+
+            if (_queueHandle == nint.Zero)
+            {
+                return;
+            }
+
+            if (!_buffers.TryGet(source, out MetalBuffer sourceBuffer) ||
+                !_buffers.TryGet(destination, out MetalBuffer destinationBuffer))
+            {
+                return;
+            }
+
+            int safeSrcOffset = Math.Clamp(srcOffset, 0, (int)sourceBuffer.Size);
+            int safeDstOffset = Math.Clamp(dstOffset, 0, (int)destinationBuffer.Size);
+            int safeSize = Math.Min(size, Math.Min((int)sourceBuffer.Size - safeSrcOffset, (int)destinationBuffer.Size - safeDstOffset));
+
+            if (safeSize <= 0)
+            {
+                return;
+            }
+
+            if (_encoderActive || _computeEncoderActive)
+            {
+                Flush();
+            }
+
+            MetalResult result = MetalNative.CopyBuffer(
+                _queueHandle,
+                sourceBuffer.Handle,
+                destinationBuffer.Handle,
+                (ulong)safeSrcOffset,
+                (ulong)safeDstOffset,
+                (ulong)safeSize);
+
+            ThrowIfFailed(result, nameof(MetalNative.CopyBuffer));
         }
 
         public void DispatchCompute(int groupsX, int groupsY, int groupsZ)

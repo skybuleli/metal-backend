@@ -297,6 +297,15 @@ METAL_BRIDGE_EXPORT metal_result metal_flush_buffer(
     uint64_t offset,
     uint64_t size);
 
+// ── 缓冲区拷贝（buffer → buffer blit，P5.9）──
+METAL_BRIDGE_EXPORT metal_result metal_copy_buffer(
+    metal_queue* queue,
+    metal_buffer* source_buffer,
+    metal_buffer* destination_buffer,
+    uint64_t source_offset,
+    uint64_t destination_offset,
+    uint64_t size);
+
 // ── 缓冲区零拷贝包装（P4.1.2 补充）：包装已有的 CPU 内存指针 ──
 METAL_BRIDGE_EXPORT metal_result metal_create_buffer_from_pointer(
     metal_device* device,

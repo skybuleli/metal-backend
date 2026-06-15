@@ -68,6 +68,15 @@ namespace Ryujinx.Graphics.Metal
         [DllImport(LibraryName, EntryPoint = "metal_buffer_get_cpu_address")]
         internal static extern MetalResult BufferGetCpuAddress(nint buffer, out nint ptr);
 
+        [DllImport(LibraryName, EntryPoint = "metal_copy_buffer")]
+        internal static extern MetalResult CopyBuffer(
+            nint queue,
+            nint sourceBuffer,
+            nint destinationBuffer,
+            ulong sourceOffset,
+            ulong destinationOffset,
+            ulong size);
+
         // ── Heap P/Invoke (P4.1.5) ──
         [DllImport(LibraryName, EntryPoint = "metal_create_heap")]
         internal static extern MetalResult CreateHeap(nint device, ulong size, MetalStorageMode mode, out nint heap);

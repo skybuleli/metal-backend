@@ -645,6 +645,75 @@ metal_result metal_compute_encoder_dispatch_threadgroups(
     return METAL_RESULT_OK;
 }
 
+metal_result metal_copy_buffer(
+    metal_queue* queue,
+    metal_buffer* source_buffer,
+    metal_buffer* destination_buffer,
+    uint64_t source_offset,
+    uint64_t destination_offset,
+    uint64_t size)
+{
+    if (queue == nullptr ||
+        source_buffer == nullptr ||
+        destination_buffer == nullptr ||
+        queue->queue == nullptr ||
+        source_buffer->buffer == nullptr ||
+        destination_buffer->buffer == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    if (size == 0)
+    {
+        return METAL_RESULT_OK;
+    }
+
+    if (source_offset > source_buffer->size ||
+        destination_offset > destination_buffer->size)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    if (size > source_buffer->size - source_offset ||
+        size > destination_buffer->size - destination_offset)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+    MTL::CommandBuffer* cmd_buffer = queue->queue->commandBuffer();
+    if (cmd_buffer == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    MTL::BlitCommandEncoder* blit_encoder = cmd_buffer->blitCommandEncoder();
+    if (blit_encoder == nullptr)
+    {
+        cmd_buffer->release();
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    blit_encoder->copyFromBuffer(
+        source_buffer->buffer,
+        static_cast<NS::UInteger>(source_offset),
+        destination_buffer->buffer,
+        static_cast<NS::UInteger>(destination_offset),
+        static_cast<NS::UInteger>(size));
+
+    blit_encoder->endEncoding();
+    cmd_buffer->commit();
+    cmd_buffer->waitUntilCompleted();
+
+    blit_encoder->release();
+    cmd_buffer->release();
+    pool->release();
+
+    return METAL_RESULT_OK;
+}
+
 metal_result metal_render_encoder_draw_primitives(
     metal_render_encoder* encoder,
     metal_primitive_type primitive_type,

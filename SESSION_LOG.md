@@ -1104,3 +1104,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.8 已完成，compute 资源绑定的单槽与数组路径都已经进入 MetalPipeline 的真实状态缓存
 - 下一步进入 `P5.9 CopyBuffer: MTLBlitCommandEncoder 数据拷贝`
+
+## 2026-06-15 下午 | P5.9 CopyBuffer: MTLBlitCommandEncoder 数据拷贝 | ✅ 完成
+
+#### 任务目标
+- 把 `IPipeline.CopyBuffer` 从占位实现接到真实的 `MTLBlitCommandEncoder::copyFromBuffer`
+- 保持实现范围收敛在 buffer→buffer，不扩散到纹理上传/下载
+
+#### 本轮实现
+- 在 `MetalPipeline.CopyBuffer` 中补入参数校验、缓冲区范围裁剪和当前编码器 flush
+- 为 `MetalNative` 增加 `CopyBuffer` P/Invoke
+- 在 `libmetal_bridge` 中新增 `metal_copy_buffer`，使用 `MTL::BlitCommandEncoder` 完成 buffer→buffer 拷贝
+- 将 `MetalStateMapping` 中 `CopyBuffer` 标记为 `P5.9` / `Implemented`
+
+#### 验证
+- `dotnet build src/ryubing/Ryujinx.sln -c Debug` ✅
+- 证据文件：`docs/evidence/P5.9-build.txt`
+
+#### 结论
+- P5.9 已完成，buffer→buffer 的 blit 数据拷贝链路已经接通
+- 下一步进入 `P5.10 纹理数据上传/下载: Buffer↔Texture`
