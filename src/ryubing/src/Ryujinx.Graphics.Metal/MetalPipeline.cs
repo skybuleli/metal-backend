@@ -1252,48 +1252,13 @@ namespace Ryujinx.Graphics.Metal
                 _depthStencilStateHandle = nint.Zero;
             }
 
-            bool depthEnabled = _depthTest.TestEnable;
-            bool stencilEnabled = _stencilTest.TestEnable;
-
-            if (!depthEnabled && !stencilEnabled)
+            if (!_depthTest.TestEnable && !_stencilTest.TestEnable)
             {
                 _depthStencilDirty = false;
                 return;
             }
 
-            var descriptor = new MetalDepthStencilDescriptor
-            {
-                DepthCompareFunction = ConvertCompareOp(_depthTest.Func),
-                DepthWriteEnabled = (byte)(_depthTest.WriteEnable ? 1 : 0),
-                StencilEnabled = (byte)(stencilEnabled ? 1 : 0),
-                ReservedPad0 = 0,
-                ReservedPad1 = 0,
-                FrontFace = new MetalStencilDescriptor
-                {
-                    CompareFunction = ConvertCompareOp(_stencilTest.FrontFunc),
-                    StencilFailure = ConvertStencilOp(_stencilTest.FrontSFail),
-                    DepthFailure = ConvertStencilOp(_stencilTest.FrontDpFail),
-                    DepthStencilPass = ConvertStencilOp(_stencilTest.FrontDpPass),
-                    ReadMask = (uint)_stencilTest.FrontFuncMask,
-                    WriteMask = (uint)_stencilTest.FrontMask,
-                },
-                BackFace = new MetalStencilDescriptor
-                {
-                    CompareFunction = ConvertCompareOp(_stencilTest.BackFunc),
-                    StencilFailure = ConvertStencilOp(_stencilTest.BackSFail),
-                    DepthFailure = ConvertStencilOp(_stencilTest.BackDpFail),
-                    DepthStencilPass = ConvertStencilOp(_stencilTest.BackDpPass),
-                    ReadMask = (uint)_stencilTest.BackFuncMask,
-                    WriteMask = (uint)_stencilTest.BackMask,
-                },
-            };
-
-            // 深度测试未启用时使用 Always 比较 + 禁用写入
-            if (!depthEnabled)
-            {
-                descriptor.DepthCompareFunction = MetalCompareFunction.Always;
-                descriptor.DepthWriteEnabled = 0;
-            }
+            MetalDepthStencilDescriptor descriptor = MetalDepthStencilStateMapping.CreateDescriptor(_depthTest, _stencilTest);
 
             MetalResult result = MetalNative.CreateDepthStencilState(
                 _deviceHandle, descriptor, out nint stateHandle);
@@ -1309,44 +1274,6 @@ namespace Ryujinx.Graphics.Metal
             }
 
             _depthStencilDirty = false;
-        }
-
-        /// <summary>
-        /// 将 GAL CompareOp 转换为 Metal 比较函数（P4.3.10）。
-        /// </summary>
-        private static MetalCompareFunction ConvertCompareOp(CompareOp op)
-        {
-            return op switch
-            {
-                CompareOp.Never or CompareOp.NeverGl => MetalCompareFunction.Never,
-                CompareOp.Less or CompareOp.LessGl => MetalCompareFunction.Less,
-                CompareOp.Equal or CompareOp.EqualGl => MetalCompareFunction.Equal,
-                CompareOp.LessOrEqual or CompareOp.LessOrEqualGl => MetalCompareFunction.LessEqual,
-                CompareOp.Greater or CompareOp.GreaterGl => MetalCompareFunction.Greater,
-                CompareOp.NotEqual or CompareOp.NotEqualGl => MetalCompareFunction.NotEqual,
-                CompareOp.GreaterOrEqual or CompareOp.GreaterOrEqualGl => MetalCompareFunction.GreaterEqual,
-                CompareOp.Always or CompareOp.AlwaysGl => MetalCompareFunction.Always,
-                _ => MetalCompareFunction.Always,
-            };
-        }
-
-        /// <summary>
-        /// 将 GAL StencilOp 转换为 Metal 模板操作（P4.3.10）。
-        /// </summary>
-        private static MetalStencilOperation ConvertStencilOp(StencilOp op)
-        {
-            return op switch
-            {
-                StencilOp.Keep or StencilOp.KeepGl => MetalStencilOperation.Keep,
-                StencilOp.Zero or StencilOp.ZeroGl => MetalStencilOperation.Zero,
-                StencilOp.Replace or StencilOp.ReplaceGl => MetalStencilOperation.Replace,
-                StencilOp.IncrementAndClamp or StencilOp.IncrementAndClampGl => MetalStencilOperation.IncrementClamp,
-                StencilOp.DecrementAndClamp or StencilOp.DecrementAndClampGl => MetalStencilOperation.DecrementClamp,
-                StencilOp.Invert or StencilOp.InvertGl => MetalStencilOperation.Invert,
-                StencilOp.IncrementAndWrap or StencilOp.IncrementAndWrapGl => MetalStencilOperation.IncrementWrap,
-                StencilOp.DecrementAndWrap or StencilOp.DecrementAndWrapGl => MetalStencilOperation.DecrementWrap,
-                _ => MetalStencilOperation.Keep,
-            };
         }
 
         private void PopulateVertexLayout(ref MetalRenderPipelineDescriptor descriptor)

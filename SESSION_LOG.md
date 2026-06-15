@@ -982,3 +982,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - `NVN SetBlendState` 到 Metal blend state 的翻译链已经独立出来
 - 下一步可以继续推进 `P5.3 NVN SetDepthStencilState → Metal depth/stencil`
+
+## 2026-06-15 下午 | P5.3 NVN SetDepthStencilState → Metal depth/stencil | ✅ 完成
+
+#### 任务目标
+- 把 Ryubing 的深度测试和模板测试状态收敛成 Metal `MTLDepthStencilDescriptor`
+- 把深度/模板转换逻辑从 `MetalPipeline` 里抽出，形成独立映射层
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalDepthStencilStateMapping.cs`
+- 将 `DepthTestDescriptor` 和 `StencilTestDescriptor` 统一映射为 Metal 深度模板描述符
+- 保留深度关闭时 `Always` 比较 + 禁止写入的回退策略
+- `MetalPipeline` 只保留状态缓存与 `MetalNative.CreateDepthStencilState` 的调用
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.3-build.txt`
+
+#### 结论
+- 深度/模板状态翻译已经和混合状态一样变成独立映射层
+- 下一步继续推进 `P5.4 NVN SetRasterizerState → Metal rasterizer`
