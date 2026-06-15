@@ -1022,3 +1022,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.4 已经从编译阻塞中恢复，可继续推进后续顶点输入与视口/裁剪状态映射
 - 下一步建议进入 `P5.5 NVN SetVertexArrayState → Metal vertex descriptor`
+
+## 2026-06-15 下午 | P5.5 NVN SetVertexArrayState → Metal vertex descriptor | ✅ 完成
+
+#### 任务目标
+- 将顶点属性与顶点缓冲的布局换算从 `MetalPipeline` 中抽离出来，形成独立的 vertex descriptor 映射层
+- 让管线类只负责缓存、重建触发和最终描述符调用
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalVertexDescriptorMapping.cs`
+- 把顶点属性格式映射、顶点缓冲步进函数、布局拼装和格式大小表全部移到新文件
+- `MetalPipeline` 只保留 `SetVertexAttribs()` / `SetVertexBuffers()` 的状态缓存，以及在创建管线时调用映射层
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.5-build.txt`
+
+#### 结论
+- P5.5 已完成，顶点输入的描述符构建已具备独立映射层
+- 下一步进入 `P5.6 NVN SetViewport/SetScissor → Metal viewport/scissor`

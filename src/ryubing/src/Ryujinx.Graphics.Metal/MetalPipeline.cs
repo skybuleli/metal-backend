@@ -517,7 +517,15 @@ namespace Ryujinx.Graphics.Metal
                     Reserved = 0,
                 };
 
-                PopulateVertexLayout(ref descriptor);
+                MetalVertexDescriptorMapping.PopulateVertexLayout(
+                    ref descriptor,
+                    _vertexAttribs.AsSpan(0, _vertexAttribCount),
+                    _vertexBuffers.AsSpan(0, _vertexBufferCount),
+                    MaxVertexAttributes,
+                    MaxVertexBufferBindings,
+                    ZeroVertexBufferIndex,
+                    FirstUserVertexBufferIndex,
+                    DefaultVertexStride);
 
                 if (_blendAttachmentCount > 0)
                 {
@@ -1257,206 +1265,6 @@ namespace Ryujinx.Graphics.Metal
             }
 
             _depthStencilDirty = false;
-        }
-
-        private void PopulateVertexLayout(ref MetalRenderPipelineDescriptor descriptor)
-        {
-            int attrCount = _vertexAttribCount;
-            if (attrCount > MaxVertexAttributes)
-            {
-                attrCount = MaxVertexAttributes;
-            }
-
-            int requiredBufferCount = _vertexBufferCount;
-            int layoutCount = 0;
-            bool usesZeroVertexBuffer = false;
-            Span<uint> referencedStrides = stackalloc uint[MaxVertexBufferBindings];
-
-            for (int i = 0; i < attrCount; i++)
-            {
-                VertexAttribDescriptor attrib = _vertexAttribs[i];
-                if (!TryConvertVertexFormat(attrib.Format, out MetalVertexFormat vertexFormat))
-                {
-                    continue;
-                }
-
-                int sourceBufferIndex = attrib.BufferIndex;
-                if (!attrib.IsZero && (uint)sourceBufferIndex >= MaxVertexBufferBindings)
-                {
-                    continue;
-                }
-
-                int metalBufferIndex;
-                if (attrib.IsZero)
-                {
-                    usesZeroVertexBuffer = true;
-                    metalBufferIndex = ZeroVertexBufferIndex;
-                    layoutCount = Math.Max(layoutCount, ZeroVertexBufferIndex + 1);
-                }
-                else
-                {
-                    requiredBufferCount = Math.Max(requiredBufferCount, sourceBufferIndex + 1);
-                    metalBufferIndex = sourceBufferIndex + FirstUserVertexBufferIndex;
-                    layoutCount = Math.Max(layoutCount, metalBufferIndex + 1);
-
-                    uint requiredStride = (uint)Math.Max(attrib.Offset, 0) + GetVertexFormatSize(attrib.Format);
-                    referencedStrides[sourceBufferIndex] = Math.Max(referencedStrides[sourceBufferIndex], requiredStride);
-                }
-
-                descriptor.VertexAttributes[i] = new MetalVertexAttributeDescriptor
-                {
-                    AttributeIndex = (uint)i,
-                    BufferIndex = (uint)metalBufferIndex,
-                    Format = vertexFormat,
-                    Offset = attrib.IsZero ? 0u : (uint)Math.Max(attrib.Offset, 0),
-                };
-            }
-
-            descriptor.VertexAttributeCount = (uint)attrCount;
-
-            int bufferCount = requiredBufferCount;
-            if (bufferCount > MaxVertexBufferBindings)
-            {
-                bufferCount = MaxVertexBufferBindings;
-            }
-
-            if (usesZeroVertexBuffer)
-            {
-                descriptor.VertexBufferLayouts[ZeroVertexBufferIndex] = new MetalVertexBufferLayoutDescriptor
-                {
-                    BufferIndex = ZeroVertexBufferIndex,
-                    Stride = DefaultVertexStride,
-                    StepFunction = MetalVertexStepFunction.Constant,
-                    StepRate = 0,
-                };
-            }
-
-            for (int i = 0; i < bufferCount; i++)
-            {
-                VertexBufferDescriptor buffer = i < _vertexBufferCount ? _vertexBuffers[i] : default;
-                uint stride = (uint)Math.Max(buffer.Stride, 0);
-                if (stride == 0 && referencedStrides[i] != 0)
-                {
-                    stride = Math.Max(referencedStrides[i], DefaultVertexStride);
-                }
-
-                descriptor.VertexBufferLayouts[i + FirstUserVertexBufferIndex] = new MetalVertexBufferLayoutDescriptor
-                {
-                    BufferIndex = (uint)(i + FirstUserVertexBufferIndex),
-                    Stride = stride,
-                    StepFunction = buffer.Divisor != 0
-                        ? MetalVertexStepFunction.PerInstance
-                        : MetalVertexStepFunction.PerVertex,
-                    StepRate = buffer.Divisor != 0 ? (uint)Math.Max(buffer.Divisor, 1) : 1u,
-                };
-            }
-
-            layoutCount = Math.Max(layoutCount, bufferCount + FirstUserVertexBufferIndex);
-            descriptor.VertexBufferLayoutCount = (uint)Math.Min(layoutCount, MaxVertexBufferBindings);
-        }
-
-        private static bool TryConvertVertexFormat(Format format, out MetalVertexFormat metalFormat)
-        {
-            metalFormat = format switch
-            {
-                Format.R8Unorm => MetalVertexFormat.UCharNormalized,
-                Format.R8Snorm => MetalVertexFormat.CharNormalized,
-                Format.R8Uint or Format.R8Uscaled => MetalVertexFormat.UChar,
-                Format.R8Sint or Format.R8Sscaled => MetalVertexFormat.Char,
-                Format.R16Float => MetalVertexFormat.Half,
-                Format.R16Unorm => MetalVertexFormat.UShortNormalized,
-                Format.R16Snorm => MetalVertexFormat.ShortNormalized,
-                Format.R16Uint or Format.R16Uscaled => MetalVertexFormat.UShort,
-                Format.R16Sint or Format.R16Sscaled => MetalVertexFormat.Short,
-                Format.R32Float => MetalVertexFormat.Float,
-                Format.R32Uint or Format.R32Uscaled => MetalVertexFormat.UInt,
-                Format.R32Sint or Format.R32Sscaled => MetalVertexFormat.Int,
-                Format.R8G8Unorm => MetalVertexFormat.UChar2Normalized,
-                Format.R8G8Snorm => MetalVertexFormat.Char2Normalized,
-                Format.R8G8Uint or Format.R8G8Uscaled => MetalVertexFormat.UChar2,
-                Format.R8G8Sint or Format.R8G8Sscaled => MetalVertexFormat.Char2,
-                Format.R16G16Float => MetalVertexFormat.Half2,
-                Format.R16G16Unorm => MetalVertexFormat.UShort2Normalized,
-                Format.R16G16Snorm => MetalVertexFormat.Short2Normalized,
-                Format.R16G16Uint or Format.R16G16Uscaled => MetalVertexFormat.UShort2,
-                Format.R16G16Sint or Format.R16G16Sscaled => MetalVertexFormat.Short2,
-                Format.R32G32Float => MetalVertexFormat.Float2,
-                Format.R32G32Uint or Format.R32G32Uscaled => MetalVertexFormat.UInt2,
-                Format.R32G32Sint or Format.R32G32Sscaled => MetalVertexFormat.Int2,
-                Format.R8G8B8Unorm => MetalVertexFormat.UChar3Normalized,
-                Format.R8G8B8Snorm => MetalVertexFormat.Char3Normalized,
-                Format.R8G8B8Uint or Format.R8G8B8Uscaled => MetalVertexFormat.UChar3,
-                Format.R8G8B8Sint or Format.R8G8B8Sscaled => MetalVertexFormat.Char3,
-                Format.R16G16B16Float => MetalVertexFormat.Half3,
-                Format.R16G16B16Unorm => MetalVertexFormat.UShort3Normalized,
-                Format.R16G16B16Snorm => MetalVertexFormat.Short3Normalized,
-                Format.R16G16B16Uint or Format.R16G16B16Uscaled => MetalVertexFormat.UShort3,
-                Format.R16G16B16Sint or Format.R16G16B16Sscaled => MetalVertexFormat.Short3,
-                Format.R32G32B32Float => MetalVertexFormat.Float3,
-                Format.R32G32B32Uint or Format.R32G32B32Uscaled => MetalVertexFormat.UInt3,
-                Format.R32G32B32Sint or Format.R32G32B32Sscaled => MetalVertexFormat.Int3,
-                Format.R8G8B8A8Unorm or Format.R8G8B8A8Srgb => MetalVertexFormat.UChar4Normalized,
-                Format.R8G8B8A8Snorm => MetalVertexFormat.Char4Normalized,
-                Format.R8G8B8A8Uint or Format.R8G8B8A8Uscaled => MetalVertexFormat.UChar4,
-                Format.R8G8B8A8Sint or Format.R8G8B8A8Sscaled => MetalVertexFormat.Char4,
-                Format.R16G16B16A16Float => MetalVertexFormat.Half4,
-                Format.R16G16B16A16Unorm => MetalVertexFormat.UShort4Normalized,
-                Format.R16G16B16A16Snorm => MetalVertexFormat.Short4Normalized,
-                Format.R16G16B16A16Uint or Format.R16G16B16A16Uscaled => MetalVertexFormat.UShort4,
-                Format.R16G16B16A16Sint or Format.R16G16B16A16Sscaled => MetalVertexFormat.Short4,
-                Format.R32G32B32A32Float => MetalVertexFormat.Float4,
-                Format.R32G32B32A32Uint or Format.R32G32B32A32Uscaled => MetalVertexFormat.UInt4,
-                Format.R32G32B32A32Sint or Format.R32G32B32A32Sscaled => MetalVertexFormat.Int4,
-                Format.R10G10B10A2Unorm => MetalVertexFormat.UInt1010102Normalized,
-                Format.R10G10B10A2Snorm => MetalVertexFormat.Int1010102Normalized,
-                Format.R11G11B10Float => MetalVertexFormat.FloatRg11B10,
-                Format.R9G9B9E5Float => MetalVertexFormat.FloatRgb9E5,
-                Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb => MetalVertexFormat.UChar4NormalizedBgra,
-                _ => MetalVertexFormat.Invalid,
-            };
-
-            return metalFormat != MetalVertexFormat.Invalid;
-        }
-
-        private static uint GetVertexFormatSize(Format format)
-        {
-            return format switch
-            {
-                Format.R8Unorm or Format.R8Snorm or Format.R8Uint or Format.R8Sint or
-                Format.R8Uscaled or Format.R8Sscaled => 1,
-                Format.R16Float or Format.R16Unorm or Format.R16Snorm or Format.R16Uint or
-                Format.R16Sint or Format.R16Uscaled or Format.R16Sscaled => 2,
-                Format.R32Float or Format.R32Uint or Format.R32Sint or
-                Format.R32Uscaled or Format.R32Sscaled => 4,
-                Format.R8G8Unorm or Format.R8G8Snorm or Format.R8G8Uint or Format.R8G8Sint or
-                Format.R8G8Uscaled or Format.R8G8Sscaled => 2,
-                Format.R16G16Float or Format.R16G16Unorm or Format.R16G16Snorm or Format.R16G16Uint or
-                Format.R16G16Sint or Format.R16G16Uscaled or Format.R16G16Sscaled => 4,
-                Format.R32G32Float or Format.R32G32Uint or Format.R32G32Sint or
-                Format.R32G32Uscaled or Format.R32G32Sscaled => 8,
-                Format.R8G8B8Unorm or Format.R8G8B8Snorm or Format.R8G8B8Uint or Format.R8G8B8Sint or
-                Format.R8G8B8Uscaled or Format.R8G8B8Sscaled => 3,
-                Format.R16G16B16Float or Format.R16G16B16Unorm or Format.R16G16B16Snorm or
-                Format.R16G16B16Uint or Format.R16G16B16Sint or Format.R16G16B16Uscaled or
-                Format.R16G16B16Sscaled => 6,
-                Format.R32G32B32Float or Format.R32G32B32Uint or Format.R32G32B32Sint or
-                Format.R32G32B32Uscaled or Format.R32G32B32Sscaled => 12,
-                Format.R8G8B8A8Unorm or Format.R8G8B8A8Snorm or Format.R8G8B8A8Uint or Format.R8G8B8A8Sint or
-                Format.R8G8B8A8Srgb or Format.R8G8B8A8Uscaled or Format.R8G8B8A8Sscaled or
-                Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb or Format.A8B8G8R8Uint => 4,
-                Format.R16G16B16A16Float or Format.R16G16B16A16Unorm or Format.R16G16B16A16Snorm or
-                Format.R16G16B16A16Uint or Format.R16G16B16A16Sint or Format.R16G16B16A16Uscaled or
-                Format.R16G16B16A16Sscaled => 8,
-                Format.R32G32B32A32Float or Format.R32G32B32A32Uint or Format.R32G32B32A32Sint or
-                Format.R32G32B32A32Uscaled or Format.R32G32B32A32Sscaled => 16,
-                Format.R10G10B10A2Unorm or Format.R10G10B10A2Uint or Format.R10G10B10A2Snorm or
-                Format.R10G10B10A2Sint or Format.R10G10B10A2Uscaled or Format.R10G10B10A2Sscaled or
-                Format.B10G10R10A2Unorm or Format.R11G11B10Float or Format.R9G9B9E5Float => 4,
-                Format.R4G4B4A4Unorm or Format.R5G5B5X1Unorm or Format.R5G5B5A1Unorm or
-                Format.R5G6B5Unorm or Format.B5G6R5Unorm or Format.B5G5R5A1Unorm or
-                Format.A1B5G5R5Unorm => 2,
-                _ => DefaultVertexStride,
-            };
         }
 
         private bool UsesZeroVertexAttributes()
