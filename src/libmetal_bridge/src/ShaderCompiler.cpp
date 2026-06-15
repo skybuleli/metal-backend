@@ -216,6 +216,29 @@ static bool compile_glsl_via_spirv_hlsl_bridge(
 
     std::string preprocessed_source = preprocess_glsl_source_for_dxil(source_code, stage);
 
+    // ── 临时调试：保存所有 GLSL 着色器源码 ──
+    {
+        static int s_shader_dump_counter = 0;
+        int idx = __sync_fetch_and_add(&s_shader_dump_counter, 1);
+        if (idx < 200)
+        {
+            char dump_path[512];
+            const char* home = getenv("HOME");
+            snprintf(dump_path, sizeof(dump_path),
+                     "%s/Library/Application Support/Ryujinx/glsl_dump", home ? home : "/tmp");
+            mkdir(dump_path, 0755);
+            snprintf(dump_path, sizeof(dump_path),
+                     "%s/Library/Application Support/Ryujinx/glsl_dump/shader_%03d_%s.glsl",
+                     home ? home : "/tmp", idx, stage);
+            FILE* df = fopen(dump_path, "w");
+            if (df)
+            {
+                fwrite(source_code, 1, strlen(source_code), df);
+                fclose(df);
+            }
+        }
+    }
+
     {
         FILE* f = fopen(glsl_path.c_str(), "w");
         if (!f)

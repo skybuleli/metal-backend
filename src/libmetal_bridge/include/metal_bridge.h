@@ -177,6 +177,52 @@ METAL_BRIDGE_EXPORT metal_result metal_texture_upload_via_blit(
     uint32_t region_height,
     uint32_t bytes_per_row);
 
+// ── 纹理间复制（texture-to-texture blit，P4.5.13）──
+
+/// 通过 GPU blit 编码器执行纹理到纹理的复制
+/// 使用 MTLBlitCommandEncoder::copyFromTexture:toTexture:
+/// @param queue        命令队列（用于创建临时命令缓冲区）
+/// @param src_texture  源纹理
+/// @param src_level    源 mip 层级
+/// @param src_slice    源数组切片
+/// @param src_x/src_y  源区域原点
+/// @param dst_texture  目标纹理
+/// @param dst_level    目标 mip 层级
+/// @param dst_slice    目标数组切片
+/// @param dst_x/dst_y  目标区域原点
+/// @param copy_width/copy_height/copy_depth  复制区域尺寸
+METAL_BRIDGE_EXPORT metal_result metal_texture_copy_to(
+    metal_queue* queue,
+    metal_texture* src_texture,
+    uint32_t src_level,
+    uint32_t src_slice,
+    uint32_t src_x,
+    uint32_t src_y,
+    uint32_t src_z,
+    metal_texture* dst_texture,
+    uint32_t dst_level,
+    uint32_t dst_slice,
+    uint32_t dst_x,
+    uint32_t dst_y,
+    uint32_t dst_z,
+    uint32_t copy_width,
+    uint32_t copy_height,
+    uint32_t copy_depth);
+
+// ── 纹理回读到缓冲区（texture → buffer，用于 CopyTo(BufferRange)）──
+METAL_BRIDGE_EXPORT metal_result metal_texture_copy_to_buffer(
+    metal_queue* queue,
+    metal_texture* texture,
+    metal_buffer* buffer,
+    uint64_t buffer_offset,
+    uint32_t layer,
+    uint32_t level,
+    uint32_t bytes_per_row,
+    uint32_t region_x,
+    uint32_t region_y,
+    uint32_t region_width,
+    uint32_t region_height);
+
 // ── 生命周期函数：全部模块共用 release，避免每类对象单独暴露销毁入口 ──
 METAL_BRIDGE_EXPORT uint32_t metal_bridge_abi_version(void);
 METAL_BRIDGE_EXPORT void metal_release(void* handle);

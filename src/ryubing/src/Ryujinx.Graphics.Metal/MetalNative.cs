@@ -145,6 +145,40 @@ namespace Ryujinx.Graphics.Metal
         [DllImport(LibraryName, EntryPoint = "metal_pixel_format_get_info")]
         internal static extern MetalPixelFormatInfo PixelFormatGetInfo(MetalPixelFormat format);
 
+        // ── 纹理间复制 P/Invoke (P4.5.13) ──
+        [DllImport(LibraryName, EntryPoint = "metal_texture_copy_to")]
+        internal static extern MetalResult TextureCopyTo(
+            nint queue,
+            nint srcTexture,
+            uint srcLevel,
+            uint srcSlice,
+            uint srcX,
+            uint srcY,
+            uint srcZ,
+            nint dstTexture,
+            uint dstLevel,
+            uint dstSlice,
+            uint dstX,
+            uint dstY,
+            uint dstZ,
+            uint copyWidth,
+            uint copyHeight,
+            uint copyDepth);
+
+        [DllImport(LibraryName, EntryPoint = "metal_texture_copy_to_buffer")]
+        internal static extern MetalResult TextureCopyToBuffer(
+            nint queue,
+            nint texture,
+            nint buffer,
+            ulong bufferOffset,
+            uint layer,
+            uint level,
+            uint bytesPerRow,
+            uint regionX,
+            uint regionY,
+            uint regionWidth,
+            uint regionHeight);
+
         // ── Presenter P/Invoke (P4.4.3) ──
         [DllImport(LibraryName, EntryPoint = "metal_create_presenter")]
         internal static extern MetalResult CreatePresenter(

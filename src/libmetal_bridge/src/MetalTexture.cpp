@@ -734,6 +734,192 @@ metal_result metal_texture_readback(
 }
 
 // ════════════════════════════════════════════════════════════════════
+// 纹理间复制（texture-to-texture blit，P4.5.13）
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_texture_copy_to(
+    metal_queue* queue,
+    metal_texture* src_texture,
+    uint32_t src_level,
+    uint32_t src_slice,
+    uint32_t src_x,
+    uint32_t src_y,
+    uint32_t src_z,
+    metal_texture* dst_texture,
+    uint32_t dst_level,
+    uint32_t dst_slice,
+    uint32_t dst_x,
+    uint32_t dst_y,
+    uint32_t dst_z,
+    uint32_t copy_width,
+    uint32_t copy_height,
+    uint32_t copy_depth)
+{
+    if (queue == nullptr || src_texture == nullptr || dst_texture == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (src_texture->base.type != METAL_HANDLE_TYPE_TEXTURE ||
+        dst_texture->base.type != METAL_HANDLE_TYPE_TEXTURE)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (src_texture->texture == nullptr || dst_texture->texture == nullptr ||
+        queue->queue == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    // 验证 mip level 范围
+    if (src_level >= src_texture->levels || dst_level >= dst_texture->levels)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::CommandBuffer* cmdBuffer = queue->queue->commandBuffer();
+    if (cmdBuffer == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    MTL::BlitCommandEncoder* blitEncoder = cmdBuffer->blitCommandEncoder();
+    if (blitEncoder == nullptr)
+    {
+        cmdBuffer->release();
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    MTL::Origin srcOrigin = MTL::Origin::Make(
+        static_cast<NS::UInteger>(src_x),
+        static_cast<NS::UInteger>(src_y),
+        static_cast<NS::UInteger>(src_z));
+
+    MTL::Size copySize = MTL::Size::Make(
+        static_cast<NS::UInteger>(copy_width),
+        static_cast<NS::UInteger>(copy_height),
+        static_cast<NS::UInteger>(copy_depth));
+
+    MTL::Origin dstOrigin = MTL::Origin::Make(
+        static_cast<NS::UInteger>(dst_x),
+        static_cast<NS::UInteger>(dst_y),
+        static_cast<NS::UInteger>(dst_z));
+
+    blitEncoder->copyFromTexture(
+        src_texture->texture,
+        static_cast<NS::UInteger>(src_slice),
+        static_cast<NS::UInteger>(src_level),
+        srcOrigin,
+        copySize,
+        dst_texture->texture,
+        static_cast<NS::UInteger>(dst_slice),
+        static_cast<NS::UInteger>(dst_level),
+        dstOrigin);
+
+    blitEncoder->endEncoding();
+    cmdBuffer->commit();
+    cmdBuffer->waitUntilCompleted();
+
+    blitEncoder->release();
+    cmdBuffer->release();
+    pool->release();
+
+    return METAL_RESULT_OK;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 纹理回读到缓冲区（texture → buffer blit，P4.5.13）
+// ════════════════════════════════════════════════════════════════════
+
+metal_result metal_texture_copy_to_buffer(
+    metal_queue* queue,
+    metal_texture* texture,
+    metal_buffer* buffer,
+    uint64_t buffer_offset,
+    uint32_t layer,
+    uint32_t level,
+    uint32_t bytes_per_row,
+    uint32_t region_x,
+    uint32_t region_y,
+    uint32_t region_width,
+    uint32_t region_height)
+{
+    if (queue == nullptr || texture == nullptr || buffer == nullptr)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (texture->base.type != METAL_HANDLE_TYPE_TEXTURE)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (buffer->base.type != METAL_HANDLE_TYPE_BUFFER)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    if (texture->texture == nullptr || buffer->buffer == nullptr || queue->queue == nullptr)
+        return METAL_RESULT_RUNTIME_ERROR;
+
+    if (level >= texture->levels)
+        return METAL_RESULT_INVALID_ARGUMENT;
+
+    NS::UInteger slice = 0;
+    if (texture->type == METAL_TEXTURE_TYPE_CUBE)
+    {
+        if (layer > 5)
+            return METAL_RESULT_INVALID_ARGUMENT;
+        slice = static_cast<NS::UInteger>(layer);
+    }
+    else if (texture->type == METAL_TEXTURE_TYPE_2D_ARRAY)
+    {
+        if (layer >= texture->depth)
+            return METAL_RESULT_INVALID_ARGUMENT;
+        slice = static_cast<NS::UInteger>(layer);
+    }
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::CommandBuffer* cmdBuffer = queue->queue->commandBuffer();
+    if (cmdBuffer == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    MTL::BlitCommandEncoder* blitEncoder = cmdBuffer->blitCommandEncoder();
+    if (blitEncoder == nullptr)
+    {
+        cmdBuffer->release();
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    MTL::Origin srcOrigin = MTL::Origin::Make(
+        static_cast<NS::UInteger>(region_x),
+        static_cast<NS::UInteger>(region_y),
+        0);
+
+    MTL::Size copySize = MTL::Size::Make(
+        static_cast<NS::UInteger>(region_width),
+        static_cast<NS::UInteger>(region_height),
+        1);
+
+    blitEncoder->copyFromTexture(
+        texture->texture,
+        slice,
+        static_cast<NS::UInteger>(level),
+        srcOrigin,
+        copySize,
+        buffer->buffer,
+        static_cast<NS::UInteger>(buffer_offset),
+        static_cast<NS::UInteger>(bytes_per_row),
+        0);  // bytesPerImage (2D = 0)
+
+    blitEncoder->endEncoding();
+    cmdBuffer->commit();
+    cmdBuffer->waitUntilCompleted();
+
+    blitEncoder->release();
+    cmdBuffer->release();
+    pool->release();
+
+    return METAL_RESULT_OK;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // 创建纹理视图（共享父纹理的底层存储）
 // ════════════════════════════════════════════════════════════════════
 

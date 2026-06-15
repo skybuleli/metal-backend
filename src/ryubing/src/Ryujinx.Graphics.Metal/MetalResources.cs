@@ -354,64 +354,110 @@ namespace Ryujinx.Graphics.Metal
             _textureInfo = texInfo;
         }
 
-        // ── CopyTo: 暂为 stub，后续需 BlitEncoder ──
+        // ── CopyTo: 通过 MTLBlitCommandEncoder 实现纹理复制 (P4.5.13) ──
 
         public void CopyTo(ITexture destination, int firstLayer, int firstLevel)
         {
-            ulong count = ++_diagnosticCopyToCount;
-
-            if (count <= 5 || (count % 100) == 0)
+            if (!TryGetNativeHandle(destination, out nint dstHandle))
             {
-                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
-                    ? format.ToString()
-                    : "Unknown";
+                Logger.Warning?.PrintMsg(LogClass.Gpu, "[Metal] CopyTo(layer/level) 无法获取目标纹理原生句柄");
+                return;
+            }
 
-                Logger.Warning?.PrintMsg(
-                    LogClass.Gpu,
-                    $"[DIAG] Texture.CopyTo(layer/level) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, firstLayer={firstLayer}, firstLevel={firstLevel}, size={Info.Width}x{Info.Height}");
+            int copyLevels = Info.Levels;
+
+            for (int level = 0; level < copyLevels; level++)
+            {
+                int mipWidth = Math.Max(1, Info.Width >> level);
+                int mipHeight = Math.Max(1, Info.Height >> level);
+                int dstLevel = firstLevel + level;
+                int copyLayers = Info.GetDepthOrLayers();
+
+                for (int layer = 0; layer < copyLayers; layer++)
+                {
+                    int dstLayer = firstLayer + layer;
+
+                    MetalResult result = MetalNative.TextureCopyTo(
+                        _queueHandle,
+                        _handle, (uint)level, (uint)layer, 0, 0, 0,
+                        dstHandle, (uint)dstLevel, (uint)dstLayer, 0, 0, 0,
+                        (uint)mipWidth, (uint)mipHeight, 1);
+
+                    if (result != MetalResult.Ok)
+                    {
+                        Logger.Warning?.PrintMsg(LogClass.Gpu,
+                            $"[Metal] TextureCopyTo 失败: result={result}, level={level}, layer={layer}");
+                    }
+                }
             }
         }
 
         public void CopyTo(ITexture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel)
         {
-            ulong count = ++_diagnosticCopyToCount;
-
-            if (count <= 5 || (count % 100) == 0)
+            if (!TryGetNativeHandle(destination, out nint dstHandle))
             {
-                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
-                    ? format.ToString()
-                    : "Unknown";
+                Logger.Warning?.PrintMsg(LogClass.Gpu, "[Metal] CopyTo(slice) 无法获取目标纹理原生句柄");
+                return;
+            }
 
-                Logger.Warning?.PrintMsg(
-                    LogClass.Gpu,
-                    $"[DIAG] Texture.CopyTo(single slice) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, srcLayer={srcLayer}, dstLayer={dstLayer}, srcLevel={srcLevel}, dstLevel={dstLevel}");
+            int mipWidth = Math.Max(1, Info.Width >> srcLevel);
+            int mipHeight = Math.Max(1, Info.Height >> srcLevel);
+
+            MetalResult result = MetalNative.TextureCopyTo(
+                _queueHandle,
+                _handle, (uint)srcLevel, (uint)srcLayer, 0, 0, 0,
+                dstHandle, (uint)dstLevel, (uint)dstLayer, 0, 0, 0,
+                (uint)mipWidth, (uint)mipHeight, 1);
+
+            if (result != MetalResult.Ok)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[Metal] TextureCopyTo(slice) 失败: result={result}");
             }
         }
 
         public void CopyTo(ITexture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter)
         {
-            ulong count = ++_diagnosticCopyRegionCount;
-
-            if (count <= 5 || (count % 100) == 0)
+            if (!TryGetNativeHandle(destination, out nint dstHandle))
             {
-                string destinationFormat = destination != null && TryGetMetalFormat(destination, out MetalPixelFormat format)
-                    ? format.ToString()
-                    : "Unknown";
+                Logger.Warning?.PrintMsg(LogClass.Gpu, "[Metal] CopyTo(region) 无法获取目标纹理原生句柄");
+                return;
+            }
 
-                Logger.Warning?.PrintMsg(
-                    LogClass.Gpu,
-                    $"[DIAG] Texture.CopyTo(region) 仍为 stub: count={count}, src={Info.Format}, dst={destinationFormat}, src=({srcRegion.X1},{srcRegion.Y1})-({srcRegion.X2},{srcRegion.Y2}), dst=({dstRegion.X1},{dstRegion.Y1})-({dstRegion.X2},{dstRegion.Y2}), linear={linearFilter}");
+            int srcWidth = srcRegion.X2 - srcRegion.X1;
+            int srcHeight = srcRegion.Y2 - srcRegion.Y1;
+            int dstWidth = dstRegion.X2 - dstRegion.X1;
+            int dstHeight = dstRegion.Y2 - dstRegion.Y1;
+
+            // MTLBlitCommandEncoder 不支持缩放，源目标尺寸必须一致
+            if (srcWidth != dstWidth || srcHeight != dstHeight)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[Metal] CopyTo(region) 缩放复制未支持: src=({srcWidth}x{srcHeight}), dst=({dstWidth}x{dstHeight})");
+                return;
+            }
+
+            MetalResult result = MetalNative.TextureCopyTo(
+                _queueHandle,
+                _handle, 0, 0, (uint)srcRegion.X1, (uint)srcRegion.Y1, 0,
+                dstHandle, 0, 0, (uint)dstRegion.X1, (uint)dstRegion.Y1, 0,
+                (uint)srcWidth, (uint)srcHeight, 1);
+
+            if (result != MetalResult.Ok)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[Metal] TextureCopyTo(region) 失败: result={result}");
             }
         }
 
         public void CopyTo(BufferRange range, int layer, int level, int stride)
         {
+            // TODO: 需要通过 MetalBufferPool 解析 BufferHandle → 原生 metal_buffer 句柄
             ulong count = ++_diagnosticCopyToBufferCount;
 
             if (count <= 5 || (count % 100) == 0)
             {
-                Logger.Warning?.PrintMsg(
-                    LogClass.Gpu,
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
                     $"[DIAG] Texture.CopyTo(buffer) 仍为 stub: count={count}, format={Info.Format}, layer={layer}, level={level}, stride={stride}, size={range.Size}");
             }
         }

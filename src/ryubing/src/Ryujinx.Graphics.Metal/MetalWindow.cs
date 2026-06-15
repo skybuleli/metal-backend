@@ -17,7 +17,9 @@ namespace Ryujinx.Graphics.Metal
         private MetalPipeline _pipeline;
         private nint _metalLayer;
         private bool _firstPresent = true;
+        private int _presentCount = 0;
         private bool _firstTextureDiagnostic = true;
+        private long _lastDrawCount = 0;
         private nint _presenterHandle;
         private uint _presenterWidth;
         private uint _presenterHeight;
@@ -120,12 +122,22 @@ namespace Ryujinx.Graphics.Metal
 
         private void LogTextureDiagnosticIfNeeded(MetalTexture texture)
         {
+            _presentCount++;
+            // 等待 draw 数超过 500 后再做诊断，确保游戏已渲染实际内容
             if (!_firstTextureDiagnostic)
             {
                 return;
             }
 
+            // 从诊断信息获取 draw 总数
+            // 通过检测 present 次数延迟：至少等 60 帧
+            if (_presentCount < 60)
+            {
+                return;
+            }
+
             _firstTextureDiagnostic = false;
+            Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] 延迟诊断触发: presentCount={_presentCount}");
 
             bool hasNonZero = false;
             bool hasVisibleColor = false;
@@ -174,7 +186,20 @@ namespace Ryujinx.Graphics.Metal
                     }
                 }
 
+                // 打印前 20 个 RGBA 像素
+                if (bytesPerPixel >= 4)
+                {
+                    int sampleCount = Math.Min(inspectedBytes / bytesPerPixel, 20);
+                    for (int p = 0; p < sampleCount; p++)
+                    {
+                        int i = p * bytesPerPixel;
+                        Logger.Info?.PrintMsg(LogClass.Gpu,
+                            $"[DIAG] pixel[{p}]: R={data[i]} G={data[i+1]} B={data[i+2]} A={data[i+3]}");
+                    }
+                }
+
                 DumpTextureToPpm(texture, data);
+                DumpAlphaToPgm(texture, data);
             }
             finally
             {
@@ -234,6 +259,44 @@ namespace Ryujinx.Graphics.Metal
             catch (Exception ex)
             {
                 Logger.Warning?.PrintMsg(LogClass.Gpu, $"[DIAG] 导出首帧源纹理 PPM 失败: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        private void DumpAlphaToPgm(MetalTexture texture, ReadOnlySpan<byte> data)
+        {
+            try
+            {
+                int width = texture.Width;
+                int height = texture.Height;
+                int bytesPerPixel = texture.Info.BytesPerPixel;
+                if (width <= 0 || height <= 0 || bytesPerPixel < 4) return;
+
+                int stride = texture.Info.GetMipStride(0);
+                string path = Path.Combine(Path.GetTempPath(), "ryujinx_metal_alpha.pgm");
+                using FileStream stream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+                using StreamWriter writer = new(stream, leaveOpen: true);
+                writer.WriteLine("P5");
+                writer.WriteLine($"{width} {height}");
+                writer.WriteLine("255");
+                writer.Flush();
+
+                byte[] alphaData = new byte[width * height];
+                for (int y = 0; y < height; y++)
+                {
+                    int rowOffset = y * stride;
+                    for (int x = 0; x < width; x++)
+                    {
+                        int srcIdx = rowOffset + x * bytesPerPixel + 3; // alpha channel
+                        if (srcIdx < data.Length)
+                            alphaData[y * width + x] = data[srcIdx];
+                    }
+                }
+                stream.Write(alphaData, 0, alphaData.Length);
+                Logger.Info?.PrintMsg(LogClass.Gpu, $"[DIAG] 已导出 alpha 通道 PGM: {path}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu, $"[DIAG] 导出 alpha PGM 失败: {ex.Message}");
             }
         }
 
