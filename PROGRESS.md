@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T15:07:50+08:00
+# 最后更新: 2026-06-15T15:16:00+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 110/166 任务 (66.3%)
+# 完成度: 111/166 任务 (66.9%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
@@ -208,7 +208,7 @@
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P5.0 | 搭建 Maxwell/GAL→Metal 状态映射表骨架 | ✅ | 2026-06-15T15:05:57+08:00 | docs/evidence/P5.0-build.txt |
-| P5.1 | Maxwell→Metal 状态映射表 (deko3d+envytools) | ⬜ | — | — |
+| P5.1 | Maxwell→Metal 状态映射表 (deko3d+envytools) | ✅ | 2026-06-15T15:12:59+08:00 | docs/evidence/P5.1-build.txt |
 | P5.2 | NVN SetBlendState → Metal blend state | ⬜ | — | — |
 | P5.3 | NVN SetDepthStencilState → Metal depth/stencil | ⬜ | — | — |
 | P5.4 | NVN SetRasterizerState → Metal rasterizer | ⬜ | — | — |
@@ -321,10 +321,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 166
-- 已完成: 110 (66.3%)
+- 已完成: 111 (66.9%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 56
+- 待开始: 55
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.1 — Maxwell→Metal 状态映射表 (deko3d+envytools)
+- 下一任务: P5.2 — NVN SetBlendState → Metal blend state

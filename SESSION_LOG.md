@@ -944,3 +944,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - 这一步把“真实游戏接入”前的状态账本搭起来了
 - 下一步进入 `P5.1`，继续补 `Maxwell→Metal` 的实际状态映射细节
+
+## 2026-06-15 下午 | P5.1 Maxwell→Metal 状态映射表 | ✅ 完成
+
+#### 任务目标
+- 把 Maxwell 侧真实状态域按渲染管线拆分成可追踪的词典
+- 让后续 `P5.2+` 能直接引用这份词典实现具体状态，而不是继续猜测映射关系
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MaxwellStateMapping.cs`
+- 按 `Rasterizer`、`ViewportScissor`、`RenderTarget`、`Blend`、`DepthStencil`、`VertexInput`、`ResourceBinding`、`Sync` 八个域整理 Maxwell 状态入口
+- 每条条目都对齐到仓库内已经存在的 Ryubing 更新函数与 `ThreedClassState` 结构字段
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.1-build.txt`
+
+#### 结论
+- 现在已经有了一份能直接支撑后续 3D homebrew 状态接入的 Maxwell 状态词典
+- 下一步可以继续推进 `P5.2 NVN SetBlendState → Metal blend state`

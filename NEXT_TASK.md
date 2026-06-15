@@ -1,14 +1,14 @@
-# 下一任务 — P5.1 Maxwell→Metal 状态映射表 (deko3d+envytools)
+# 下一任务 — P5.2 NVN SetBlendState → Metal blend state
 
-> 生成时间：2026-06-15 15:07:50
+> 生成时间：2026-06-15 15:16:00
 > 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.1 |
-| 任务名称 | Maxwell→Metal 状态映射表 (deko3d+envytools) |
+| 任务 ID | P5.2 |
+| 任务名称 | NVN SetBlendState → Metal blend state |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.1 → ✅
+- 更新 PROGRESS.md：P5.2 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
