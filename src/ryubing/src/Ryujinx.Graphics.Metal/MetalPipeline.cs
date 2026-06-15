@@ -281,20 +281,7 @@ namespace Ryujinx.Graphics.Metal
             // 将高级混合操作转换为最接近的标准混合（Add + SrcAlpha/OneMinusSrcAlpha）
             for (int i = 0; i < 8; i++)
             {
-                _blendAttachments[i] = new MetalBlendAttachmentDescriptor
-                {
-                    BlendingEnabled = (byte)(i == 0 ? 1 : 0),
-                    ReservedPad0 = 0,
-                    ReservedPad1 = 0,
-                    ReservedPad2 = 0,
-                    SrcRgbFactor = MetalBlendFactor.SrcAlpha,
-                    DstRgbFactor = MetalBlendFactor.OneMinusSrcAlpha,
-                    RgbOperation = MetalBlendOperation.Add,
-                    SrcAlphaFactor = MetalBlendFactor.One,
-                    DstAlphaFactor = MetalBlendFactor.OneMinusSrcAlpha,
-                    AlphaOperation = MetalBlendOperation.Add,
-                    WriteMask = (uint)MetalColorWriteMask.All,
-                };
+                _blendAttachments[i] = MetalBlendStateMapping.CreateFallbackAdvancedAttachment(i == 0);
             }
 
             _blendAttachmentCount = 8;
@@ -315,7 +302,7 @@ namespace Ryujinx.Graphics.Metal
                 // 初始化新增的槽位为默认（禁用混合）
                 for (int i = _blendAttachmentCount; i < requiredCount; i++)
                 {
-                    _blendAttachments[i] = CreateDefaultBlendAttachment();
+                    _blendAttachments[i] = MetalBlendStateMapping.CreateDisabledAttachment();
                 }
 
                 _blendAttachmentCount = requiredCount;
@@ -323,24 +310,11 @@ namespace Ryujinx.Graphics.Metal
 
             if (blend.Enable)
             {
-                _blendAttachments[index] = new MetalBlendAttachmentDescriptor
-                {
-                    BlendingEnabled = 1,
-                    ReservedPad0 = 0,
-                    ReservedPad1 = 0,
-                    ReservedPad2 = 0,
-                    SrcRgbFactor = ConvertBlendFactor(blend.ColorSrcFactor),
-                    DstRgbFactor = ConvertBlendFactor(blend.ColorDstFactor),
-                    RgbOperation = ConvertBlendOp(blend.ColorOp),
-                    SrcAlphaFactor = ConvertBlendFactor(blend.AlphaSrcFactor),
-                    DstAlphaFactor = ConvertBlendFactor(blend.AlphaDstFactor),
-                    AlphaOperation = ConvertBlendOp(blend.AlphaOp),
-                    WriteMask = (uint)MetalColorWriteMask.All,
-                };
+                _blendAttachments[index] = MetalBlendStateMapping.CreateAttachment(blend);
             }
             else
             {
-                _blendAttachments[index] = CreateDefaultBlendAttachment();
+                _blendAttachments[index] = MetalBlendStateMapping.CreateDisabledAttachment();
             }
 
             RecreatePipelineForLayoutChange();
@@ -1632,74 +1606,6 @@ namespace Ryujinx.Graphics.Metal
             {
                 IndexType.UInt => MetalIndexType.UInt32,
                 _ => MetalIndexType.UInt16,
-            };
-        }
-
-        /// <summary>
-        /// 将 GAL BlendFactor 转换为 Metal 混合因子（P4.3.9）。
-        /// 参考：Metal Shading Language Specification - Table 5.3 Blend Factors
-        /// </summary>
-        private static MetalBlendFactor ConvertBlendFactor(BlendFactor factor)
-        {
-            return factor switch
-            {
-                BlendFactor.Zero or BlendFactor.ZeroGl => MetalBlendFactor.Zero,
-                BlendFactor.One or BlendFactor.OneGl => MetalBlendFactor.One,
-                BlendFactor.SrcColor or BlendFactor.SrcColorGl => MetalBlendFactor.SrcColor,
-                BlendFactor.OneMinusSrcColor or BlendFactor.OneMinusSrcColorGl => MetalBlendFactor.OneMinusSrcColor,
-                BlendFactor.SrcAlpha or BlendFactor.SrcAlphaGl => MetalBlendFactor.SrcAlpha,
-                BlendFactor.OneMinusSrcAlpha or BlendFactor.OneMinusSrcAlphaGl => MetalBlendFactor.OneMinusSrcAlpha,
-                BlendFactor.DstAlpha or BlendFactor.DstAlphaGl => MetalBlendFactor.DstAlpha,
-                BlendFactor.OneMinusDstAlpha or BlendFactor.OneMinusDstAlphaGl => MetalBlendFactor.OneMinusDstAlpha,
-                BlendFactor.DstColor or BlendFactor.DstColorGl => MetalBlendFactor.DstColor,
-                BlendFactor.OneMinusDstColor or BlendFactor.OneMinusDstColorGl => MetalBlendFactor.OneMinusDstColor,
-                BlendFactor.SrcAlphaSaturate or BlendFactor.SrcAlphaSaturateGl => MetalBlendFactor.SrcAlphaSaturate,
-                BlendFactor.ConstantColor => MetalBlendFactor.BlendColor,
-                BlendFactor.OneMinusConstantColor => MetalBlendFactor.OneMinusBlendColor,
-                BlendFactor.ConstantAlpha => MetalBlendFactor.BlendAlpha,
-                BlendFactor.OneMinusConstantAlpha => MetalBlendFactor.OneMinusBlendAlpha,
-                BlendFactor.Src1Color or BlendFactor.Src1ColorGl => MetalBlendFactor.Src1Color,
-                BlendFactor.OneMinusSrc1Color or BlendFactor.OneMinusSrc1ColorGl => MetalBlendFactor.OneMinusSrc1Color,
-                BlendFactor.Src1Alpha or BlendFactor.Src1AlphaGl => MetalBlendFactor.Src1Alpha,
-                BlendFactor.OneMinusSrc1Alpha or BlendFactor.OneMinusSrc1AlphaGl => MetalBlendFactor.OneMinusSrc1Alpha,
-                _ => MetalBlendFactor.Zero,
-            };
-        }
-
-        /// <summary>
-        /// 将 GAL BlendOp 转换为 Metal 混合操作（P4.3.9）。
-        /// </summary>
-        private static MetalBlendOperation ConvertBlendOp(BlendOp op)
-        {
-            return op switch
-            {
-                BlendOp.Add or BlendOp.AddGl => MetalBlendOperation.Add,
-                BlendOp.Subtract or BlendOp.SubtractGl => MetalBlendOperation.Subtract,
-                BlendOp.ReverseSubtract or BlendOp.ReverseSubtractGl => MetalBlendOperation.ReverseSubtract,
-                BlendOp.Minimum or BlendOp.MinimumGl => MetalBlendOperation.Min,
-                BlendOp.Maximum or BlendOp.MaximumGl => MetalBlendOperation.Max,
-                _ => MetalBlendOperation.Add,
-            };
-        }
-
-        /// <summary>
-        /// 创建默认的混合附件描述符（禁用混合，全写入）。
-        /// </summary>
-        private static MetalBlendAttachmentDescriptor CreateDefaultBlendAttachment()
-        {
-            return new MetalBlendAttachmentDescriptor
-            {
-                BlendingEnabled = 0,
-                ReservedPad0 = 0,
-                ReservedPad1 = 0,
-                ReservedPad2 = 0,
-                SrcRgbFactor = MetalBlendFactor.One,
-                DstRgbFactor = MetalBlendFactor.Zero,
-                RgbOperation = MetalBlendOperation.Add,
-                SrcAlphaFactor = MetalBlendFactor.One,
-                DstAlphaFactor = MetalBlendFactor.Zero,
-                AlphaOperation = MetalBlendOperation.Add,
-                WriteMask = (uint)MetalColorWriteMask.All,
             };
         }
 

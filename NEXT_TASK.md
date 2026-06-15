@@ -1,14 +1,14 @@
-# 下一任务 — P5.2 NVN SetBlendState → Metal blend state
+# 下一任务 — P5.3 NVN SetDepthStencilState → Metal depth/stencil
 
-> 生成时间：2026-06-15 15:16:00
+> 生成时间：2026-06-15 15:22:42
 > 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.2 |
-| 任务名称 | NVN SetBlendState → Metal blend state |
+| 任务 ID | P5.3 |
+| 任务名称 | NVN SetDepthStencilState → Metal depth/stencil |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.2 → ✅
+- 更新 PROGRESS.md：P5.3 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

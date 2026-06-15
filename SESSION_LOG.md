@@ -963,3 +963,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - 现在已经有了一份能直接支撑后续 3D homebrew 状态接入的 Maxwell 状态词典
 - 下一步可以继续推进 `P5.2 NVN SetBlendState → Metal blend state`
+
+## 2026-06-15 下午 | P5.2 NVN SetBlendState → Metal blend state | ✅ 完成
+
+#### 任务目标
+- 把 Ryubing 的 `BlendDescriptor` / `AdvancedBlendDescriptor` 收敛成 Metal 混合附件描述符
+- 把混合状态翻译从 `MetalPipeline` 里抽成独立映射层，方便后续继续推进深度模板和光栅化状态
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalBlendStateMapping.cs`
+- 将标准混合与高级混合的 fallback 逻辑统一为 `MetalBlendAttachmentDescriptor` 的集中创建
+- 把 `MetalPipeline` 中原本散落的 `BlendFactor` / `BlendOp` 转换逻辑收束到新映射层
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.2-build.txt`
+
+#### 结论
+- `NVN SetBlendState` 到 Metal blend state 的翻译链已经独立出来
+- 下一步可以继续推进 `P5.3 NVN SetDepthStencilState → Metal depth/stencil`
