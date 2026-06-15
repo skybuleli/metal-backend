@@ -1,0 +1,14 @@
+P5.13 Transform Feedback → MTLBuffer 写入
+
+构建命令:
+dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug
+
+结果:
+- 构建成功
+- 错误: 0
+- 警告: 177
+
+说明:
+- `MetalPipeline.BeginTransformFeedback` 现在会记录活动拓扑
+- `MetalPipeline.SetTransformFeedbackBuffers` 现在会缓存目标缓冲区快照
+- `MetalStateMapping` 新增 TF 相关映射，明确 Metal 侧通过 compute 化路径承接 MTLBuffer 写入

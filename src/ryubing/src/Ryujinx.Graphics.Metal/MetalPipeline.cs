@@ -60,6 +60,8 @@ namespace Ryujinx.Graphics.Metal
         private PrimitiveTopology _primitiveTopology;
         private uint _patchControlPoints;
         private MetalIndexBufferBinding _indexBuffer;
+        private BufferRange[] _transformFeedbackBuffers = Array.Empty<BufferRange>();
+        private bool _transformFeedbackActive;
         private bool _rasterizerDiscard;
         private PolygonModeMask _depthBiasEnables;
         private float _depthBiasFactor;
@@ -133,6 +135,8 @@ namespace Ryujinx.Graphics.Metal
 
         public void BeginTransformFeedback(PrimitiveTopology topology)
         {
+            _primitiveTopology = topology;
+            _transformFeedbackActive = true;
         }
 
         public void ClearBuffer(BufferHandle destination, int offset, int size, uint value)
@@ -389,6 +393,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void EndTransformFeedback()
         {
+            _transformFeedbackActive = false;
         }
 
         public void SetAlphaTest(bool enable, float reference, CompareOp op)
@@ -1001,6 +1006,20 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetTransformFeedbackBuffers(ReadOnlySpan<BufferRange> buffers)
         {
+            int count = buffers.Length;
+
+            if (_transformFeedbackBuffers.Length != count)
+            {
+                _transformFeedbackBuffers = new BufferRange[count];
+            }
+
+            buffers.CopyTo(_transformFeedbackBuffers);
+
+            if (_transformFeedbackActive && count > 0)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[DIAG] TransformFeedback buffers 已缓存: count={count}, topology={_primitiveTopology}");
+            }
         }
 
         public void SetUniformBuffers(ReadOnlySpan<BufferAssignment> buffers)

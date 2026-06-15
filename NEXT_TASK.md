@@ -1,14 +1,14 @@
-# 下一任务 — P5.13 Transform Feedback → MTLBuffer 写入
+# 下一任务 — P5.14 Indirect Draw + Conditional Rendering
 
-> 生成时间：2026-06-15 17:17:03
+> 生成时间：2026-06-15 17:23:11
 > 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.13 |
-| 任务名称 | Transform Feedback → MTLBuffer 写入 |
+| 任务 ID | P5.14 |
+| 任务名称 | Indirect Draw + Conditional Rendering |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.13 → ✅
+- 更新 PROGRESS.md：P5.14 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

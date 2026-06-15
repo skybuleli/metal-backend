@@ -25,6 +25,7 @@ namespace Ryujinx.Graphics.Metal
             new("SetPolygonMode", "setTriangleFillMode", MetalStateDomain.Rasterizer, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "Point 模式暂回退到 Lines。"),
             new("SetPrimitiveTopology", "drawPrimitives / drawIndexedPrimitives", MetalStateDomain.Rasterizer, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前仅保存 topology，绘制时换算 MetalPrimitiveType。"),
             new("SetPatchParameters", "PatchControlPoints + tessellation compute fallback", MetalStateDomain.Tessellation, "MetalPipeline", "P5.12", MetalStateMaturity.Partial, "patch 顶点数已缓存，Metal 侧依赖上游 compute 化曲面细分路径承接。"),
+            new("SetTransformFeedbackBuffers", "MTLBuffer writeback targets / storage buffer emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.13", MetalStateMaturity.Partial, "TF 缓冲区已进入 Metal 侧状态缓存，写入由上游 compute 化路径完成。"),
             new("SetVertexAttribs", "MTLVertexDescriptor.attribute", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "已有顶点属性布局收集和管线重建。"),
             new("SetVertexBuffers", "MTLVertexDescriptor.layout / setVertexBuffer", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "已有顶点缓冲布局收集和管线重建。"),
             new("SetIndexBuffer", "setIndexBuffer", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前只记录 BufferRange + IndexType。"),
@@ -42,8 +43,8 @@ namespace Ryujinx.Graphics.Metal
             new("TextureBarrierTiled", "MTLFence / encoder split", MetalStateDomain.Sync, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "Tiled 路径与普通纹理屏障共享同一骨架。"),
             new("Barrier", "CommandBuffer boundary", MetalStateDomain.Sync, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "当前作为命令缓冲边界的占位点。"),
             new("CommandBufferBarrier", "CommandBuffer boundary", MetalStateDomain.Sync, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "为后续资源可见性控制预留。"),
-            new("BeginTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "Metal 无原生 TF，后续以 Compute/Buffer 写入模拟。"),
-            new("EndTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "与 BeginTransformFeedback 成对保留。"),
+            new("BeginTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.13", MetalStateMaturity.Partial, "Metal 无原生 TF，但现在会记录活动状态与目标 topology，供 compute 化路径写入 MTLBuffer。"),
+            new("EndTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.13", MetalStateMaturity.Partial, "与 BeginTransformFeedback 成对保留，并结束 TF 活动标记。"),
             new("TryHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "当前先保留返回值语义，后续再接硬件计数器。"),
             new("EndHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "与条件渲染入口配对。"),
         ];

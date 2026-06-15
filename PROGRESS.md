@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T17:17:03+08:00
+# 最后更新: 2026-06-15T17:23:11+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 122/166 任务 (73.5%)
+# 完成度: 123/166 任务 (74.1%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
@@ -220,7 +220,7 @@
 | P5.10 | 纹理数据上传/下载: Buffer↔Texture | ✅ | 2026-06-15T17:01:35+08:00 | docs/evidence/P5.10-build.txt |
 | P5.11 | 几何着色器路径: Maxwell GS→Vertex+Compute 解构 | ✅ | 2026-06-15T17:08:09+08:00 | docs/evidence/P5.11-build.txt |
 | P5.12 | 曲面细分路径: Maxwell Tess→Compute+Post-TCS | ✅ | 2026-06-15T17:15:56+08:00 | docs/evidence/P5.12-build.txt |
-| P5.13 | Transform Feedback → MTLBuffer 写入 | ⬜ | — | — |
+| P5.13 | Transform Feedback → MTLBuffer 写入 | ✅ | 2026-06-15T17:21:48+08:00 | docs/evidence/P5.13-build.txt |
 | P5.14 | Indirect Draw + Conditional Rendering | ⬜ | — | — |
 
 # ===================================================================
@@ -321,10 +321,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 166
-- 已完成: 122 (73.5%)
+- 已完成: 123 (74.1%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 44
+- 待开始: 43
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.13 — Transform Feedback → MTLBuffer 写入
+- 下一任务: P5.14 — Indirect Draw + Conditional Rendering

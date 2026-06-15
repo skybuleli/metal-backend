@@ -1182,3 +1182,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.12 已完成，tessellation 状态现在有了实际缓存与映射记录
 - 下一步进入 `P5.13` Transform Feedback 写入链路
+
+## 2026-06-15 下午 | P5.13 Transform Feedback → MTLBuffer 写入 | ✅ 完成
+
+#### 任务目标
+- 把 Transform Feedback 的活动状态和目标缓冲区在 Metal 侧显式缓存起来
+- 让 TF 写入链路与上游 compute 化/存储缓冲路径保持一致的状态语义
+
+#### 本轮实现
+- 在 `MetalPipeline` 中记录 TF 活动拓扑，并缓存 TF 缓冲区快照
+- 在 `MetalStateMapping` 中新增 `SetTransformFeedbackBuffers` / `BeginTransformFeedback` / `EndTransformFeedback` 映射
+- 保持 Metal 侧不实现原生 TF 编码器，而是把写入交给上游 compute 化路径
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug` ✅
+- 证据文件：`docs/evidence/P5.13-build.txt`
+
+#### 结论
+- P5.13 已完成，TF 状态现在可以被 Metal 侧追踪和消费
+- 下一步进入 `P5.14` Indirect Draw + Conditional Rendering
