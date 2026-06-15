@@ -29,6 +29,10 @@ namespace Ryujinx.Graphics.Metal
             new("SetVertexAttribs", "MTLVertexDescriptor.attribute", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "已有顶点属性布局收集和管线重建。"),
             new("SetVertexBuffers", "MTLVertexDescriptor.layout / setVertexBuffer", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "已有顶点缓冲布局收集和管线重建。"),
             new("SetIndexBuffer", "setIndexBuffer", MetalStateDomain.VertexInput, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前只记录 BufferRange + IndexType。"),
+            new("DrawIndirect", "drawPrimitives:indirectBuffer:", MetalStateDomain.VertexInput, "MetalPipeline", "P5.14", MetalStateMaturity.Implemented, "Metal 原生支持单次 indirect draw，已接到 render encoder。"),
+            new("DrawIndexedIndirect", "drawIndexedPrimitives:indirectBuffer:", MetalStateDomain.VertexInput, "MetalPipeline", "P5.14", MetalStateMaturity.Implemented, "Metal 原生支持索引 indirect draw，已接到 render encoder。"),
+            new("DrawIndirectCount", "indirectBuffer + CPU count fallback", MetalStateDomain.VertexInput, "MetalPipeline", "P5.14", MetalStateMaturity.Partial, "count 版本先读取参数缓冲区并在同一 encoder 内循环发射。"),
+            new("DrawIndexedIndirectCount", "indirectBuffer + CPU count fallback", MetalStateDomain.VertexInput, "MetalPipeline", "P5.14", MetalStateMaturity.Partial, "count 版本先读取参数缓冲区并在同一 encoder 内循环发射。"),
             new("SetUniformBuffers", "setVertexBuffer / setFragmentBuffer", MetalStateDomain.ResourceBinding, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "统一缓冲区已按 binding 缓存。"),
             new("SetStorageBuffers", "setVertexBuffer / setFragmentBuffer / setBuffer", MetalStateDomain.ResourceBinding, "MetalPipeline", "P5.8", MetalStateMaturity.Implemented, "存储缓冲区已按 binding 缓存，并在 compute 下发时批量绑定。"),
             new("SetTextureAndSampler", "setFragmentTexture + setFragmentSamplerState", MetalStateDomain.ResourceBinding, "MetalPipeline", "P5.0", MetalStateMaturity.Skeleton, "当前只做 fragment 绑定，后续再扩展 stage-aware 路径。"),
@@ -45,8 +49,8 @@ namespace Ryujinx.Graphics.Metal
             new("CommandBufferBarrier", "CommandBuffer boundary", MetalStateDomain.Sync, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "为后续资源可见性控制预留。"),
             new("BeginTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.13", MetalStateMaturity.Partial, "Metal 无原生 TF，但现在会记录活动状态与目标 topology，供 compute 化路径写入 MTLBuffer。"),
             new("EndTransformFeedback", "Compute emulation", MetalStateDomain.TransformFeedback, "MetalPipeline", "P5.13", MetalStateMaturity.Partial, "与 BeginTransformFeedback 成对保留，并结束 TF 活动标记。"),
-            new("TryHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "当前先保留返回值语义，后续再接硬件计数器。"),
-            new("EndHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.0", MetalStateMaturity.Skeleton, "与条件渲染入口配对。"),
+            new("TryHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.14", MetalStateMaturity.Partial, "Metal 侧仍回退 CPU 条件判断，但已记录明确诊断，避免误以为 host 路径可用。"),
+            new("EndHostConditionalRendering", "MTLCounterSampleBuffer / host fallback", MetalStateDomain.ConditionalRendering, "MetalPipeline / MetalSync", "P5.14", MetalStateMaturity.Partial, "与条件渲染入口配对，当前仅用于结束回退语义。"),
         ];
 
         public static ReadOnlySpan<MetalStateMappingEntry> Entries => s_entries;

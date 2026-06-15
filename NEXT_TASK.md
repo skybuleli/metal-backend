@@ -1,14 +1,14 @@
-# 下一任务 — P5.14 Indirect Draw + Conditional Rendering
+# 下一任务 — P6.1.1 单元测试框架搭建 (Catch2 + xUnit)
 
-> 生成时间：2026-06-15 17:23:11
-> 所属阶段：Phase 5 — 命令映射与状态跟踪
+> 生成时间：2026-06-15 17:39:05
+> 所属阶段：Phase 6 — 测试与验证体系
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.14 |
-| 任务名称 | Indirect Draw + Conditional Rendering |
+| 任务 ID | P6.1.1 |
+| 任务名称 | 单元测试框架搭建 (Catch2 + xUnit) |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.14 → ✅
+- 更新 PROGRESS.md：P6.1.1 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

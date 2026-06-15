@@ -1061,6 +1061,12 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_primitives(
     uint32_t instance_count,
     uint32_t base_instance);
 
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_primitives_indirect(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    metal_buffer* indirect_buffer,
+    uint64_t indirect_buffer_offset);
+
 METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_indexed_primitives(
     metal_render_encoder* encoder,
     metal_primitive_type primitive_type,
@@ -1071,6 +1077,15 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_indexed_primitives(
     uint32_t instance_count,
     int32_t base_vertex,
     uint32_t base_instance);
+
+METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_indexed_primitives_indirect(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    metal_index_type index_type,
+    metal_buffer* index_buffer,
+    uint64_t index_buffer_offset,
+    metal_buffer* indirect_buffer,
+    uint64_t indirect_buffer_offset);
 
 METAL_BRIDGE_EXPORT metal_result metal_end_render_encoding(
     metal_render_encoder* encoder);

@@ -736,6 +736,27 @@ metal_result metal_render_encoder_draw_primitives(
     return METAL_RESULT_OK;
 }
 
+metal_result metal_render_encoder_draw_primitives_indirect(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    metal_buffer* indirect_buffer,
+    uint64_t indirect_buffer_offset)
+{
+    if (encoder == nullptr ||
+        encoder->encoder == nullptr ||
+        indirect_buffer == nullptr ||
+        indirect_buffer->buffer == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    encoder->encoder->drawPrimitives(
+        to_mtl_primitive_type(primitive_type),
+        indirect_buffer->buffer,
+        indirect_buffer_offset);
+    return METAL_RESULT_OK;
+}
+
 metal_result metal_render_encoder_draw_indexed_primitives(
     metal_render_encoder* encoder,
     metal_primitive_type primitive_type,
@@ -766,6 +787,35 @@ metal_result metal_render_encoder_draw_indexed_primitives(
         static_cast<NS::UInteger>(instance_count),
         base_vertex,
         static_cast<NS::UInteger>(base_instance));
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_render_encoder_draw_indexed_primitives_indirect(
+    metal_render_encoder* encoder,
+    metal_primitive_type primitive_type,
+    metal_index_type index_type,
+    metal_buffer* index_buffer,
+    uint64_t index_buffer_offset,
+    metal_buffer* indirect_buffer,
+    uint64_t indirect_buffer_offset)
+{
+    if (encoder == nullptr ||
+        encoder->encoder == nullptr ||
+        index_buffer == nullptr ||
+        index_buffer->buffer == nullptr ||
+        indirect_buffer == nullptr ||
+        indirect_buffer->buffer == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    encoder->encoder->drawIndexedPrimitives(
+        to_mtl_primitive_type(primitive_type),
+        to_mtl_index_type(index_type),
+        index_buffer->buffer,
+        index_buffer_offset,
+        indirect_buffer->buffer,
+        indirect_buffer_offset);
     return METAL_RESULT_OK;
 }
 

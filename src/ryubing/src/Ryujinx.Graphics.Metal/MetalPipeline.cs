@@ -357,18 +357,130 @@ namespace Ryujinx.Graphics.Metal
 
         public void DrawIndexedIndirect(BufferRange indirectBuffer)
         {
+            if (!TryGetIndexBufferBinding(out nint indexHandle, out ulong indexOffset, out _, out IndexType indexType))
+            {
+                return;
+            }
+
+            if (!TryGetIndirectBuffer(indirectBuffer, out nint indirectHandle, out ulong indirectOffset))
+            {
+                return;
+            }
+
+            _diagnosticDrawCount++;
+            LogDiagnosticIfNeeded();
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                MetalResult result = MetalNative.RenderEncoderDrawIndexedPrimitivesIndirect(
+                    renderEncoder,
+                    ConvertPrimitiveTopology(_primitiveTopology),
+                    ConvertIndexType(indexType),
+                    indexHandle,
+                    indexOffset,
+                    indirectHandle,
+                    indirectOffset);
+                ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawIndexedPrimitivesIndirect));
+            });
         }
 
         public void DrawIndexedIndirectCount(BufferRange indirectBuffer, BufferRange parameterBuffer, int maxDrawCount, int stride)
         {
+            if (maxDrawCount <= 0 || stride <= 0)
+            {
+                return;
+            }
+
+            if (!TryGetIndexBufferBinding(out nint indexHandle, out ulong indexOffset, out _, out IndexType indexType))
+            {
+                return;
+            }
+
+            if (!TryGetIndirectBuffer(indirectBuffer, out nint indirectHandle, out ulong indirectOffset))
+            {
+                return;
+            }
+
+            uint drawCount = Math.Min((uint)maxDrawCount, ReadIndirectDrawCount(parameterBuffer));
+            if (drawCount == 0)
+            {
+                return;
+            }
+
+            _diagnosticDrawCount += drawCount;
+            LogDiagnosticIfNeeded();
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                for (uint i = 0; i < drawCount; i++)
+                {
+                    MetalResult result = MetalNative.RenderEncoderDrawIndexedPrimitivesIndirect(
+                        renderEncoder,
+                        ConvertPrimitiveTopology(_primitiveTopology),
+                        ConvertIndexType(indexType),
+                        indexHandle,
+                        indexOffset,
+                        indirectHandle,
+                        indirectOffset + (ulong)i * (ulong)stride);
+                    ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawIndexedPrimitivesIndirect));
+                }
+            });
         }
 
         public void DrawIndirect(BufferRange indirectBuffer)
         {
+            if (!TryGetIndirectBuffer(indirectBuffer, out nint indirectHandle, out ulong indirectOffset))
+            {
+                return;
+            }
+
+            _diagnosticDrawCount++;
+            LogDiagnosticIfNeeded();
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                MetalResult result = MetalNative.RenderEncoderDrawPrimitivesIndirect(
+                    renderEncoder,
+                    ConvertPrimitiveTopology(_primitiveTopology),
+                    indirectHandle,
+                    indirectOffset);
+                ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawPrimitivesIndirect));
+            });
         }
 
         public void DrawIndirectCount(BufferRange indirectBuffer, BufferRange parameterBuffer, int maxDrawCount, int stride)
         {
+            if (maxDrawCount <= 0 || stride <= 0)
+            {
+                return;
+            }
+
+            if (!TryGetIndirectBuffer(indirectBuffer, out nint indirectHandle, out ulong indirectOffset))
+            {
+                return;
+            }
+
+            uint drawCount = Math.Min((uint)maxDrawCount, ReadIndirectDrawCount(parameterBuffer));
+            if (drawCount == 0)
+            {
+                return;
+            }
+
+            _diagnosticDrawCount += drawCount;
+            LogDiagnosticIfNeeded();
+
+            ExecuteRenderDraw(renderEncoder =>
+            {
+                for (uint i = 0; i < drawCount; i++)
+                {
+                    MetalResult result = MetalNative.RenderEncoderDrawPrimitivesIndirect(
+                        renderEncoder,
+                        ConvertPrimitiveTopology(_primitiveTopology),
+                        indirectHandle,
+                        indirectOffset + (ulong)i * (ulong)stride);
+                    ThrowIfFailed(result, nameof(MetalNative.RenderEncoderDrawPrimitivesIndirect));
+                }
+            });
         }
 
         public void DrawTexture(ITexture texture, ISampler sampler, Extents2DF srcRegion, Extents2DF dstRegion)
@@ -1159,12 +1271,57 @@ namespace Ryujinx.Graphics.Metal
 
         public bool TryHostConditionalRendering(ICounterEvent value, ulong compare, bool isEqual)
         {
+            Logger.Warning?.PrintMsg(LogClass.Gpu, "[DIAG] Metal 暂未接通 host conditional rendering，回退到 CPU 路径。");
             return false;
         }
 
         public bool TryHostConditionalRendering(ICounterEvent value, ICounterEvent compare, bool isEqual)
         {
+            Logger.Warning?.PrintMsg(LogClass.Gpu, "[DIAG] Metal 暂未接通 host conditional rendering，回退到 CPU 路径。");
             return false;
+        }
+
+        private bool TryGetIndirectBuffer(BufferRange indirectBuffer, out nint indirectHandle, out ulong indirectOffset)
+        {
+            indirectHandle = nint.Zero;
+            indirectOffset = 0;
+
+            if (indirectBuffer.Handle == BufferHandle.Null || indirectBuffer.Size <= 0)
+            {
+                return false;
+            }
+
+            if (!_buffers.TryGet(indirectBuffer.Handle, out MetalBuffer metalBuffer))
+            {
+                return false;
+            }
+
+            if (indirectBuffer.Offset < 0 || indirectBuffer.Offset >= (long)metalBuffer.Size)
+            {
+                return false;
+            }
+
+            indirectHandle = metalBuffer.Handle;
+            indirectOffset = (ulong)indirectBuffer.Offset;
+            return true;
+        }
+
+        private uint ReadIndirectDrawCount(BufferRange parameterBuffer)
+        {
+            if (parameterBuffer.Handle == BufferHandle.Null || parameterBuffer.Size < sizeof(uint))
+            {
+                return 0;
+            }
+
+            using PinnedSpan<byte> pinned = _buffers.GetData(parameterBuffer.Handle, parameterBuffer.Offset, sizeof(uint));
+            ReadOnlySpan<byte> bytes = pinned.Get();
+
+            if (bytes.Length < sizeof(uint))
+            {
+                return 0;
+            }
+
+            return MemoryMarshal.Read<uint>(bytes);
         }
 
         private void RecreatePipelineForLayoutChange()

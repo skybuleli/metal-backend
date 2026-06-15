@@ -1,0 +1,13 @@
+P5.14 验证记录（完成）
+
+1. `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug`
+   - 结果：成功，0 errors，183 warnings
+   - 重点：`MetalNative.RenderEncoderDrawPrimitivesIndirect` / `RenderEncoderDrawIndexedPrimitivesIndirect` 绑定与 `MetalPipeline` indirect draw 路径编译通过
+
+2. `cmake -B build -S src/libmetal_bridge -DCMAKE_BUILD_TYPE=Debug && cmake --build build`
+   - 结果：成功，`libmetal_bridge.dylib` 链接完成
+   - 重点：`metal_render_encoder_draw_primitives_indirect` / `metal_render_encoder_draw_indexed_primitives_indirect` 原生桥接函数编译通过
+
+说明：
+- 该文件记录 `P5.14` 的实现与验证结果，后续如需回溯可直接引用。
+- 当前 `TryHostConditionalRendering` 仍保留 CPU 回退与诊断日志，尚未接入原生 host conditional rendering。

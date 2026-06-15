@@ -1201,3 +1201,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.13 已完成，TF 状态现在可以被 Metal 侧追踪和消费
 - 下一步进入 `P5.14` Indirect Draw + Conditional Rendering
+
+## 2026-06-15 下午 | P5.14 Indirect Draw + Conditional Rendering | ✅ 完成
+
+#### 任务目标
+- 把 `DrawIndirect` / `DrawIndexedIndirect` 真正接到 Metal 原生 indirect draw 路径
+- 让 conditional rendering 在 Metal 侧保持明确的 CPU 回退语义，不再是静默空实现
+
+#### 本轮实现
+- 在 `libmetal_bridge` 补齐 `drawPrimitives:indirectBuffer:` 与 `drawIndexedPrimitives:... indirectBuffer:` 的 C ABI 桥接
+- 在 `MetalPipeline` 中实现 indirect draw / indirect count draw 的实际发射
+- 将 `TryHostConditionalRendering` 统一为明确诊断 + CPU fallback
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug` ✅
+- `cmake -B build -S src/libmetal_bridge -DCMAKE_BUILD_TYPE=Debug && cmake --build build` ✅
+- 证据文件：`docs/evidence/P5.14-build.txt`
+
+#### 结论
+- P5.14 已完成，indirect draw 已经可以走 Metal 原生编码器
+- conditional rendering 当前仍依赖 CPU fallback，但语义已显式记录，下一步可以继续推进 `P5.15`

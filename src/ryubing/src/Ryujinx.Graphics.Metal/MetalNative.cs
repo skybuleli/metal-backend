@@ -357,6 +357,13 @@ namespace Ryujinx.Graphics.Metal
             uint instanceCount,
             uint baseInstance);
 
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_draw_primitives_indirect")]
+        internal static extern MetalResult RenderEncoderDrawPrimitivesIndirect(
+            nint renderEncoder,
+            MetalPrimitiveType primitiveType,
+            nint indirectBuffer,
+            ulong indirectBufferOffset);
+
         [DllImport(LibraryName, EntryPoint = "metal_render_encoder_draw_indexed_primitives")]
         internal static extern MetalResult RenderEncoderDrawIndexedPrimitives(
             nint renderEncoder,
@@ -368,6 +375,16 @@ namespace Ryujinx.Graphics.Metal
             uint instanceCount,
             int baseVertex,
             uint baseInstance);
+
+        [DllImport(LibraryName, EntryPoint = "metal_render_encoder_draw_indexed_primitives_indirect")]
+        internal static extern MetalResult RenderEncoderDrawIndexedPrimitivesIndirect(
+            nint renderEncoder,
+            MetalPrimitiveType primitiveType,
+            MetalIndexType indexType,
+            nint indexBuffer,
+            ulong indexBufferOffset,
+            nint indirectBuffer,
+            ulong indirectBufferOffset);
 
         [DllImport(LibraryName, EntryPoint = "metal_end_render_encoding")]
         internal static extern MetalResult EndRenderEncoding(
