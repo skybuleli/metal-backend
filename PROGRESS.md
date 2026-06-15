@@ -1,12 +1,12 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T14:41:07+08:00
+# 最后更新: 2026-06-15T14:55:19+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 108/165 任务 (65.5%)
+# 完成度: 109/166 任务 (65.7%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
 ## Phase 4: 核心 Metal 后端实现与 2D 闭环重排
-### 阶段状态: 🔄 IN PROGRESS
+### 阶段状态: ✅ COMPLETE (2026-06-15)
 ### 出口: 2D 最小闭环稳定跑通，且轻量 2D homebrew 可渲染
 
 ## ── 图例 ──
@@ -108,7 +108,7 @@
 
 # ===================================================================
 ## Phase 4: 核心 Metal 后端实现与 2D 闭环重排
-### 阶段状态: 🔄 IN PROGRESS
+### 阶段状态: ✅ COMPLETE (2026-06-15)
 ### 出口: 2D 最小闭环稳定跑通，且轻量 2D homebrew 可渲染
 # ===================================================================
 ### 4.1 设备与资源管理
@@ -191,10 +191,11 @@
 | P4.6.8 | 轻量 2D homebrew smoke：打通 `TetrisNX`/`Pong-NX` 级别样本并记录首帧证据 | ✅ | 2026-06-15T13:22:13+08:00 | docs/p4-lightweight-homebrew-smoke.md + src/demos/p4_6c/ + docs/evidence/P4.6.8-p4-6c-homebrew-smoke.ppm + docs/evidence/P4.6.8-p4-6c-homebrew-atlas.ppm + docs/evidence/P4.6.8-run.txt + docs/evidence/P4.6.8-meta.json |
 | P4.6.9 | 标准 2D homebrew 验收：打通 `OpenSupaplex` 或 `NXEngine-evo` 之一 | ✅ | 2026-06-15T13:59:01+08:00 | docs/evidence/P4.6.9-run.txt + docs/evidence/P4.6.9-meta.json |
 | P4.6.10 | 窗口版 2D smoke：用现成 NSWindow + CAMetalLayer + Presenter 呈现 smoke 首帧 | ✅ | 2026-06-15T14:21:49+08:00 | docs/evidence/P4.6.10-run.txt + docs/evidence/P4.6.10-window-smoke.ppm + docs/evidence/P4.6.10-window-smoke.png + docs/evidence/P4.6.10-meta.json |
+| P4.6.11 | 真实 draw path smoke：Shader + Pipeline + Draw + Presenter 画出首个三角形 | ✅ | 2026-06-15T14:51:42+08:00 | docs/evidence/P4.6.11-run.txt + docs/evidence/P4.6.11-bridge-triangle.ppm + docs/evidence/P4.6.11-bridge-triangle.png + docs/evidence/P4.6.11-meta.json |
 
 ### 阶段总结
 - **已完成模块**: 设备管理 (P4.1)、着色器编译 (P4.2)、管线状态 (P4.3)、同步与呈现 (P4.4)
-- **新增主线**: 先收口 Slang 原生主路径，再建立最小 2D 闭环，最后回到蔚蓝；P4.6.10 先改为窗口版 smoke，优先验证 Presenter/窗口管道
+- **新增主线**: 先收口 Slang 原生主路径，再建立最小 2D 闭环，最后回到蔚蓝；P4.6.10 先验证 Presenter/窗口管道，P4.6.11 再验证真实 draw path
 - **风险拆分**: Shader / Pipeline / Bridge 三类问题分流
 - **下一阶段前置条件**: P4.6 完成后，再进入 Phase 5 的 Maxwell/GAL 状态映射扩展
 
@@ -319,8 +320,8 @@
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 165
-- 已完成: 108 (65.5%)
+- 总任务数: 166
+- 已完成: 109 (65.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0

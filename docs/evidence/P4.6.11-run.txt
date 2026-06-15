@@ -1,0 +1,2 @@
+已导出真实 draw path 首帧: "out/p4_6e_bridge_triangle.ppm"
+P4.6.11 真实 draw path smoke 完成: presents=89

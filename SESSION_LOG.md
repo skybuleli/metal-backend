@@ -22,11 +22,31 @@
 ## 当前状态摘要
 
 - 当前阶段：Phase 5 — 命令映射与状态跟踪
-- 当前进度：108/165 任务完成
+- 当前进度：109/166 任务完成
 - 下一任务：P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
 - 最近状态机维护：`gen_next_task.py` 会刷新 `PROGRESS.md` 统计区并生成 `NEXT_TASK.md`；`verify_progress.py` 会校验二者一致性
 
 ## 最近滚动记录
+
+### 2026-06-15 | P4.6.11 真实 draw path smoke — `Shader + Pipeline + Draw + Presenter` 首个三角形 | ✅ 完成
+
+- **Agent**: Codex
+- **结果**: ✅ 通过 bridge 真正完成 shader 编译、pipeline 创建、draw call、render target 回读与窗口呈现，导出 `presents=89`
+- **变更**:
+  - `src/demos/p4_6e/src/main.mm`：新增真实 draw path smoke demo，使用 `metal_compile_shader` + `metal_create_render_pipeline` + `metal_begin_render_encoding_with_targets`
+  - `src/demos/p4_6e/Makefile` / `src/demos/p4_6e/README.md`：新增构建、运行、证据入口与说明
+  - `src/demos/Makefile`：补齐 `p4_6e` 构建/运行入口
+  - `PROGRESS.md` / `NEXT_TASK.md` / `SESSION_LOG.md`：同步任务定义、统计和阶段状态
+- **验证**:
+  - `make -C src/demos/p4_6e build` ✅
+  - `make -C src/demos/p4_6e evidence` ✅
+  - `python3 tools/verify_progress.py` ✅
+- **证据**:
+  - `docs/evidence/P4.6.11-run.txt`
+  - `docs/evidence/P4.6.11-bridge-triangle.ppm`
+  - `docs/evidence/P4.6.11-bridge-triangle.png`
+  - `docs/evidence/P4.6.11-meta.json`
+- **下一任务**: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
 
 ### 2026-06-15 | P4.6.10 窗口版 2D smoke — `NSWindow + CAMetalLayer + Presenter` 呈现 smoke 首帧 | ✅ 完成
 

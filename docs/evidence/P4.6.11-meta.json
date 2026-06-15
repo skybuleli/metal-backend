@@ -1,0 +1,8 @@
+{
+  "task": "P4.6.11",
+  "scene": "bridge draw path triangle",
+  "presented_frames": 1,
+  "center_sample": [107, 158, 125],
+  "corner_sample": [10, 15, 26],
+  "artifacts": ["out/p4_6e_bridge_triangle.ppm", "out/p4_6e_bridge_triangle.json"]
+}

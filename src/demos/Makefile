@@ -2,7 +2,7 @@
 	run-d1 run-d2 run-d3 run-d4 run-d4-window run-preview run-d5 run-d6 run-d7 run-d8 \
 	evidence evidence-d8 clean
 
-DEMOS = d1 d2 d3 d4 d5 d6 d7 d8 preview p4_6a p4_6b p4_6c p4_6d
+DEMOS = d1 d2 d3 d4 d5 d6 d7 d8 preview p4_6a p4_6b p4_6c p4_6d p4_6e
 
 all: build-demos
 
@@ -28,7 +28,8 @@ build-demos:
 	@$(MAKE) -C p4_6b build
 	@$(MAKE) -C p4_6c build
 	@$(MAKE) -C p4_6d build
-	@echo "D1–D8、P4.6a–P4.6d 与预览窗口已全部构建完成。"
+	@$(MAKE) -C p4_6e build
+	@echo "D1–D8、P4.6a–P4.6e 与预览窗口已全部构建完成。"
 	@echo "可用下一步: make -C src/demos run-d8"
 
 d1:
@@ -63,6 +64,9 @@ p4_6c:
 
 p4_6d:
 	@$(MAKE) -C p4_6d build
+
+p4_6e:
+	@$(MAKE) -C p4_6e build
 
 preview-evidence:
 	@$(MAKE) -C preview evidence
@@ -111,6 +115,9 @@ run-p4_6c:
 
 run-p4_6d:
 	@$(MAKE) -C p4_6d run
+
+run-p4_6e:
+	@$(MAKE) -C p4_6e run
 
 run-d8:
 	@$(MAKE) -C d8 run
