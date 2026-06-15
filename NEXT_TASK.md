@@ -1,14 +1,14 @@
-# 下一任务 — P5.0 搭建 Maxwell/GAL→Metal 状态映射表骨架
+# 下一任务 — P4.6.10 蔚蓝回归重试：在新诊断链路下复测首帧/首屏，并把问题归因到 Shader/Pipeline/Bridge 之一
 
-> 生成时间：2026-06-15 11:55:14
-> 所属阶段：Phase 5 — 命令映射与状态跟踪
+> 生成时间：2026-06-15 14:01:04
+> 所属阶段：Phase 4 — 核心 Metal 后端实现与 2D 闭环重排
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.0 |
-| 任务名称 | 搭建 Maxwell/GAL→Metal 状态映射表骨架 |
+| 任务 ID | P4.6.10 |
+| 任务名称 | 蔚蓝回归重试：在新诊断链路下复测首帧/首屏，并把问题归因到 Shader/Pipeline/Bridge 之一 |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.0 → ✅
+- 更新 PROGRESS.md：P4.6.10 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

@@ -1,13 +1,13 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T11:55:14+08:00
-# 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 97/152 任务 (63.8%)
+# 最后更新: 2026-06-15T14:01:04+08:00
+# 当前阶段: Phase 4 — 核心 Metal 后端实现与 2D 闭环重排
+# 完成度: 107/165 任务 (64.8%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
-## Phase 4: 核心 Metal 后端实现
-### 阶段状态: ✅ COMPLETE (2026-06-14)
-### 出口: 2D 游戏可启动渲染 🔄 待更多验证
+## Phase 4: 核心 Metal 后端实现与 2D 闭环重排
+### 阶段状态: 🔄 IN PROGRESS
+### 出口: 2D 最小闭环稳定跑通，且轻量 2D homebrew 可渲染
 
 ## ── 图例 ──
 ## ⬜ 待开始   🔄 进行中   ✅ 已完成   🚫 已阻塞   ⏸️ 已跳过
@@ -80,7 +80,7 @@
 | P2.8b | D6 双路径对照：Path A 与手写 MSL 输出一致性验证 + 差异证据 | ✅ | 2026-06-12T23:07:24+08:00 | docs/evidence/P2.8b-d6-patha.png + docs/evidence/P2.8b-d6-legacy-msl.png + docs/evidence/P2.8b-d6-diff-heatmap.png + docs/evidence/P2.8b-compare.txt + docs/evidence/P2.8b-meta.json |
 | P2.8c | D6 高风险语义回归：uniform/matrix/depth compare/HDR attachment/sampler compare 证据固化 | ✅ | 2026-06-12T23:11:18+08:00 | docs/evidence/P2.8c-run.txt + docs/evidence/P2.8c-semantics.txt + docs/evidence/P2.8c-meta.json |
 | P2.9 | D7 GPU-Driven：Compute 粒子 + Instancing + Indirect Draw | ✅ | 2026-06-12T23:42:42+08:00 | docs/evidence/P2.9-run.txt + docs/evidence/P2.9-d7-gpu-driven.png + docs/evidence/P2.9-meta.json + docs/evidence/P2.9-perf.json + docs/evidence/P2.9-compute-reflection.json |
-| P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ✅ | 2026-06-13T01:35:00+08:00 | docs/evidence/P2.10-d8-complex-showcase.png + docs/evidence/P2.10-run.txt + docs/evidence/P2.10-meta.json + docs/evidence/P2.10-perf.json：7 个 PBR 球体 (GGX) + shadow map + 程序化天空盒 + bloom + 粒子漩涡 + HUD + 自由轨道摄像机，M1 上 812 FPS
+| P2.10 | D8 Complex Showcase：PBR 材质球 + 阴影 + 天空盒 + 后处理 + 粒子 + HUD + 自由摄像机 | ✅ | 2026-06-13T01:35:00+08:00 | docs/evidence/P2.10-d8-complex-showcase.png + docs/evidence/P2.10-run.txt + docs/evidence/P2.10-meta.json + docs/evidence/P2.10-perf.json：7 个 PBR 球体 (GGX) + shadow map + 程序化天空盒 + bloom + 粒子漩涡 + HUD + 自由轨道摄像机，M1 上 812 FPS |
 | P2.11 | D8 性能验证：M1 上 ≥60fps 或记录阻塞瓶颈 | ✅ | 2026-06-13T02:45:00+08:00 | docs/evidence/P2.11-run.txt + docs/evidence/P2.11-perf.json + docs/evidence/P2.11-d8-perf.png + docs/evidence/P2.11-meta.json：离屏 1098 FPS (0.91ms/帧)，窗口 ~59 FPS (vsync 60Hz 限流)，GPU 渲染性能 18x 超过目标 |
 | P2.12 | Demo 构建与回归入口：make build-demos + 截图/JSON 证据规范 | ✅ | 2026-06-13T02:48:00+08:00 | docs/evidence/P2.12-build.txt + docs/evidence/P2.12-meta.json：D1–D8 全部成功构建，新增 evidence/evidence-d8 顶层目标，统一 build-demos 入口覆盖所有 Demo |
 
@@ -107,9 +107,9 @@
 | P3.11 | 验证：选择 Metal 后端→启动→空白窗口不崩溃 | ✅ | 2026-06-13T14:20:00+08:00 | docs/evidence/P3.11-metal-backend-launch-test.log |
 
 # ===================================================================
-## Phase 4: 核心 Metal 后端实现
+## Phase 4: 核心 Metal 后端实现与 2D 闭环重排
 ### 阶段状态: 🔄 IN PROGRESS
-### 出口: 2D 游戏可启动渲染
+### 出口: 2D 最小闭环稳定跑通，且轻量 2D homebrew 可渲染
 # ===================================================================
 ### 4.1 设备与资源管理
 | ID | 任务 | 状态 | 完成时间 | 证据 |
@@ -159,11 +159,11 @@
 | P4.4.5 | BackgroundContextAction: 后台 MTLCommandQueue | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 | P4.4.6 | RunLoop: 主渲染循环 | ✅ | 2026-06-14T14:48:46+08:00 | 参见 Phase 4 阶段总结 |
 
-### 4.5 验收测试
-### 出口验证: Phase 4 全部模块集成后，按以下顺序逐项验收
+### 4.5 既有模块验收
+### 出口验证: Phase 4 核心模块已完成，但不再视为“真实 2D 游戏闭环已证明”
 
-> **验收原则**：自底向上，单模块→集成→端到端。每步先独立验证，再组合验证。
-> 验证工具：Xcode Metal Debugger / GPU Frame Capture / 自定义 Logger。
+> **重排说明**：P4.5 的通过说明底层模块可工作，不等于真实 2D 游戏链路已经收敛。
+> 从本轮重排开始，真实 2D 验收转移到 `P4.6`，按“手写最小样本 → 轻量 homebrew → 蔚蓝回归”递进。
 
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
@@ -176,44 +176,27 @@
 | P4.5.7 | 呈现验收: CAMetalLayer 交换链正常刷新 (≥60fps 空场景) | ✅ | 2026-06-14 | docs/evidence/P4.5.7-meta.json |
 | P4.5.8 | 2D Demo 完整渲染: Demo D1 帧缓冲对比 (像素差异<1%) | ✅ | 2026-06-14 | docs/evidence/P4.5.8-meta.json |
 
-### 验收操作流程
+### 4.6 2D 主线重排与最小闭环
+### 出口验证: Slang 原生主路径收口，手写 2D 样本跑通，至少 2 个轻量 2D homebrew 可渲染
 
-Agent 执行验收时，按以下步骤操作：
-
-```
-验收步骤:
-1. P4.5.1 设备冒烟 → dotnet run --project Ryubing.Tests -- --filter MetalDeviceSmoke
-2. P4.5.2 着色器编译 → 运行 scripts/verify_shaders.sh (≥5 个 Path A 着色器)
-3. P4.5.3 资源生命周期 → Instruments Leaks 检测 + 100 次循环脚本
-4. P4.5.4 基础 Draw → dotnet run --project Ryubing.Tests -- --filter MetalDrawTest
-5. P4.5.5 管线状态 → dotnet run --project Ryubing.Tests -- --filter MetalPipelineState
-6. P4.5.6 同步验收 → dotnet run --project Ryubing.Tests -- --filter MetalSyncTest
-7. P4.5.7 呈现验收 → dotnet run --project Ryubing.Tests -- --filter MetalPresenter
-8. P4.5.8 2D Demo → dotnet run --project Ryubing -- --backend Metal --demo D1
-   → 截取帧缓冲 → 与 OpenGL 参考对比 → 像素差异 < 1%
-
-每步通过后 ✅ 标记对应 P4.5.x；失败则记录错误日志到 docs/acceptance/P4.5.x-error.log
-```
-
-### 验收判定标准
-
-| 验收项 | 通过标准 | 失败处理 |
-|--------|----------|----------|
-| P4.5.1 | MetalDevice 创建成功，特性查询返回值在合理范围 | 检查 MTLDevice 创建参数 + entitlement |
-| P4.5.2 | 5 个着色器全部完成 Path A 编译 + metallib > 0B | 逐个排查 Slang→DXIL→MSC 环节 |
-| P4.5.3 | Instruments Leaks 报告 0 泄漏，100 次循环无崩溃 | 检查 retain/release 配对 |
-| P4.5.4 | Triangle + Quad 渲染画面与参考一致 | 金属调试器抓帧对比 |
-| P4.5.5 | 4 种状态组合渲染正确，无 Metal 验证层错误 | 启用 MTL_DEBUG_LAYER=1 |
-| P4.5.6 | 串行提交 10 个 CommandBuffer 按序完成 | GPU Frame Capture 时间轴验证 |
-| P4.5.7 | 连续 100 帧无丢帧，无 GPU 超时 | 启用 MTL_DEVICE_HANG_DETECTION=1 |
-| P4.5.8 | 像素差异 < 1%，无视觉伪影 | ImageMagick compare 或自定义工具 |
+| ID | 任务 | 状态 | 完成时间 | 证据 |
+|----|------|------|----------|------|
+| P4.6.1 | 收口 2D 调试主线：冻结蔚蓝为后验回归样本，确定手写/轻量 homebrew/复杂样本三级验收顺序 | ✅ | 2026-06-15T12:09:46+08:00 | docs/p4-2d-realignment-plan.md |
+| P4.6.2 | 建立 Slang 原生图形着色器模板集：VS/FS 的 ConstantBuffer、纹理采样、varying 语义、alpha blend 最小样本 | ✅ | 2026-06-15T12:18:00+08:00 | docs/evidence/P4.6.2-slang-graphics-templates.log + docs/evidence/P4.6.2-meta.json + docs/p4-slang-graphics-templates.md |
+| P4.6.3 | 收紧 Metal 主编译路径：主线禁用 GLSL 直通 Path A，GLSL 桥接降级为诊断/对照模式 | ✅ | 2026-06-15T12:23:18+08:00 | docs/evidence/P4.6.3-libmetal-bridge-build.log + docs/evidence/P4.6.3-metal-build.log |
+| P4.6.4 | 建立着色器诊断证据链：源码 dump、Slang 输出、DXIL 摘要、metallib 产物、失败归因标签 | ✅ | 2026-06-15T12:31:00+08:00 | docs/evidence/P4.6.4-diagnostic-chain.log + docs/evidence/P4.6.4-meta.json + docs/evidence/P4.6.4-diagnostics/index.json |
+| P4.6.5 | 建立渲染诊断证据链：RenderTarget dump、Draw 次序日志、关键状态快照、Present 前后帧抓取 | ✅ | 2026-06-15T12:35:25+08:00 | docs/p4-render-diagnostic-evidence.md + docs/evidence/P4.6.5-diagnostic-bundle/ + docs/evidence/P4.6.5-render-diagnostic.log + docs/evidence/P4.6.5-meta.json |
+| P4.6.6 | 实现手写 2D 最小样本 A：单纹理 Quad + Sprite Atlas + alpha blend | ✅ | 2026-06-15T12:53:50+08:00 | docs/p4-handwritten-2d-sample-a.md + src/demos/p4_6a/ + docs/evidence/P4.6.6-p4-6a-sprite-quad.ppm + docs/evidence/P4.6.6-p4-6a-sprite-atlas.ppm + docs/evidence/P4.6.6-run.txt + docs/evidence/P4.6.6-meta.json |
+| P4.6.7 | 实现手写 2D 最小样本 B：Tile Map + camera scroll + HUD 文本/面板 | ✅ | 2026-06-15T13:08:40+08:00 | docs/p4-handwritten-2d-sample-b.md + src/demos/p4_6b/ + docs/evidence/P4.6.7-p4-6b-tilemap-scroll-a.ppm + docs/evidence/P4.6.7-p4-6b-tilemap-scroll-b.ppm + docs/evidence/P4.6.7-p4-6b-tilemap-atlas.ppm + docs/evidence/P4.6.7-run.txt + docs/evidence/P4.6.7-meta.json |
+| P4.6.8 | 轻量 2D homebrew smoke：打通 `TetrisNX`/`Pong-NX` 级别样本并记录首帧证据 | ✅ | 2026-06-15T13:22:13+08:00 | docs/p4-lightweight-homebrew-smoke.md + src/demos/p4_6c/ + docs/evidence/P4.6.8-p4-6c-homebrew-smoke.ppm + docs/evidence/P4.6.8-p4-6c-homebrew-atlas.ppm + docs/evidence/P4.6.8-run.txt + docs/evidence/P4.6.8-meta.json |
+| P4.6.9 | 标准 2D homebrew 验收：打通 `OpenSupaplex` 或 `NXEngine-evo` 之一 | ✅ | 2026-06-15T13:59:01+08:00 | docs/evidence/P4.6.9-run.txt + docs/evidence/P4.6.9-meta.json |
+| P4.6.10 | 蔚蓝回归重试：在新诊断链路下复测首帧/首屏，并把问题归因到 Shader/Pipeline/Bridge 之一 | ⬜ | — | — |
 
 ### 阶段总结
-- **完成模块**: 设备管理 (P4.1)、着色器编译 (P4.2)、管线状态 (P4.3)、同步与呈现 (P4.4)
-- **关键实现**: MetalDevice/MTLBuffer/MTLTexture/MTLRenderPipeline/CAMetalLayer
-- **技术债务**: 需在 Phase 5 中补全 Maxwell→Metal 状态映射表
-- **未覆盖场景**: 几何着色器、曲面细分、Transform Feedback (Phase 5)
-- **下一阶段**: Phase 5 — 命令映射与状态跟踪
+- **已完成模块**: 设备管理 (P4.1)、着色器编译 (P4.2)、管线状态 (P4.3)、同步与呈现 (P4.4)
+- **新增主线**: 先收口 Slang 原生主路径，再建立最小 2D 闭环，最后回到蔚蓝
+- **风险拆分**: Shader / Pipeline / Bridge 三类问题分流
+- **下一阶段前置条件**: P4.6 完成后，再进入 Phase 5 的 Maxwell/GAL 状态映射扩展
 
 
 # ===================================================================
@@ -256,8 +239,8 @@ Agent 执行验收时，按以下步骤操作：
 | ID | 任务 | 状态 | 完成时间 | 证据 |
 |----|------|------|----------|------|
 | P6.2.0 | 将 kk Metal 限制清单转为着色器编译回归样本 | ⬜ | — | — |
-| P6.2.1 | Path A 端到端编译 (10个真实着色器) | ⬜ | — | — |
-| P6.2.2 | Path C 端到端编译 (同10个着色器) | ⬜ | — | — |
+| P6.2.1 | Slang 原生 Path A 端到端编译 (10 个图形/计算样本) | ⬜ | — | — |
+| P6.2.2 | GLSL 桥接诊断回归 (仅对照，不作为主成功路径) | ⬜ | — | — |
 | P6.2.3 | 回退逻辑验证 | ⬜ | — | — |
 | P6.2.4 | 着色器缓存命中测试 | ⬜ | — | — |
 | P6.2.5 | 跨阶段优化验证 (spirv-opt) | ⬜ | — | — |
@@ -270,6 +253,7 @@ Agent 执行验收时，按以下步骤操作：
 | P6.3.3 | MRT 渲染 (3附件) | ⬜ | — | — |
 | P6.3.4 | Compute Dispatch | ⬜ | — | — |
 | P6.3.5 | 同步正确性 | ⬜ | — | — |
+| P6.3.6 | 2D 样本分层回归：手写样本 / smoke homebrew / 标准 homebrew | ⬜ | — | — |
 
 ### 6.4 回归测试 + CI
 | ID | 任务 | 状态 | 完成时间 | 证据 |
@@ -278,6 +262,7 @@ Agent 执行验收时，按以下步骤操作：
 | P6.4.2 | Game Shader 编译回归 (20个着色器) | ⬜ | — | — |
 | P6.4.3 | 性能基准 (D8 ≤16ms 帧时间) | ⬜ | — | — |
 | P6.4.4 | CI 流水线: GitHub Actions 自动化测试 | ⬜ | — | — |
+| P6.4.5 | 蔚蓝回归脚本：首帧、首屏、切场景三段证据采集 | ⬜ | — | — |
 
 # ===================================================================
 ## Phase 7: 性能优化与 MetalFX
@@ -334,11 +319,11 @@ Agent 执行验收时，按以下步骤操作：
 # ===================================================================
 ## ── 统计 ──
 # ===================================================================
-- 总任务数: 152
-- 已完成: 97 (63.8%)
+- 总任务数: 165
+- 已完成: 107 (64.8%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 55
-- 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.0 — 搭建 Maxwell/GAL→Metal 状态映射表骨架
+- 待开始: 58
+- 当前阶段: Phase 4 — 核心 Metal 后端实现与 2D 闭环重排
+- 下一任务: P4.6.10 — 蔚蓝回归重试：在新诊断链路下复测首帧/首屏，并把问题归因到 Shader/Pipeline/Bridge 之一

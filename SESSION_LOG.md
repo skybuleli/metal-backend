@@ -580,3 +580,308 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 - ` /tmp/celeste_metal_validation2.log`
 - ` /tmp/celeste_metal_validation3.log`
 - ` /tmp/ryujinx_metal_first_present_formatfix.png`
+
+## 2026-06-15 中午 | P4.6.1 收口 2D 调试主线与阶段重排 | ✅ 完成
+
+#### 本轮文档与计划改动
+- 新增 [`docs/p4-2d-realignment-plan.md`](docs/p4-2d-realignment-plan.md)
+  - 明确将蔚蓝从“当前主驱动样本”降级为“后验回归样本”
+  - 将当前风险拆分为 `Shader / Pipeline / Bridge` 三类
+  - 确定新的推进顺序：Slang 原生主路径 → 手写 2D 最小闭环 → 轻量 Homebrew → 蔚蓝回归
+- 更新 `PROGRESS.md`
+  - 将 Phase 4 重命名为“核心 Metal 后端实现与 2D 闭环重排”
+  - 新增 `P4.6.1` 到 `P4.6.10` 任务链
+  - 将 `P6.2`、`P6.3`、`P6.4` 的后续验证任务改为与新主线一致
+
+#### 本轮判断
+- 继续直接用蔚蓝驱动开发，会把“着色器主路线是否正确”“渲染状态映射是否完整”“桥接层是否有功能缺口”三类变量耦合在一起
+- 蓝图和已有验证都表明，主线应当优先收口到 `Slang 原生语法 → DXIL → MSC → metallib`
+- 当前 `ShaderCompiler.cpp` 与 `MetalShaderCompiler.cs` 仍保留 GLSL 正常输入/桥接路径，因此需要把这部分前置清理
+
+#### 下一步
+1. 执行 `P4.6.2`：建立 Slang 原生图形着色器模板集
+2. 随后执行 `P4.6.3`：把 GLSL 从 Path A 主成功路径中降级为诊断模式
+3. 再进入 `P4.6.4` / `P4.6.5`：补齐着色器与渲染两条诊断证据链
+
+## 2026-06-15 中午 | P4.6.3 收紧 Metal 主编译路径 | ✅ 完成
+
+#### 本轮代码改动
+- `src/ryubing/src/Ryujinx.Graphics.Metal/MetalShaderCompiler.cs`
+  - 默认拒绝 `TargetLanguage.Glsl` 作为 Metal 主路径输入
+  - 新增显式诊断开关 `SWITCH_METAL_ENABLE_GLSL_DIAGNOSTIC_BRIDGE=1`
+  - 保留错误信息，提示 GLSL 只能在诊断/对照模式下开启
+- `src/libmetal_bridge/src/ShaderCompiler.cpp`
+  - 同样将 GLSL 从默认 Path A 主线中移除
+  - 新增显式桥接开关 `SWITCH_METAL_ENABLE_GLSL_DIAGNOSTIC_BRIDGE`
+  - 未开启时直接返回失败，不再进入 `compile_glsl_via_spirv_hlsl_bridge`
+
+#### 验证结果
+- `cmake --build src/libmetal_bridge/build --target metal_bridge -j4` ✅
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Release` ✅
+- 证据日志：
+- `docs/evidence/P4.6.3-libmetal-bridge-build.log`
+- `docs/evidence/P4.6.3-metal-build.log`
+
+#### 结论
+- Metal 主路径现在默认只接受 Slang 原生语法和已缓存 metallib
+- GLSL 仍可在显式诊断开关下打开桥接，便于后续对照排查
+- 这一步把“主线输入”和“调试对照”真正分开了，后面可以更稳地推进 2D 最小闭环
+
+## 2026-06-15 中午 | P4.6.4 建立着色器诊断证据链 | ✅ 完成
+
+#### 本轮证据包
+- 诊断根目录：`docs/evidence/P4.6.4-diagnostics/`
+- 汇总日志：[`docs/evidence/P4.6.4-diagnostic-chain.log`](docs/evidence/P4.6.4-diagnostic-chain.log)
+- 汇总元数据：[`docs/evidence/P4.6.4-meta.json`](docs/evidence/P4.6.4-meta.json)
+- 索引文件：[`docs/evidence/P4.6.4-diagnostics/index.json`](docs/evidence/P4.6.4-diagnostics/index.json)
+
+#### 内容覆盖
+- 6 个样本全部纳入诊断包：
+  - `fullscreen_vertex`
+  - `fullscreen_fragment`
+  - `sprite_alpha_vertex`
+  - `sprite_alpha_fragment`
+  - `tilemap_vertex`
+  - `tilemap_fragment`
+- 每个样本目录都保留：
+  - `source_dump.slang`
+  - `slang_output.log`
+  - `dxil.bin` / `dxil.summary.json`
+  - `metallib.bin` / `metallib.summary.json`
+  - `reflection.json`
+  - `diagnosis.json`
+
+#### 验证结果
+- `P4.6.4-meta.json` 中 `all_passed = true`
+- 6 个样本全部命中：
+  - `slang_ok`
+  - `dxil_ok`
+  - `msc_ok`
+  - `metallib_ok`
+
+#### 结论
+- 现在我们已经有一套稳定的着色器诊断证据链，可以直接用于后续 `P4.6.5` 的渲染诊断链路
+- 失败时可快速归因到源文件、Slang、DXIL、MSC 或 metallib 阶段
+- 这一步让后续 2D 调试不再只看“过没过”，而是能看“哪一层坏了”
+
+## 2026-06-15 中午 | P4.6.2 建立 Slang 原生图形着色器模板集 | ✅ 完成
+
+#### 本轮代码与文档改动
+- 新增 `src/shader_templates/slang_graphics/fullscreen_quad.slang`
+  - 最小 `SV_VertexID -> SV_Position + TEXCOORD0` 全屏采样模板
+- 新增 `src/shader_templates/slang_graphics/sprite_alpha.slang`
+  - 覆盖 `ConstantBuffer<T>`、`POSITION/TEXCOORD0/COLOR0`、纹理采样、顶点色乘法、alpha discard
+- 新增 `src/shader_templates/slang_graphics/tilemap_camera.slang`
+  - 覆盖 tilemap atlas、camera scroll、`ConstantBuffer<T>` 和最小 2D 场景插值形态
+- 新增 `docs/p4-slang-graphics-templates.md`
+  - 固化三类模板的用途、约束和对 `CommandMapper` 的直接要求
+- 新增 `tools/test_slang_graphics_templates.sh`
+  - 自动编译 6 个图形入口（3 VS + 3 FS）
+  - 使用 MSC reflection 校验 `CBV / SRV / Sampler / varying` 形态
+
+#### 验证结果
+- `tools/test_slang_graphics_templates.sh` ✅
+  - `fullscreen_vertex`: 3364B DXIL → 6208B metallib
+  - `fullscreen_fragment`: 3880B DXIL → 5408B metallib
+  - `sprite_alpha_vertex`: 4516B DXIL → 7192B metallib
+  - `sprite_alpha_fragment`: 4244B DXIL → 5800B metallib
+  - `tilemap_vertex`: 4704B DXIL → 7200B metallib
+  - `tilemap_fragment`: 4708B DXIL → 5688B metallib
+- 反射校验全部通过：
+  - fullscreen FS = `SRV + Sampler`
+  - sprite VS = `CBV`
+  - sprite FS = `SRV + Sampler`
+  - tilemap VS = `CBV`
+  - tilemap FS = `SRV + CBV + Sampler`
+
+#### 结论
+- Slang 原生图形阶段的最小模板已经从“零散 demo 样例”收口为“可复用、可自动验证的模板集”
+- 后续 `CommandMapper` 或手写 2D 样本如果偏离这组三种模板太远，应优先怀疑路线不一致，而不是先怀疑 MSC 或 Metal
+
+#### 下一步
+1. 执行 `P4.6.3`：收紧 Metal 主编译路径，禁止 GLSL 作为 Path A 主成功路径
+2. 保留 GLSL 桥接仅用于诊断与对照，不再参与主闭环成功判定
+
+## 2026-06-15 中午 | P4.6.5 建立渲染诊断证据链 | ✅ 完成
+
+#### 本轮代码与文档改动
+- 新增 `docs/p4-render-diagnostic-evidence.md`
+  - 固化渲染诊断包结构、判读顺序与使用方式
+- 新增 `tools/test_render_diagnostic_chain.sh`
+  - 一键调用 D4 窗口版生成渲染诊断证据包
+- 更新 `src/demos/d4/src/window_main.mm`
+  - 增加 `--diagnostic-bundle` 参数
+  - 输出 `window pass` / `capture pass` / `presentDrawable` 顺序日志
+  - 自动导出 `render_target_dump.ppm`、`presented_frame.ppm`、`draw_order.log`、`state_snapshot.json`、`manifest.json`
+- 更新 `src/demos/d4/Makefile`
+  - 新增 `evidence-diagnostic` 目标
+  - 生成 `docs/evidence/P4.6.5-diagnostic-bundle/` 和 `docs/evidence/P4.6.5-render-diagnostic.log`
+- 更新 `src/demos/d4/README.md`
+  - 补充诊断证据生成入口
+
+#### 验证结果
+- `./tools/test_render_diagnostic_chain.sh` ✅
+- 生成的诊断包文件全部存在：
+  - `render_target_dump.ppm`
+  - `presented_frame.ppm`
+  - `draw_order.log`
+  - `state_snapshot.json`
+  - `manifest.json`
+- `docs/evidence/P4.6.5-meta.json` 中 `all_passed = true`
+- `render_target_dump.ppm` 与 `presented_frame.ppm` 均成功落盘，大小一致
+
+#### 结论
+- 现在我们有了真正统一的渲染证据链，不再只依赖单张截图或零散日志
+- 后续 `P4.6.6`/`P4.6.7` 可以直接复用这套 bundle 结构，把“画面不对”拆成可回放的顺序证据
+- 这一步把 2D 最小闭环的排查粒度进一步收窄到了“渲染目标、顺序日志、状态快照、前后帧”四层
+
+## 2026-06-15 中午 | P4.6.6 实现手写 2D 最小样本 A | ✅ 完成
+
+#### 本轮代码与文档改动
+- 新增 `src/demos/p4_6a/src/main.mm`
+  - 手写 MSL 直接绘制 2D quad
+  - 使用单张 sprite atlas 作为唯一纹理源
+  - 通过 `instance_id` 一次性生成背景层和前景 sprite 层
+  - 前景使用 `sourceAlpha / oneMinusSourceAlpha` 混合
+- 新增 `src/demos/p4_6a/Makefile`
+  - `build` / `run` / `evidence` 入口
+  - 自动导出 scene PPM、atlas PPM、PNG 与运行日志
+- 新增 `src/demos/p4_6a/README.md`
+  - 说明样本结构和证据生成方式
+- 新增 `docs/p4-handwritten-2d-sample-a.md`
+  - 固化该样本的设计意图和证据范围
+
+#### 验证结果
+- `make -C src/demos/p4_6a evidence` ✅
+- 生成的证据文件：
+  - `docs/evidence/P4.6.6-p4-6a-sprite-quad.ppm`
+  - `docs/evidence/P4.6.6-p4-6a-sprite-quad.png`
+  - `docs/evidence/P4.6.6-p4-6a-sprite-atlas.ppm`
+  - `docs/evidence/P4.6.6-p4-6a-sprite-atlas.png`
+  - `docs/evidence/P4.6.6-run.txt`
+  - `docs/evidence/P4.6.6-meta.json`
+- 运行时像素采样结果：
+  - corner pixel = `(140, 70, 40)`
+  - center pixel = `(167, 120, 164)`
+  - sprite pixel = `(208, 179, 225)`
+- 证据校验通过，中心像素与角落像素已出现明显差异，说明 sprite 覆盖和 alpha blend 都在起作用
+
+#### 结论
+- 现在我们已经有了第一条真正手写的 2D 最小闭环样本，不再依赖 Path A 的图形模板
+- 这一步证明了 atlas 采样、quad 生成和 alpha blend 可以在一个最小场景里稳定工作
+- 后续 `P4.6.7` 可以在这条样本基础上只增加 tilemap / camera scroll / HUD，而不用再怀疑最底层 2D 渲染链路
+
+## 2026-06-15 下午 | P4.6.7 实现手写 2D 最小样本 B | ✅ 完成
+
+#### 本轮代码与文档改动
+- 新增 `src/demos/p4_6b/src/main.mm`
+  - 手写 MSL 直接渲染 tile map、滚动相机和 HUD 面板
+  - 单张 atlas 同时承载世界 tiles、字体 glyph 和 UI 白块
+  - 世界层与 HUD 层分别绘制，HUD 保持固定在屏幕空间
+  - 通过两帧不同 camera scroll 生成可对比的离屏证据
+- 新增 `src/demos/p4_6b/Makefile`
+  - `build` / `run` / `evidence` 入口
+  - 自动导出两帧 scene、atlas、PNG 和运行日志
+  - 内置 PPM 差异校验，确保滚动确实改变画面
+- 新增 `src/demos/p4_6b/README.md`
+  - 说明样本目标、构成和证据输出
+- 新增 `docs/p4-handwritten-2d-sample-b.md`
+  - 固化该样本的设计意图、结构和后续用途
+
+#### 验证结果
+- `make -C src/demos/p4_6b evidence` ✅
+- 生成的证据文件：
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-scroll-a.ppm`
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-scroll-a.png`
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-scroll-b.ppm`
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-scroll-b.png`
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-atlas.ppm`
+  - `docs/evidence/P4.6.7-p4-6b-tilemap-atlas.png`
+  - `docs/evidence/P4.6.7-run.txt`
+  - `docs/evidence/P4.6.7-meta.json`
+- 证据校验结果：
+  - `frame_diff_pixels = 233524`
+  - `center_a = (61, 103, 134)`
+  - `center_b = (81, 133, 181)`
+- 画面检查确认：
+  - tile map 的滚动变化清晰可见
+  - HUD 面板稳定覆盖在世界层之上
+  - 文本 glyph 已从同一张 atlas 正常取样
+
+#### 结论
+- 这一步把“tilemap + camera scroll + HUD”收成了一个独立的最小闭环
+- 现在我们可以更放心地推进 `P4.6.8` 的轻量 homebrew smoke，而不是直接回到蔚蓝
+- 如果后续样本再出问题，问题域就能更清晰地收敛到 shader、pipeline 或 bridge 之一
+
+## 2026-06-15 下午 | P4.6.8 实现轻量 2D homebrew smoke | ✅ 完成
+
+#### 本轮代码与文档改动
+- 新增 `src/demos/p4_6c/src/main.mm`
+  - 手写 MSL 直接绘制轻量 homebrew smoke 首帧
+  - 左侧是 Tetris 风格棋盘，右侧是 Pong 风格球场
+  - 顶部 HUD 显示 smoke 标题和副标题
+  - 单张 atlas 同时承载背景、方块、挡板、球体和字体 glyph
+- 新增 `src/demos/p4_6c/Makefile`
+  - `build` / `run` / `evidence` 入口
+  - 自动导出主图、atlas、PNG 和运行日志
+  - 证据校验拆成独立 Python 脚本，避免 shell quoting 复杂化
+- 新增 `src/demos/p4_6c/README.md`
+  - 说明这个 smoke 样本是 `TetrisNX` / `Pong-NX` 的 proxy
+- 新增 `docs/p4-lightweight-homebrew-smoke.md`
+  - 固化该样本的设计意图、结构和后续用途
+- 新增 `tools/test_p4_6c_smoke.py`
+  - 负责校验 PPM、采样关键像素并写出 meta
+
+#### 验证结果
+- `make -C src/demos/p4_6c evidence` ✅
+- 生成的证据文件：
+  - `docs/evidence/P4.6.8-p4-6c-homebrew-smoke.ppm`
+  - `docs/evidence/P4.6.8-p4-6c-homebrew-smoke.png`
+  - `docs/evidence/P4.6.8-p4-6c-homebrew-atlas.ppm`
+  - `docs/evidence/P4.6.8-p4-6c-homebrew-atlas.png`
+  - `docs/evidence/P4.6.8-run.txt`
+  - `docs/evidence/P4.6.8-meta.json`
+- 证据校验结果：
+  - `board = (25, 12, 8)`
+  - `court = (186, 204, 199)`
+  - `hud = (19, 23, 36)`
+  - `background = (7, 5, 6)`
+- 画面检查确认：
+  - 左侧 Tetris 棋盘和右侧 Pong 球场分区明确
+  - HUD 标题栏完整可读
+  - 文本中缺字问题已修正，`FIRST FRAME` 完整显示
+
+#### 结论
+- 现在我们有了一个可复用的轻量 homebrew smoke proxy，可以作为真实 2D homebrew 的前置门槛
+- 这一步进一步缩小了“复杂 2D 问题”与“底层链路问题”之间的距离
+- 下一步推进 `P4.6.9` 时，我们可以更有把握地接近 `OpenSupaplex` / `NXEngine-evo`
+
+## 2026-06-15 下午 | P4.6.9 标准 2D homebrew 验收：NXEngine-evo | ✅ 完成
+
+#### 选择与判断
+- 先排查 `OpenSupaplex` 和 `NXEngine-evo` 的可落地性
+- `OpenSupaplex` 的 macOS 路径依赖完整 Xcode.app，当前机器只有 CLT，不适合作为主线
+- 选择 `NXEngine-evo` 作为标准验收样本，因为它有 CMake 路线，而且自带 `data/` 资源
+
+#### 环境修复
+- 将 `~/.zprofile` 中旧的 Homebrew 镜像配置修正为 USTC 的 bottles/api 组合
+- 通过 Homebrew 安装补齐 `sdl2_mixer` 和 `sdl2_image`
+- 遇到 CLT 默认 `c++` 缺少可链接 `libc++` 的问题后，切换到 Homebrew LLVM 编译器链
+
+#### 本轮验证
+- `cmake -S /Users/liliang/MetalBackend/_external/nxengine-evo -B /Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm -DPLATFORM=pc -DCMAKE_BUILD_TYPE=Release` ✅
+- `cmake --build /Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm -j 4` ✅
+- 生成产物：
+  - `/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm/nxengine-evo`
+  - `/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm/nxextract`
+- 启动检查：
+  - 用 Python 封装运行主程序 8 秒
+  - 进程未在超时前退出，且没有立即性的 stdout/stderr 错误
+
+#### 证据文件
+- `docs/evidence/P4.6.9-run.txt`
+- `docs/evidence/P4.6.9-meta.json`
+
+#### 结论
+- 标准 2D homebrew 验收链路已经推进到“能构建、能启动、不秒退”的状态
+- 下一步可以把这一条链路作为 2D 回归标准样本，继续做更细的画面/交互验收

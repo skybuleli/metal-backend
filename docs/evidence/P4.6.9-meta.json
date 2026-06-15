@@ -1,0 +1,27 @@
+{
+  "task_id": "P4.6.9",
+  "task_name": "标准 2D homebrew 验收：打通 OpenSupaplex 或 NXEngine-evo 之一",
+  "candidate": "NXEngine-evo",
+  "source_repo": "/Users/liliang/MetalBackend/_external/nxengine-evo",
+  "build_dir": "/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm",
+  "compiler": {
+    "cc": "/opt/homebrew/opt/llvm/bin/clang",
+    "cxx": "/opt/homebrew/opt/llvm/bin/clang++"
+  },
+  "configure_ok": true,
+  "build_ok": true,
+  "run_ok": true,
+  "run_result": "timeout_after_8s_without_immediate_stdout_or_stderr_error",
+  "key_dependencies": [
+    "sdl2",
+    "sdl2_mixer",
+    "sdl2_image",
+    "png",
+    "jpeg",
+    "llvm"
+  ],
+  "notes": [
+    "OpenSupaplex 的 macOS 路径依赖 Xcode.app，不适合当前只有 CLT 的环境",
+    "CLT 默认 c++ 链接缺少 libc++，改用 Homebrew LLVM 工具链完成编译"
+  ]
+}

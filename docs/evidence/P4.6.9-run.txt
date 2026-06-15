@@ -1,0 +1,21 @@
+P4.6.9 标准 2D homebrew 验收记录：NXEngine-evo
+
+构建配置：
+- `CC=/opt/homebrew/opt/llvm/bin/clang`
+- `CXX=/opt/homebrew/opt/llvm/bin/clang++`
+- `cmake -S /Users/liliang/MetalBackend/_external/nxengine-evo -B /Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm -DPLATFORM=pc -DCMAKE_BUILD_TYPE=Release`
+
+构建结果：
+- CMake 成功识别 `SDL2`、`SDL2_mixer`、`SDL2_image`、`PNG`、`JPEG`
+- `cmake --build /Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm -j 4`
+- 生成可执行文件：
+  - `/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm/nxengine-evo`
+  - `/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm/nxextract`
+
+启动检查：
+- 运行命令：`python3` 封装启动 `/Users/liliang/MetalBackend/_external/nxengine-evo/build-llvm/nxengine-evo`
+- 超时时间：8 秒
+- 结果：进程未在超时前退出，且未在 stdout/stderr 里打印立即性错误
+
+补充说明：
+- 本机 CLT 默认 `c++` 缺少可链接的 `libc++`，因此切换到 Homebrew LLVM 工具链完成编译
