@@ -34,6 +34,7 @@ make -C src/demos/d4 run-window
 ```bash
 make -C src/demos/d4 evidence
 make -C src/demos/d4 evidence-window
+make -C src/demos/d4 evidence-diagnostic
 ```
 
 ## 技术说明
@@ -59,3 +60,6 @@ D4 采用手写 MSL 而非 Path A（Slang→DXIL→MSC）管线，因为：
 | `docs/evidence/P2.6b-window.txt` | 实时窗口运行日志 |
 | `docs/evidence/P2.6b-d4-rotating-window.png` | 实时窗口最终帧导出图 |
 | `docs/evidence/P2.6b-meta.json` | 实时窗口元数据 |
+| `docs/evidence/P4.6.5-diagnostic-bundle/` | 渲染诊断证据包 |
+| `docs/evidence/P4.6.5-render-diagnostic.log` | 渲染诊断运行日志 |
+| `docs/evidence/P4.6.5-meta.json` | 渲染诊断元数据 |

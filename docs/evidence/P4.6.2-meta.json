@@ -1,0 +1,42 @@
+{
+  "task": "P4.6.2",
+  "template_dir": "src/shader_templates/slang_graphics",
+  "checks": [
+    {
+      "name": "fullscreen_vertex_varyings",
+      "ok": true,
+      "detail": "fullscreen quad 顶点输出固定为 SV_Position + TEXCOORD0"
+    },
+    {
+      "name": "fullscreen_fragment_sampling",
+      "ok": true,
+      "detail": "fullscreen quad 片段模板固定为 1 个纹理 + 1 个采样器"
+    },
+    {
+      "name": "sprite_vertex_constant_buffer",
+      "ok": true,
+      "detail": "sprite alpha 顶点模板通过 ConstantBuffer<T> 提供场景数据"
+    },
+    {
+      "name": "sprite_fragment_sampling",
+      "ok": true,
+      "detail": "sprite alpha 片段模板固定为采样 + alpha 输出"
+    },
+    {
+      "name": "sprite_varying_color_uv",
+      "ok": true,
+      "detail": "sprite alpha 顶点输出保留 TEXCOORD0 与 COLOR0"
+    },
+    {
+      "name": "tilemap_vertex_constant_buffer",
+      "ok": true,
+      "detail": "tilemap 顶点模板通过 ConstantBuffer<T> 提供 scroll/atlas 参数"
+    },
+    {
+      "name": "tilemap_fragment_cbv_srv_sampler",
+      "ok": true,
+      "detail": "tilemap 片段模板同时依赖 atlas 纹理、场景常量缓冲和采样器"
+    }
+  ],
+  "all_passed": true
+}

@@ -1,0 +1,15 @@
+{
+  "task": "P4.6.5",
+  "demo": "D4Window",
+  "scene": "RenderTarget dump + draw order log + state snapshot + present before/after capture",
+  "artifacts": [
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/render_target_dump.ppm",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/presented_frame.ppm",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/draw_order.log",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/state_snapshot.json",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/manifest.json",
+    "docs/evidence/P4.6.5-render-diagnostic.log"
+  ],
+  "notes": "诊断包使用同一帧中的 window pass 与 capture pass 生成。render_target_dump 作为呈现前抓帧，presented_frame 作为呈现后抓帧。",
+  "all_passed": true
+}

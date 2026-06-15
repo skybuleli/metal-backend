@@ -1,0 +1,14 @@
+{
+  "task": "P4.6.6",
+  "demo": "P4_6a",
+  "scene": "handwritten sprite atlas quad with alpha blend",
+  "artifacts": [
+    "docs/evidence/P4.6.6-p4-6a-sprite-quad.ppm",
+    "docs/evidence/P4.6.6-p4-6a-sprite-quad.png",
+    "docs/evidence/P4.6.6-p4-6a-sprite-atlas.ppm",
+    "docs/evidence/P4.6.6-p4-6a-sprite-atlas.png",
+    "docs/evidence/P4.6.6-run.txt"
+  ],
+  "notes": "单张 sprite atlas 驱动背景 quad + 前景 sprite quad，前景使用 sourceAlpha/oneMinusSourceAlpha 混合。",
+  "all_passed": true
+}

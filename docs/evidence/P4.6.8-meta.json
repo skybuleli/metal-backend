@@ -1,0 +1,35 @@
+{
+  "task": "P4.6.8",
+  "demo": "P4_6c",
+  "scene": "lightweight homebrew smoke proxy for TetrisNX and Pong-NX",
+  "artifacts": [
+    "docs/evidence/P4.6.8-p4-6c-homebrew-smoke.ppm",
+    "docs/evidence/P4.6.8-p4-6c-homebrew-smoke.png",
+    "docs/evidence/P4.6.8-p4-6c-homebrew-atlas.ppm",
+    "docs/evidence/P4.6.8-p4-6c-homebrew-atlas.png",
+    "docs/evidence/P4.6.8-run.txt"
+  ],
+  "samples": {
+    "board": [
+      25,
+      12,
+      8
+    ],
+    "court": [
+      186,
+      204,
+      199
+    ],
+    "hud": [
+      19,
+      23,
+      36
+    ],
+    "background": [
+      7,
+      5,
+      6
+    ]
+  },
+  "all_passed": true
+}

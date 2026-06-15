@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include <strings.h>
 #include <CommonCrypto/CommonCrypto.h>
 
 // Slang C API：仅在可用时引入
@@ -79,6 +80,17 @@ static bool should_keep_failed_shader_temp()
 {
     const char* value = getenv("SWITCH_METAL_KEEP_FAILED_SHADER_TEMP");
     return value && value[0] != '\0' && strcmp(value, "0") != 0;
+}
+
+static bool should_enable_glsl_diagnostic_bridge()
+{
+    const char* value = getenv("SWITCH_METAL_ENABLE_GLSL_DIAGNOSTIC_BRIDGE");
+    if (!value || value[0] == '\0')
+    {
+        return false;
+    }
+
+    return strcmp(value, "0") != 0 && strcasecmp(value, "false") != 0;
 }
 
 static std::string preprocess_glsl_source_for_dxil(const char* source_code, const char* stage)
@@ -878,9 +890,16 @@ metal_shader_compile_result metal_compile_shader(
     std::vector<uint8_t> dxil_data;
     bool is_glsl_source = (strcmp(source_language, "glsl") == 0);
 
-    // GLSL 源码跳过 Slang 直接编译路径：Slang 编译 GLSL 产出 COLOR 语义，
-    // 与桥接路径的 TEXCOORD 语义不一致，导致 varyings 不匹配。
-    // 通过 spirv-opt + normalize_hlsl_varying_semantics 确保语义对齐。
+    if (is_glsl_source && !should_enable_glsl_diagnostic_bridge())
+    {
+        result.result = METAL_RESULT_COMPILE_FAILED;
+        snprintf(result.error_message, sizeof(result.error_message),
+                 "GLSL 已从 Path A 主路径移除；如需诊断桥接，请设置 SWITCH_METAL_ENABLE_GLSL_DIAGNOSTIC_BRIDGE=1。");
+        return result;
+    }
+
+    // GLSL 仅在显式开启诊断桥接时走桥接路径：
+    // 先转 SPIR-V，再转 HLSL，最终产出 DXIL，便于比对与定位语义差异。
     if (is_glsl_source)
     {
         goto glsl_bridge;
@@ -1022,7 +1041,7 @@ metal_shader_compile_result metal_compile_shader(
     (void)profile;
 #endif
 
-    // Slang API 失败或库未链接时，回退到 popen（仅非 GLSL，GLSL 走桥接）
+    // Slang API 失败或库未链接时，回退到 popen（GLSL 仅在诊断桥接显式开启时可用）
     if (dxil_data.empty() && !is_glsl_source)
     {
         // ── 回退：popen slangc CLI ──

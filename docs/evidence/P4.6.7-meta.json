@@ -1,0 +1,27 @@
+{
+  "task": "P4.6.7",
+  "demo": "P4_6b",
+  "scene": "handwritten tilemap with camera scroll and HUD panel/text",
+  "artifacts": [
+    "docs/evidence/P4.6.7-p4-6b-tilemap-scroll-a.ppm",
+    "docs/evidence/P4.6.7-p4-6b-tilemap-scroll-a.png",
+    "docs/evidence/P4.6.7-p4-6b-tilemap-scroll-b.ppm",
+    "docs/evidence/P4.6.7-p4-6b-tilemap-scroll-b.png",
+    "docs/evidence/P4.6.7-p4-6b-tilemap-atlas.ppm",
+    "docs/evidence/P4.6.7-p4-6b-tilemap-atlas.png",
+    "docs/evidence/P4.6.7-run.txt"
+  ],
+  "notes": "单张 atlas 同时承载 world tiles 与 HUD glyphs；用两帧不同 camera scroll 证明 tilemap 位移与 HUD 覆盖层稳定。",
+  "frame_diff_pixels": 233524,
+  "center_a": [
+    61,
+    103,
+    134
+  ],
+  "center_b": [
+    81,
+    133,
+    181
+  ],
+  "all_passed": true
+}

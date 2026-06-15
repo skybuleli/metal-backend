@@ -1,0 +1,9 @@
+{
+  "task": "P4.6.5",
+  "files": [
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/render_target_dump.ppm",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/presented_frame.ppm",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/draw_order.log",
+    "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/state_snapshot.json"
+  ]
+}

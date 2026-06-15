@@ -1,0 +1,6 @@
+P4.6.7 手写 2D 样本完成:
+  frame_a: "out/p4_6b_tilemap_scroll_a.ppm"
+  frame_b: "out/p4_6b_tilemap_scroll_b.ppm"
+  atlas:   out/p4_6b_tilemap_atlas.ppm
+  camera_a=(72.0, 48.0), camera_b=(120.0, 88.0)
+  world tiles=576, hud quads=40

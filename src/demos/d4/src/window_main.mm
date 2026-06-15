@@ -6,8 +6,10 @@
 
 #include <chrono>
 #include <filesystem>
+#include <iomanip>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -26,6 +28,48 @@ std::string NsStringToUtf8(NSString* text)
     }
 
     return std::string([text UTF8String]);
+}
+
+std::string JsonEscape(const std::string& value)
+{
+    std::ostringstream escaped;
+    for (char ch : value)
+    {
+        switch (ch)
+        {
+        case '\\': escaped << "\\\\"; break;
+        case '"': escaped << "\\\""; break;
+        case '\b': escaped << "\\b"; break;
+        case '\f': escaped << "\\f"; break;
+        case '\n': escaped << "\\n"; break;
+        case '\r': escaped << "\\r"; break;
+        case '\t': escaped << "\\t"; break;
+        default:
+            if (static_cast<unsigned char>(ch) < 0x20)
+            {
+                escaped << "\\u" << std::hex << std::setw(4) << std::setfill('0')
+                        << static_cast<int>(static_cast<unsigned char>(ch));
+            }
+            else
+            {
+                escaped << ch;
+            }
+            break;
+        }
+    }
+    return escaped.str();
+}
+
+bool WriteTextFile(const std::filesystem::path& output_path, const std::string& contents)
+{
+    std::ofstream output(output_path, std::ios::binary);
+    if (!output)
+    {
+        return false;
+    }
+
+    output << contents;
+    return static_cast<bool>(output);
 }
 
 bool WritePpm(const std::filesystem::path& output_path,
@@ -109,7 +153,81 @@ bool ExportTextureToPpm(id<MTLTexture> texture, const std::filesystem::path& out
     return WritePpm(output_path, pixels, width, height);
 }
 
-bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_ppm_path)
+bool WriteDiagnosticBundle(const std::filesystem::path& bundle_dir,
+                           id<MTLTexture> render_target_dump,
+                           id<MTLTexture> presented_frame,
+                           std::uint32_t drawable_width,
+                           std::uint32_t drawable_height,
+                           std::uint32_t presented_frames,
+                           double auto_close_seconds,
+                           double elapsed_seconds)
+{
+    std::filesystem::create_directories(bundle_dir);
+
+    const std::filesystem::path render_target_path = bundle_dir / "render_target_dump.ppm";
+    const std::filesystem::path presented_frame_path = bundle_dir / "presented_frame.ppm";
+    const std::filesystem::path draw_order_path = bundle_dir / "draw_order.log";
+    const std::filesystem::path state_snapshot_path = bundle_dir / "state_snapshot.json";
+    const std::filesystem::path manifest_path = bundle_dir / "manifest.json";
+
+    if (!ExportTextureToPpm(render_target_dump, render_target_path))
+    {
+        return false;
+    }
+
+    bool presented_frame_exported = false;
+    if (presented_frame != nil)
+    {
+        presented_frame_exported = ExportTextureToPpm(presented_frame, presented_frame_path);
+    }
+
+    std::ostringstream draw_order;
+    draw_order << "P4.6.5 渲染诊断顺序\n";
+    draw_order << "1. window pass: clear -> draw cube -> endEncoding\n";
+    draw_order << "2. capture pass: clear -> draw cube -> endEncoding\n";
+    draw_order << "3. presentDrawable -> commit -> waitUntilCompleted\n";
+    draw_order << "4. render_target_dump = " << render_target_path.string() << "\n";
+    draw_order << "5. presented_frame = " << (presented_frame_exported ? presented_frame_path.string() : "未导出")
+               << "\n";
+    if (!WriteTextFile(draw_order_path, draw_order.str()))
+    {
+        return false;
+    }
+
+    std::ostringstream state;
+    state << "{\n";
+    state << "  \"task\": \"P4.6.5\",\n";
+    state << "  \"scene\": \"D4Window diagnostic capture\",\n";
+    state << "  \"drawable\": {\"width\": " << drawable_width << ", \"height\": " << drawable_height << "},\n";
+    state << "  \"presented_frames\": " << presented_frames << ",\n";
+    state << "  \"auto_close_seconds\": " << auto_close_seconds << ",\n";
+    state << "  \"elapsed_seconds\": " << elapsed_seconds << ",\n";
+    state << "  \"render_target_dump\": \"" << JsonEscape(render_target_path.string()) << "\",\n";
+    state << "  \"presented_frame\": \"" << JsonEscape(presented_frame_exported ? presented_frame_path.string() : std::string()) << "\",\n";
+    state << "  \"draw_order\": \"" << JsonEscape(draw_order_path.string()) << "\",\n";
+    state << "  \"notes\": \"window_pass 与 capture_pass 使用同一套着色器、深度状态与 uniform 数据，present 前后均保留可回读证据。\"\n";
+    state << "}\n";
+    if (!WriteTextFile(state_snapshot_path, state.str()))
+    {
+        return false;
+    }
+
+    std::ostringstream manifest;
+    manifest << "{\n";
+    manifest << "  \"task\": \"P4.6.5\",\n";
+    manifest << "  \"files\": [\n";
+    manifest << "    \"" << JsonEscape(render_target_path.string()) << "\",\n";
+    manifest << "    \"" << JsonEscape(presented_frame_exported ? presented_frame_path.string() : std::string()) << "\",\n";
+    manifest << "    \"" << JsonEscape(draw_order_path.string()) << "\",\n";
+    manifest << "    \"" << JsonEscape(state_snapshot_path.string()) << "\"\n";
+    manifest << "  ]\n";
+    manifest << "}\n";
+    return WriteTextFile(manifest_path, manifest.str());
+}
+
+bool RunWindow(double auto_close_seconds,
+               const std::filesystem::path& export_ppm_path,
+               const std::filesystem::path& diagnostic_bundle_dir)
 {
     @autoreleasepool
     {
@@ -232,6 +350,7 @@ bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_pp
 
         const auto start_time = std::chrono::steady_clock::now();
         std::uint32_t presented_frames = 0;
+        bool diagnostic_bundle_written = false;
 
         while (true)
         {
@@ -301,6 +420,8 @@ bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_pp
                 window_pass.depthAttachment.storeAction = MTLStoreActionDontCare;
                 window_pass.depthAttachment.clearDepth = 1.0;
 
+                std::cout << "[DIAG] 第 " << (presented_frames + 1) << " 帧: window pass 开始 ("
+                          << drawable_width << "x" << drawable_height << ")\n";
                 id<MTLRenderCommandEncoder> window_encoder =
                     [command_buffer renderCommandEncoderWithDescriptor:window_pass];
                 EncodeCubePass(window_encoder,
@@ -321,6 +442,7 @@ bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_pp
                 capture_pass.depthAttachment.storeAction = MTLStoreActionDontCare;
                 capture_pass.depthAttachment.clearDepth = 1.0;
 
+                std::cout << "[DIAG] 第 " << (presented_frames + 1) << " 帧: capture pass 开始\n";
                 id<MTLRenderCommandEncoder> capture_encoder =
                     [command_buffer renderCommandEncoderWithDescriptor:capture_pass];
                 EncodeCubePass(capture_encoder,
@@ -330,10 +452,36 @@ bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_pp
                                vertex_normal_buffer,
                                uniform_buffer);
 
+                if (!diagnostic_bundle_written && !diagnostic_bundle_dir.empty())
+                {
+                    std::cout << "[DIAG] 第 " << (presented_frames + 1) << " 帧: 预览导出准备就绪\n";
+                }
+
                 [command_buffer presentDrawable:drawable];
+                std::cout << "[DIAG] 第 " << (presented_frames + 1) << " 帧: presentDrawable 已调用\n";
                 [command_buffer commit];
                 [command_buffer waitUntilCompleted];
+                std::cout << "[DIAG] 第 " << (presented_frames + 1) << " 帧: commit + waitUntilCompleted 完成\n";
                 ++presented_frames;
+
+                if (!diagnostic_bundle_written && !diagnostic_bundle_dir.empty())
+                {
+                    if (!WriteDiagnosticBundle(diagnostic_bundle_dir,
+                                               capture_texture,
+                                               drawable.texture,
+                                               drawable_width,
+                                               drawable_height,
+                                               presented_frames,
+                                               auto_close_seconds,
+                                               std::chrono::duration<double>(
+                                                   std::chrono::steady_clock::now() - start_time).count()))
+                    {
+                        std::cerr << "无法写出诊断证据包: " << diagnostic_bundle_dir << "\n";
+                        return false;
+                    }
+                    diagnostic_bundle_written = true;
+                    std::cout << "[DIAG] 已写出渲染诊断包: " << diagnostic_bundle_dir << "\n";
+                }
             }
 
             if (auto_close_seconds > 0.0)
@@ -374,6 +522,7 @@ bool RunWindow(double auto_close_seconds, const std::filesystem::path& export_pp
 int main(int argc, char** argv)
 {
     std::filesystem::path export_ppm_path;
+    std::filesystem::path diagnostic_bundle_dir;
     double auto_close_seconds = 0.0;
 
     for (int index = 1; index < argc; ++index)
@@ -389,12 +538,17 @@ int main(int argc, char** argv)
             export_ppm_path = argv[++index];
             continue;
         }
+        if (argument == "--diagnostic-bundle" && index + 1 < argc)
+        {
+            diagnostic_bundle_dir = argv[++index];
+            continue;
+        }
 
         std::cerr << "未知参数: " << argument << "\n";
         return 1;
     }
 
-    if (!RunWindow(auto_close_seconds, export_ppm_path))
+    if (!RunWindow(auto_close_seconds, export_ppm_path, diagnostic_bundle_dir))
     {
         return 1;
     }

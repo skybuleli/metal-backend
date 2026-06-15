@@ -1,0 +1,168 @@
+{
+  "task": "P4.6.4",
+  "cases": [
+    {
+      "case": "fullscreen_fragment",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/dxil.bin",
+        "exists": true,
+        "bytes": 3880,
+        "sha256": "20d5f5dbb182858d7fa048605215e6134cc2beb4f24eade01a1f40bc105a3ae5",
+        "magic_hex": "44584243e942ddd75ec0f6b2fb1395eb"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/metallib.bin",
+        "exists": true,
+        "bytes": 5408,
+        "sha256": "e4ddbfcd18c79c504028e3df7161cf02029e69886d73fce2f8f27a8e6280088d",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    },
+    {
+      "case": "fullscreen_vertex",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_vertex/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_vertex/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_vertex/dxil.bin",
+        "exists": true,
+        "bytes": 3364,
+        "sha256": "13f29b6d0962f561b37b4a996fd92105a5283f0d2cf2f2eb6fc87c41a83e2abe",
+        "magic_hex": "445842430521e4171655b3804d8e12cb"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_vertex/metallib.bin",
+        "exists": true,
+        "bytes": 6208,
+        "sha256": "f05f64f4cf9bfe8061b4b19d14148693c7bf4d6287fdfd350b7c6f71f76860bb",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_vertex/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    },
+    {
+      "case": "sprite_alpha_fragment",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/dxil.bin",
+        "exists": true,
+        "bytes": 4244,
+        "sha256": "d2019f235183ef8de41781675dc55fe2756c065b1eac62e1c87acf2909f6d41b",
+        "magic_hex": "44584243fcf17d2b1f5fb2d7e57a5924"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/metallib.bin",
+        "exists": true,
+        "bytes": 5800,
+        "sha256": "056a30c3e52f9f25a03660363716f15345558830b28875155ce25ccb3a483e0e",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    },
+    {
+      "case": "sprite_alpha_vertex",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_vertex/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_vertex/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_vertex/dxil.bin",
+        "exists": true,
+        "bytes": 4516,
+        "sha256": "4d7c02d4980c4b3178fac7e960bc27a11588853fa18acc6f531197f8615177af",
+        "magic_hex": "44584243296ec98700d391dc62c2a1e4"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_vertex/metallib.bin",
+        "exists": true,
+        "bytes": 7192,
+        "sha256": "e781dc14db12fb8ab98a134cfe918df6a7011ae2cdb4ce2cc2c9448b5f391663",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_vertex/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    },
+    {
+      "case": "tilemap_fragment",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_fragment/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_fragment/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_fragment/dxil.bin",
+        "exists": true,
+        "bytes": 4708,
+        "sha256": "b720a38e1fb0b7f0dfe5d9784cca6284395f3354db57de5bc463990299b513ae",
+        "magic_hex": "445842433b7ff2893b091e97a7f50fb7"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_fragment/metallib.bin",
+        "exists": true,
+        "bytes": 5688,
+        "sha256": "2fd25cd2ee64cba311344d24a2df9cafbb7970256dc33d5634e2ec664a14ecbf",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_fragment/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    },
+    {
+      "case": "tilemap_vertex",
+      "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_vertex/source_dump.slang",
+      "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_vertex/slang_output.log",
+      "dxil": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_vertex/dxil.bin",
+        "exists": true,
+        "bytes": 4704,
+        "sha256": "41a33db7b17e4dbeb81ab5e0f136042a1fb338bb07967129c9ae12d27485211b",
+        "magic_hex": "44584243cd39e3ede7f2f2ad9b2e1d08"
+      },
+      "metallib": {
+        "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_vertex/metallib.bin",
+        "exists": true,
+        "bytes": 7200,
+        "sha256": "0f7c548f438de07f4482685cf2439d95bdbbe81a3e9308078943225972e41381",
+        "magic_hex": "4d544c4201800200070000810e000000"
+      },
+      "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/tilemap_vertex/reflection.json",
+      "failure_tags": [
+        "slang_ok",
+        "dxil_ok",
+        "msc_ok",
+        "metallib_ok"
+      ],
+      "ok": true
+    }
+  ],
+  "all_passed": true
+}

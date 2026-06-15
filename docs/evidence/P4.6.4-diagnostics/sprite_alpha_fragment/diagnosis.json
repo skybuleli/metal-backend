@@ -1,0 +1,29 @@
+{
+  "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/source_dump.slang",
+  "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/slang_output.log",
+  "dxil": {
+    "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/dxil.bin",
+    "exists": true,
+    "bytes": 4244,
+    "sha256": "d2019f235183ef8de41781675dc55fe2756c065b1eac62e1c87acf2909f6d41b",
+    "magic_hex": "44584243fcf17d2b1f5fb2d7e57a5924"
+  },
+  "metallib": {
+    "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/metallib.bin",
+    "exists": true,
+    "bytes": 5800,
+    "sha256": "056a30c3e52f9f25a03660363716f15345558830b28875155ce25ccb3a483e0e",
+    "magic_hex": "4d544c4201800200070000810e000000"
+  },
+  "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/sprite_alpha_fragment/reflection.json",
+  "failure_tags": [
+    "slang_ok",
+    "dxil_ok",
+    "msc_ok",
+    "metallib_ok"
+  ],
+  "status": {
+    "slang_exit": 0,
+    "msc_exit": 0
+  }
+}

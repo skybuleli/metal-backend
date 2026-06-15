@@ -1,4 +1,5 @@
 .PHONY: all build build-window run run-window evidence evidence-window clean
+.PHONY: evidence-diagnostic
 
 SHELL := /bin/bash
 
@@ -27,6 +28,10 @@ WINDOW_EVIDENCE_PPM := $(EVIDENCE_DIR)/P2.6b-d4-rotating-window.ppm
 WINDOW_EVIDENCE_PNG := $(EVIDENCE_DIR)/P2.6b-d4-rotating-window.png
 WINDOW_EVIDENCE_RUN := $(EVIDENCE_DIR)/P2.6b-window.txt
 WINDOW_EVIDENCE_META := $(EVIDENCE_DIR)/P2.6b-meta.json
+
+DIAG_BUNDLE_DIR := $(EVIDENCE_DIR)/P4.6.5-diagnostic-bundle
+DIAG_EVIDENCE_RUN := $(EVIDENCE_DIR)/P4.6.5-render-diagnostic.log
+DIAG_EVIDENCE_META := $(EVIDENCE_DIR)/P4.6.5-meta.json
 
 all: build
 
@@ -73,6 +78,16 @@ evidence-window: build-window
 	@echo "  $(WINDOW_EVIDENCE_PNG)"
 	@echo "  $(WINDOW_EVIDENCE_RUN)"
 	@echo "  $(WINDOW_EVIDENCE_META)"
+
+evidence-diagnostic: build-window
+	@mkdir -p $(EVIDENCE_DIR)
+	@rm -rf $(DIAG_BUNDLE_DIR)
+	@set -o pipefail; ./$(WINDOW_TARGET) --auto-close-seconds 1 --export-ppm $(WINDOW_PPM_OUT) --diagnostic-bundle $(DIAG_BUNDLE_DIR) 2>&1 | tee $(DIAG_EVIDENCE_RUN)
+	@python3 -c 'from pathlib import Path; import json; bundle = Path("$(DIAG_BUNDLE_DIR)"); required = ["render_target_dump.ppm", "presented_frame.ppm", "draw_order.log", "state_snapshot.json", "manifest.json"]; missing = [name for name in required if not (bundle / name).exists()]; assert not missing, f"缺少诊断证据文件: {missing}"; meta = { "task": "P4.6.5", "demo": "D4Window", "scene": "RenderTarget dump + draw order log + state snapshot + present before/after capture", "artifacts": [str(bundle / name) for name in required] + ["docs/evidence/P4.6.5-render-diagnostic.log"], "notes": "诊断包使用同一帧中的 window pass 与 capture pass 生成。render_target_dump 作为呈现前抓帧，presented_frame 作为呈现后抓帧。", "all_passed": True }; Path("$(DIAG_EVIDENCE_META)").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"); print("P4.6.5 诊断证据包已生成")'
+	@echo "已生成渲染诊断证据:"
+	@echo "  $(DIAG_BUNDLE_DIR)"
+	@echo "  $(DIAG_EVIDENCE_RUN)"
+	@echo "  $(DIAG_EVIDENCE_META)"
 
 clean:
 	rm -rf build out

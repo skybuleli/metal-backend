@@ -1,0 +1,29 @@
+{
+  "source_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/source_dump.slang",
+  "slang_output": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/slang_output.log",
+  "dxil": {
+    "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/dxil.bin",
+    "exists": true,
+    "bytes": 3880,
+    "sha256": "20d5f5dbb182858d7fa048605215e6134cc2beb4f24eade01a1f40bc105a3ae5",
+    "magic_hex": "44584243e942ddd75ec0f6b2fb1395eb"
+  },
+  "metallib": {
+    "path": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/metallib.bin",
+    "exists": true,
+    "bytes": 5408,
+    "sha256": "e4ddbfcd18c79c504028e3df7161cf02029e69886d73fce2f8f27a8e6280088d",
+    "magic_hex": "4d544c4201800200070000810e000000"
+  },
+  "reflection": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.4-diagnostics/fullscreen_fragment/reflection.json",
+  "failure_tags": [
+    "slang_ok",
+    "dxil_ok",
+    "msc_ok",
+    "metallib_ok"
+  ],
+  "status": {
+    "slang_exit": 0,
+    "msc_exit": 0
+  }
+}

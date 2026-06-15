@@ -1,0 +1,3 @@
+P4.6.8 轻量 2D homebrew smoke 完成: "out/p4_6c_homebrew_smoke.ppm"
+atlas: out/p4_6c_homebrew_atlas.ppm
+instances=287

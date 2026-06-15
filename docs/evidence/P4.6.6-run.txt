@@ -1,0 +1,7 @@
+P4.6.6 手写 2D 样本完成: "out/p4_6a_sprite_quad.ppm"
+atlas: out/p4_6a_sprite_atlas.ppm
+corner pixel RGBA=(140, 70, 40, 255)
+center pixel RGBA=(167, 120, 164, 255)
+sprite pixel RGBA=(208, 179, 225, 255)
+atlas tile: background=(0,0), sprite=(1,1)
+blend: sourceAlpha / oneMinusSourceAlpha

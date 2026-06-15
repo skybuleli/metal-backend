@@ -1,0 +1,12 @@
+{
+  "task": "P4.6.5",
+  "scene": "D4Window diagnostic capture",
+  "drawable": {"width": 1920, "height": 1920},
+  "presented_frames": 1,
+  "auto_close_seconds": 1,
+  "elapsed_seconds": 0.0907527,
+  "render_target_dump": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/render_target_dump.ppm",
+  "presented_frame": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/presented_frame.ppm",
+  "draw_order": "/Users/liliang/MetalBackend/metal-backend/docs/evidence/P4.6.5-diagnostic-bundle/draw_order.log",
+  "notes": "window_pass 与 capture_pass 使用同一套着色器、深度状态与 uniform 数据，present 前后均保留可回读证据。"
+}
