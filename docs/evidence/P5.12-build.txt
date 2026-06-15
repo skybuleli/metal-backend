@@ -1,0 +1,14 @@
+P5.12 曲面细分路径: Maxwell Tess→Compute+Post-TCS
+
+构建命令:
+dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug
+
+结果:
+- 构建成功
+- 错误: 0
+- 警告: 177
+
+说明:
+- `MetalPipeline.SetPatchParameters` 现在会缓存 patch control points
+- `MetalStateMapping` 新增 tessellation 映射记录，标明由上游 compute 化路径承接
+- Metal 侧仍不实现原生 tessellation 执行，仅保留状态入口和后续扩展点

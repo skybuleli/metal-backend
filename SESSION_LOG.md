@@ -1163,3 +1163,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.11 已完成，geometry-as-compute 路线已正式落到状态映射层
 - 下一步进入 `P5.12` 曲面细分路径
+
+## 2026-06-15 下午 | P5.12 曲面细分路径: Maxwell Tess→Compute+Post-TCS | ✅ 完成
+
+#### 任务目标
+- 把 Maxwell 曲面细分的状态入口从空实现收口成可追踪状态
+- 让上游 compute 化的 Post-TCS 路线在 Metal 侧有明确承接点
+
+#### 本轮实现
+- 在 `MetalPipeline` 中缓存 `PatchControlPoints`
+- 在 `MetalStateMapping` 中新增 `SetPatchParameters` 记录，注明由 compute 化 tessellation 路线承接
+- 保持 Metal 侧不引入原生 tessellation 执行器，仅保留状态入口与后续扩展点
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug` ✅
+- 证据文件：`docs/evidence/P5.12-build.txt`
+
+#### 结论
+- P5.12 已完成，tessellation 状态现在有了实际缓存与映射记录
+- 下一步进入 `P5.13` Transform Feedback 写入链路

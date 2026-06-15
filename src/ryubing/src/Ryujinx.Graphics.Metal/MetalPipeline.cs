@@ -58,6 +58,7 @@ namespace Ryujinx.Graphics.Metal
         private MetalWinding _winding;
         private MetalTriangleFillMode _fillMode;
         private PrimitiveTopology _primitiveTopology;
+        private uint _patchControlPoints;
         private MetalIndexBufferBinding _indexBuffer;
         private bool _rasterizerDiscard;
         private PolygonModeMask _depthBiasEnables;
@@ -87,6 +88,8 @@ namespace Ryujinx.Graphics.Metal
         /// 当前活动的渲染管线句柄（由 metal_create_render_pipeline 返回）
         /// </summary>
         internal nint PipelineHandle => _pipelineHandle;
+
+        internal uint PatchControlPoints => _patchControlPoints;
 
         public MetalPipeline(nint deviceHandle, nint queueHandle, MetalBufferPool buffers)
         {
@@ -566,6 +569,9 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetPatchParameters(int vertices, ReadOnlySpan<float> defaultOuterLevel, ReadOnlySpan<float> defaultInnerLevel)
         {
+            _patchControlPoints = (uint)Math.Max(vertices, 0);
+            // Metal 没有原生 tessellation pipeline，这里先缓存 patch 状态供后续
+            // compute 化的 Post-TCS 路径和诊断信息使用。
         }
 
         public void SetPointParameters(float size, bool isProgramPointSize, bool enablePointSprite, Origin origin)
