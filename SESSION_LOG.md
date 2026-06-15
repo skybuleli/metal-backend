@@ -1083,3 +1083,24 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.7 已完成，compute 调度链路已经从 GAL 到 Metal 侧闭环
 - 下一步进入 `P5.8 SetStorageBuffers + SetImage: Compute 资源绑定`
+
+## 2026-06-15 下午 | P5.8 SetStorageBuffers + SetImage: Compute 资源绑定 | ✅ 完成
+
+#### 任务目标
+- 让 compute 资源绑定不再只停留在单槽缓存，而是能够把图像数组展开到连续 binding 槽位
+- 保持 `DispatchCompute` 的 encoder 下发逻辑不变，只补齐资源缓存与清理语义
+
+#### 本轮实现
+- 在 `MetalPipeline` 中为 `_textureBindings` 增加数组长度跟踪，避免旧数组绑定残留
+- `SetImage` / `SetTextureAndSampler` 在写入单槽前先清理旧数组绑定
+- `SetImageArray` / `SetTextureArray` 支持把 `MetalImageArray` / `MetalTextureArray` 展开到连续 binding 槽位
+- `SetImageArraySeparate` / `SetTextureArraySeparate` 复用平面 binding 逻辑，保持 Metal flat binding 模型一致
+- 将 `MetalStateMapping` 中的 `SetStorageBuffers` / `SetImage` 任务成熟度提升为已实现，标注为 P5.8
+
+#### 验证
+- `dotnet build src/ryubing/Ryujinx.sln -c Debug` ✅
+- 证据文件：`docs/evidence/P5.8-build.txt`
+
+#### 结论
+- P5.8 已完成，compute 资源绑定的单槽与数组路径都已经进入 MetalPipeline 的真实状态缓存
+- 下一步进入 `P5.9 CopyBuffer: MTLBlitCommandEncoder 数据拷贝`

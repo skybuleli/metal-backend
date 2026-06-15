@@ -41,6 +41,7 @@ namespace Ryujinx.Graphics.Metal
         private readonly MetalBufferBinding[] _uniformBuffers;
         private readonly MetalStorageBufferBinding[] _storageBuffers;
         private readonly MetalTextureBinding[,] _textureBindings;
+        private readonly int[,] _textureArrayLengths;
         private readonly MetalRenderTargetState _renderTargets;
         private readonly MetalBlendAttachmentDescriptor[] _blendAttachments;
         private int _blendAttachmentCount;
@@ -99,6 +100,7 @@ namespace Ryujinx.Graphics.Metal
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
             _storageBuffers = new MetalStorageBufferBinding[MaxStorageBufferBindings];
             _textureBindings = new MetalTextureBinding[MaxShaderStages, MaxTextureBindings];
+            _textureArrayLengths = new int[MaxShaderStages, MaxTextureBindings];
             _renderTargets = new MetalRenderTargetState();
             _blendAttachments = new MetalBlendAttachmentDescriptor[8];
             _blendAttachmentCount = 0;
@@ -441,6 +443,8 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
+            ClearTextureArrayBinding(stageIndex, binding);
+
             nint textureHandle = nint.Zero;
             if (texture != null)
             {
@@ -456,12 +460,25 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetImageArray(ShaderStage stage, int binding, IImageArray array)
         {
-            // 当前阶段仅支持逐槽绑定，数组绑定后续再按 concrete array 展开。
+            if (!TryGetShaderStageIndex(stage, out int stageIndex) ||
+                (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            ClearTextureArrayBinding(stageIndex, binding);
+
+            if (array is not MetalImageArray metalImageArray)
+            {
+                return;
+            }
+
+            BindTextureArray(stageIndex, binding, metalImageArray.Images, ReadOnlySpan<ISampler>.Empty);
         }
 
         public void SetImageArraySeparate(ShaderStage stage, int setIndex, IImageArray array)
         {
-            // 当前阶段仅支持逐槽绑定，数组绑定后续再按 concrete array 展开。
+            SetImageArray(stage, setIndex, array);
         }
 
         public void SetIndexBuffer(BufferRange buffer, IndexType type)
@@ -895,6 +912,8 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
+            ClearTextureArrayBinding(stageIndex, binding);
+
             nint textureHandle = nint.Zero;
             if (texture != null)
             {
@@ -914,10 +933,25 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetTextureArray(ShaderStage stage, int binding, ITextureArray array)
         {
+            if (!TryGetShaderStageIndex(stage, out int stageIndex) ||
+                (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            ClearTextureArrayBinding(stageIndex, binding);
+
+            if (array is not MetalTextureArray metalTextureArray)
+            {
+                return;
+            }
+
+            BindTextureArray(stageIndex, binding, metalTextureArray.Textures, metalTextureArray.Samplers);
         }
 
         public void SetTextureArraySeparate(ShaderStage stage, int setIndex, ITextureArray array)
         {
+            SetTextureArray(stage, setIndex, array);
         }
 
         public void SetTransformFeedbackBuffers(ReadOnlySpan<BufferRange> buffers)
@@ -1529,6 +1563,65 @@ namespace Ryujinx.Graphics.Metal
             {
                 throw new InvalidOperationException($"{operation} 失败：{result}");
             }
+        }
+
+        private void BindTextureArray(
+            int stageIndex,
+            int binding,
+            ReadOnlySpan<ITexture> textures,
+            ReadOnlySpan<ISampler> samplers)
+        {
+            if ((uint)stageIndex >= MaxShaderStages || (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            int maxCount = Math.Min(textures.Length, MaxTextureBindings - binding);
+            _textureArrayLengths[stageIndex, binding] = maxCount;
+
+            for (int i = 0; i < maxCount; i++)
+            {
+                nint textureHandle = nint.Zero;
+                ITexture texture = textures[i];
+                if (texture != null)
+                {
+                    MetalTexture.TryGetNativeHandle(texture, out textureHandle);
+                }
+
+                nint samplerHandle = nint.Zero;
+                if (i < samplers.Length && samplers[i] is MetalSampler metalSampler)
+                {
+                    samplerHandle = metalSampler.Handle;
+                }
+
+                _textureBindings[stageIndex, binding + i] = new MetalTextureBinding
+                {
+                    TextureHandle = textureHandle,
+                    SamplerHandle = samplerHandle,
+                };
+            }
+        }
+
+        private void ClearTextureArrayBinding(int stageIndex, int binding)
+        {
+            if ((uint)stageIndex >= MaxShaderStages || (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            int length = _textureArrayLengths[stageIndex, binding];
+            if (length <= 0)
+            {
+                return;
+            }
+
+            int clearCount = Math.Min(length, MaxTextureBindings - binding);
+            for (int i = 0; i < clearCount; i++)
+            {
+                _textureBindings[stageIndex, binding + i] = default;
+            }
+
+            _textureArrayLengths[stageIndex, binding] = 0;
         }
 
         /// <summary>

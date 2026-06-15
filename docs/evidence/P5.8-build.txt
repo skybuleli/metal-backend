@@ -1,0 +1,12 @@
+P5.8 构建验证
+
+命令:
+dotnet build src/ryubing/Ryujinx.sln -c Debug
+
+结果:
+- C# 解决方案构建成功
+- libmetal_bridge.dylib 构建成功
+- 关键输出: "已成功生成。"
+
+备注:
+- 构建过程中仅有既有的 NU190x / CA1416 / CS8632 等警告，无新增错误。
