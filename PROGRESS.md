@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T15:51:16+08:00
+# 最后更新: 2026-06-15T15:58:39+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 115/166 任务 (69.3%)
+# 完成度: 116/166 任务 (69.9%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
@@ -213,7 +213,7 @@
 | P5.3 | NVN SetDepthStencilState → Metal depth/stencil | ✅ | 2026-06-15T15:32:48+08:00 | docs/evidence/P5.3-build.txt |
 | P5.4 | NVN SetRasterizerState → Metal rasterizer | ✅ | 2026-06-15T15:42:51+08:00 | docs/evidence/P5.4-build.txt |
 | P5.5 | NVN SetVertexArrayState → Metal vertex descriptor | ✅ | 2026-06-15T15:50:06+08:00 | docs/evidence/P5.5-build.txt |
-| P5.6 | NVN SetViewport/SetScissor → Metal viewport/scissor | ⬜ | — | — |
+| P5.6 | NVN SetViewport/SetScissor → Metal viewport/scissor | ✅ | 2026-06-15T15:57:45+08:00 | docs/evidence/P5.6-build.txt |
 | P5.7 | DispatchCompute: MTLComputeCommandEncoder | ⬜ | — | — |
 | P5.8 | SetStorageBuffers + SetImage: Compute 资源绑定 | ⬜ | — | — |
 | P5.9 | CopyBuffer: MTLBlitCommandEncoder 数据拷贝 | ⬜ | — | — |
@@ -321,10 +321,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 166
-- 已完成: 115 (69.3%)
+- 已完成: 116 (69.9%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 51
+- 待开始: 50
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.6 — NVN SetViewport/SetScissor → Metal viewport/scissor
+- 下一任务: P5.7 — DispatchCompute: MTLComputeCommandEncoder

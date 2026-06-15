@@ -668,31 +668,10 @@ namespace Ryujinx.Graphics.Metal
             int count = Math.Min(MaxViewports, regions.Length);
             for (int i = 0; i < count; i++)
             {
-                Rectangle<int> r = regions[i];
-                uint x = (uint)Math.Max(0, r.X);
-                uint y = (uint)Math.Max(0, r.Y);
-                uint width = (uint)Math.Max(0, r.Width);
-                uint height = (uint)Math.Max(0, r.Height);
-
-                // Metal 要求裁剪矩形必须在 render pass 附件范围内。
-                // Ryujinx 可能传递 65535x65535 作为"全屏"标记，
-                // 裁剪到当前渲染目标尺寸避免 Metal Validation 报错。
-                if (x + width > (uint)_renderWidth)
-                {
-                    width = (uint)Math.Max(0, _renderWidth - (int)x);
-                }
-                if (y + height > (uint)_renderHeight)
-                {
-                    height = (uint)Math.Max(0, _renderHeight - (int)y);
-                }
-
-                _scissorRects[i] = new MetalScissorRect
-                {
-                    X = x,
-                    Y = y,
-                    Width = width,
-                    Height = height,
-                };
+                _scissorRects[i] = MetalViewportScissorMapping.ToMetalScissorRect(
+                    regions[i],
+                    _renderWidth,
+                    _renderHeight);
             }
             _scissorCount = count;
         }
@@ -907,23 +886,7 @@ namespace Ryujinx.Graphics.Metal
             int count = Math.Min(MaxViewports, viewports.Length);
             for (int i = 0; i < count; i++)
             {
-                Viewport vp = viewports[i];
-                float width = vp.Region.Width == 0f ? 1f : vp.Region.Width;
-                float height = vp.Region.Height == 0f ? 1f : vp.Region.Height;
-
-                // Vulkan 视口 Y 轴向下，Metal Y 轴向上；通过翻转 originY 进行坐标转换
-                // originY = |height| - region.Y - region.Height
-                double originY = Math.Abs(height) - vp.Region.Y - height;
-
-                _viewports[i] = new MetalViewport
-                {
-                    OriginX = vp.Region.X,
-                    OriginY = originY,
-                    Width = width,
-                    Height = Math.Abs(height),
-                    ZNear = Math.Clamp(vp.DepthNear, 0f, 1f),
-                    ZFar = Math.Clamp(vp.DepthFar, 0f, 1f),
-                };
+                _viewports[i] = MetalViewportScissorMapping.ToMetalViewport(viewports[i]);
             }
             _viewportCount = count;
         }

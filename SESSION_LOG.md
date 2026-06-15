@@ -1041,3 +1041,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.5 已完成，顶点输入的描述符构建已具备独立映射层
 - 下一步进入 `P5.6 NVN SetViewport/SetScissor → Metal viewport/scissor`
+
+## 2026-06-15 下午 | P5.6 NVN SetViewport/SetScissor → Metal viewport/scissor | ✅ 完成
+
+#### 任务目标
+- 将视口和裁剪矩形的坐标换算、边界裁剪逻辑从 `MetalPipeline` 中抽离出来
+- 保持 Metal 端对 viewport/scissor 的状态缓存和 encoder 下发流程不变
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalViewportScissorMapping.cs`
+- 把 `Viewport` → `MetalViewport` 的 Y 翻转、深度范围裁剪逻辑集中到映射层
+- 把 `Rectangle<int>` → `MetalScissorRect` 的边界裁剪逻辑集中到映射层
+- `MetalPipeline` 只保留视口/裁剪数组缓存与计数更新
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.6-build.txt`
+
+#### 结论
+- P5.6 已完成，视口和裁剪的状态换算已经独立成层
+- 下一步进入 `P5.7 DispatchCompute: MTLComputeCommandEncoder`

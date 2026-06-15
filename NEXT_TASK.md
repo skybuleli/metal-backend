@@ -1,14 +1,14 @@
-# 下一任务 — P5.6 NVN SetViewport/SetScissor → Metal viewport/scissor
+# 下一任务 — P5.7 DispatchCompute: MTLComputeCommandEncoder
 
-> 生成时间：2026-06-15 15:51:16
+> 生成时间：2026-06-15 15:58:39
 > 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.6 |
-| 任务名称 | NVN SetViewport/SetScissor → Metal viewport/scissor |
+| 任务 ID | P5.7 |
+| 任务名称 | DispatchCompute: MTLComputeCommandEncoder |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.6 → ✅
+- 更新 PROGRESS.md：P5.7 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 
