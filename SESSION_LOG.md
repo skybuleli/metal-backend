@@ -925,3 +925,22 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - 标准 2D homebrew 验收链路已经推进到“能构建、能启动、不秒退”的状态
 - 下一步可以把这一条链路作为 2D 回归标准样本，继续做更细的画面/交互验收
+
+## 2026-06-15 下午 | P5.0 Maxwell/GAL→Metal 状态映射表骨架 | ✅ 完成
+
+#### 任务目标
+- 先不直接冲真实游戏渲染，而是把 `GAL/IPipeline` 到 Metal 的状态映射骨架固定下来
+- 目标是让后续 `P5.1+` 的状态实现有统一的总表，不再把状态逻辑零散堆在 `MetalPipeline` 里
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalStateMapping.cs`
+- 以骨架表的方式列出 `SetProgram`、`SetRenderTargets`、`SetBlendState`、`SetDepthTest`、`SetRasterizerState`、`SetVertexBuffers`、`SetTextureAndSampler`、`DispatchCompute`、`CopyBuffer`、`Clear*`、`TextureBarrier` 等状态入口
+- 每条映射都标注了 Metal 目标、归属模块和当前阶段任务号，方便后续逐项填实
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.0-build.txt`
+
+#### 结论
+- 这一步把“真实游戏接入”前的状态账本搭起来了
+- 下一步进入 `P5.1`，继续补 `Maxwell→Metal` 的实际状态映射细节
