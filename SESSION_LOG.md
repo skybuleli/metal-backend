@@ -1002,3 +1002,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - 深度/模板状态翻译已经和混合状态一样变成独立映射层
 - 下一步继续推进 `P5.4 NVN SetRasterizerState → Metal rasterizer`
+
+## 2026-06-15 下午 | P5.4 NVN SetRasterizerState → Metal rasterizer | ✅ 完成
+
+#### 任务目标
+- 把 Ryubing 的光栅化状态更新收束到 Metal 后端可直接消费的状态映射里
+- 先打通 cull mode、front face winding、polygon mode 与 rasterizer discard 的状态缓存与映射
+
+#### 本轮实现
+- 新增 `src/ryubing/src/Ryujinx.Graphics.Metal/MetalRasterizerStateMapping.cs`
+- 在 `MetalPipeline` 中接入 `SetFaceCulling()`、`SetFrontFace()`、`SetPolygonMode()` 与 `SetRasterizerDiscard()`
+- 让 rasterizer discard 在绘制路径里生效为 early return
+- 收窄映射文件边界，只保留 Metal 项目能直接引用的 GAL 公共类型
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj` ✅
+- 证据文件：`docs/evidence/P5.4-build.txt`
+
+#### 结论
+- P5.4 已经从编译阻塞中恢复，可继续推进后续顶点输入与视口/裁剪状态映射
+- 下一步建议进入 `P5.5 NVN SetVertexArrayState → Metal vertex descriptor`

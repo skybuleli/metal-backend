@@ -1,14 +1,14 @@
-# 下一任务 — P5.4 NVN SetRasterizerState → Metal rasterizer
+# 下一任务 — P5.5 NVN SetVertexArrayState → Metal vertex descriptor
 
-> 生成时间：2026-06-15 15:33:55
+> 生成时间：2026-06-15 15:44:14
 > 所属阶段：Phase 5 — 命令映射与状态跟踪
 
 ## 任务详情
 
 | 项目 | 内容 |
 |------|------|
-| 任务 ID | P5.4 |
-| 任务名称 | NVN SetRasterizerState → Metal rasterizer |
+| 任务 ID | P5.5 |
+| 任务名称 | NVN SetVertexArrayState → Metal vertex descriptor |
 | 当前状态 | ⬜ |
 | 优先级 | 🔴 高 |
 | 前置依赖 | 参见 PROGRESS.md |
@@ -25,7 +25,7 @@
 
 ## 完成后
 
-- 更新 PROGRESS.md：P5.4 → ✅
+- 更新 PROGRESS.md：P5.5 → ✅
 - 重新运行 `python3 tools/gen_next_task.py` 生成下一个任务
 - 记录 SESSION_LOG.md
 

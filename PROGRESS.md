@@ -1,7 +1,7 @@
 # 项目进度账本
-# 最后更新: 2026-06-15T15:33:55+08:00
+# 最后更新: 2026-06-15T15:44:14+08:00
 # 当前阶段: Phase 5 — 命令映射与状态跟踪
-# 完成度: 113/166 任务 (68.1%)
+# 完成度: 114/166 任务 (68.7%)
 # 仓库: switch-metal-backend
 
 # ===================================================================
@@ -211,7 +211,7 @@
 | P5.1 | Maxwell→Metal 状态映射表 (deko3d+envytools) | ✅ | 2026-06-15T15:12:59+08:00 | docs/evidence/P5.1-build.txt |
 | P5.2 | NVN SetBlendState → Metal blend state | ✅ | 2026-06-15T15:21:27+08:00 | docs/evidence/P5.2-build.txt |
 | P5.3 | NVN SetDepthStencilState → Metal depth/stencil | ✅ | 2026-06-15T15:32:48+08:00 | docs/evidence/P5.3-build.txt |
-| P5.4 | NVN SetRasterizerState → Metal rasterizer | ⬜ | — | — |
+| P5.4 | NVN SetRasterizerState → Metal rasterizer | ✅ | 2026-06-15T15:42:51+08:00 | docs/evidence/P5.4-build.txt |
 | P5.5 | NVN SetVertexArrayState → Metal vertex descriptor | ⬜ | — | — |
 | P5.6 | NVN SetViewport/SetScissor → Metal viewport/scissor | ⬜ | — | — |
 | P5.7 | DispatchCompute: MTLComputeCommandEncoder | ⬜ | — | — |
@@ -321,10 +321,10 @@
 ## ── 统计 ──
 # ===================================================================
 - 总任务数: 166
-- 已完成: 113 (68.1%)
+- 已完成: 114 (68.7%)
 - 进行中: 0
 - 阻塞: 0
 - 跳过: 0
-- 待开始: 53
+- 待开始: 52
 - 当前阶段: Phase 5 — 命令映射与状态跟踪
-- 下一任务: P5.4 — NVN SetRasterizerState → Metal rasterizer
+- 下一任务: P5.5 — NVN SetVertexArrayState → Metal vertex descriptor

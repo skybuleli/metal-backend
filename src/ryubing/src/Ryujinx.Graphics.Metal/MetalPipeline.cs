@@ -57,6 +57,12 @@ namespace Ryujinx.Graphics.Metal
         private MetalTriangleFillMode _fillMode;
         private PrimitiveTopology _primitiveTopology;
         private MetalIndexBufferBinding _indexBuffer;
+        private bool _rasterizerDiscard;
+        private PolygonModeMask _depthBiasEnables;
+        private float _depthBiasFactor;
+        private float _depthBiasUnits;
+        private float _depthBiasClamp;
+        private bool _depthClamp;
         private int _vertexAttribCount;
         private int _vertexBufferCount;
         private readonly nint _zeroVertexBufferHandle;
@@ -322,10 +328,15 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetDepthBias(PolygonModeMask enables, float factor, float units, float clamp)
         {
+            _depthBiasEnables = enables;
+            _depthBiasFactor = factor;
+            _depthBiasUnits = units;
+            _depthBiasClamp = clamp;
         }
 
         public void SetDepthClamp(bool clamp)
         {
+            _depthClamp = clamp;
         }
 
         public void SetDepthMode(DepthMode mode)
@@ -344,32 +355,12 @@ namespace Ryujinx.Graphics.Metal
         public void SetFaceCulling(bool enable, Face face)
         {
             _cullEnabled = enable;
-            if (!enable)
-            {
-                _cullMode = MetalCullMode.None;
-                return;
-            }
-
-            // GAL Face 值与 OpenGL 一致：Front=0x404, Back=0x405, FrontAndBack=0x408
-            _cullMode = face switch
-            {
-                Face.Front => MetalCullMode.Front,
-                Face.Back => MetalCullMode.Back,
-                Face.FrontAndBack => MetalCullMode.None, // Metal 不支持同时剔除双面，回退为不剔除
-                _ => MetalCullMode.None,
-            };
+            _cullMode = MetalRasterizerStateMapping.ToMetalCullMode(enable, face);
         }
 
         public void SetFrontFace(FrontFace frontFace)
         {
-            // GAL FrontFace 值与 OpenGL 一致：Clockwise=0x900, CounterClockwise=0x901
-            // MTL::Winding: CounterClockwise=0, Clockwise=1
-            _winding = frontFace switch
-            {
-                FrontFace.Clockwise => MetalWinding.Clockwise,
-                FrontFace.CounterClockwise => MetalWinding.CounterClockwise,
-                _ => MetalWinding.CounterClockwise,
-            };
+            _winding = MetalRasterizerStateMapping.ToMetalWinding(frontFace);
         }
 
         public void SetImage(ShaderStage stage, int binding, ITexture texture)
@@ -438,16 +429,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetPolygonMode(PolygonMode frontMode, PolygonMode backMode)
         {
-            // Metal 只有 setTriangleFillMode，不区分正反面；使用 frontMode
-            // PolygonMode 值与 OpenGL 一致：Point=0x1b00, Line=0x1b01, Fill=0x1b02
-            // Metal 不支持 Point 模式，回退为 Lines
-            _fillMode = frontMode switch
-            {
-                PolygonMode.Fill => MetalTriangleFillMode.Fill,
-                PolygonMode.Line => MetalTriangleFillMode.Lines,
-                PolygonMode.Point => MetalTriangleFillMode.Lines, // 回退
-                _ => MetalTriangleFillMode.Fill,
-            };
+            _fillMode = MetalRasterizerStateMapping.ToMetalFillMode(frontMode);
         }
 
         public void SetPrimitiveRestart(bool enable, int index)
@@ -633,6 +615,7 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetRasterizerDiscard(bool discard)
         {
+            _rasterizerDiscard = discard;
         }
 
         public void SetRenderTargetColorMasks(ReadOnlySpan<uint> componentMask)
@@ -977,7 +960,7 @@ namespace Ryujinx.Graphics.Metal
 
         private void ExecuteRenderDraw(Action<nint> drawAction)
         {
-            if (_pipelineHandle == nint.Zero || _queueHandle == nint.Zero || drawAction == null)
+            if (_rasterizerDiscard || _pipelineHandle == nint.Zero || _queueHandle == nint.Zero || drawAction == null)
             {
                 return;
             }
