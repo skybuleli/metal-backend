@@ -229,6 +229,12 @@ namespace Ryujinx.Graphics.Metal
             in MetalRenderPipelineDescriptor descriptor,
             out nint pipeline);
 
+        [DllImport(LibraryName, EntryPoint = "metal_create_compute_pipeline")]
+        internal static extern MetalResult CreateComputePipeline(
+            nint device,
+            in MetalComputePipelineDescriptor descriptor,
+            out nint pipeline);
+
         [DllImport(LibraryName, EntryPoint = "metal_begin_command_buffer")]
         internal static extern MetalResult BeginCommandBuffer(
             nint queue,
@@ -301,6 +307,12 @@ namespace Ryujinx.Graphics.Metal
             nint pipeline,
             out nint renderEncoder);
 
+        [DllImport(LibraryName, EntryPoint = "metal_begin_compute_encoding")]
+        internal static extern MetalResult BeginComputeEncoding(
+            nint commandBuffer,
+            nint pipeline,
+            out nint computeEncoder);
+
         [DllImport(LibraryName, EntryPoint = "metal_render_encoder_set_vertex_buffer")]
         internal static extern MetalResult RenderEncoderSetVertexBuffer(
             nint renderEncoder,
@@ -351,6 +363,39 @@ namespace Ryujinx.Graphics.Metal
         [DllImport(LibraryName, EntryPoint = "metal_end_render_encoding")]
         internal static extern MetalResult EndRenderEncoding(
             nint renderEncoder);
+
+        [DllImport(LibraryName, EntryPoint = "metal_compute_encoder_set_buffer")]
+        internal static extern MetalResult ComputeEncoderSetBuffer(
+            nint computeEncoder,
+            uint index,
+            nint buffer,
+            ulong offset);
+
+        [DllImport(LibraryName, EntryPoint = "metal_compute_encoder_set_texture")]
+        internal static extern MetalResult ComputeEncoderSetTexture(
+            nint computeEncoder,
+            uint index,
+            nint texture);
+
+        [DllImport(LibraryName, EntryPoint = "metal_compute_encoder_set_sampler")]
+        internal static extern MetalResult ComputeEncoderSetSampler(
+            nint computeEncoder,
+            uint index,
+            nint sampler);
+
+        [DllImport(LibraryName, EntryPoint = "metal_compute_encoder_dispatch_threadgroups")]
+        internal static extern MetalResult ComputeEncoderDispatchThreadgroups(
+            nint computeEncoder,
+            uint groupsX,
+            uint groupsY,
+            uint groupsZ,
+            uint threadsX,
+            uint threadsY,
+            uint threadsZ);
+
+        [DllImport(LibraryName, EntryPoint = "metal_end_compute_encoding")]
+        internal static extern MetalResult EndComputeEncoding(
+            nint computeEncoder);
 
         [DllImport(LibraryName, EntryPoint = "metal_commit_command_buffer")]
         internal static extern MetalResult CommitCommandBuffer(
@@ -430,6 +475,17 @@ namespace Ryujinx.Graphics.Metal
         public MetalVertexBufferLayoutDescriptor[] VertexBufferLayouts;
         public nint BlendAttachments;
         public uint BlendAttachmentCount;
+        public uint Reserved;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct MetalComputePipelineDescriptor
+    {
+        public uint AbiVersion;
+        public nint MetallibData;
+        public ulong MetallibSize;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string FunctionName;
         public uint Reserved;
     }
 

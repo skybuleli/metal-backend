@@ -412,6 +412,17 @@ void metal_release(void* handle)
         delete pipeline;
         break;
     }
+    case METAL_HANDLE_TYPE_COMPUTE_PIPELINE:
+    {
+        metal_compute_pipeline* pipeline = static_cast<metal_compute_pipeline*>(handle);
+        if (pipeline->pipeline_state != nullptr)
+        {
+            pipeline->pipeline_state->release();
+            pipeline->pipeline_state = nullptr;
+        }
+        delete pipeline;
+        break;
+    }
 case METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE:
     {
         metal_depth_stencil_state* dsState = static_cast<metal_depth_stencil_state*>(handle);
@@ -470,6 +481,22 @@ case METAL_HANDLE_TYPE_DEPTH_STENCIL_STATE:
         {
             encoder->depth_stencil_target->release();
             encoder->depth_stencil_target = nullptr;
+        }
+        delete encoder;
+        break;
+    }
+    case METAL_HANDLE_TYPE_COMPUTE_ENCODER:
+    {
+        metal_compute_encoder* encoder = static_cast<metal_compute_encoder*>(handle);
+        if (encoder->encoder != nullptr)
+        {
+            if (!encoder->encoding_ended)
+            {
+                encoder->encoder->endEncoding();
+                encoder->encoding_ended = true;
+            }
+            encoder->encoder->release();
+            encoder->encoder = nullptr;
         }
         delete encoder;
         break;

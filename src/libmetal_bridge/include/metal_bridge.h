@@ -844,6 +844,16 @@ typedef struct metal_render_pipeline_descriptor
     uint32_t reserved;
 } metal_render_pipeline_descriptor;
 
+/// 计算管线描述符
+typedef struct metal_compute_pipeline_descriptor
+{
+    uint32_t abi_version;
+    const void* metallib_data;
+    uint64_t metallib_size;
+    const char* function_name;
+    uint32_t reserved;
+} metal_compute_pipeline_descriptor;
+
 typedef enum metal_primitive_type
 {
     METAL_PRIMITIVE_TYPE_POINT = 0,
@@ -867,6 +877,11 @@ METAL_BRIDGE_EXPORT metal_result metal_create_render_pipeline(
     metal_device* device,
     const metal_render_pipeline_descriptor* descriptor,
     metal_render_pipeline** out_pipeline);
+
+METAL_BRIDGE_EXPORT metal_result metal_create_compute_pipeline(
+    metal_device* device,
+    const metal_compute_pipeline_descriptor* descriptor,
+    metal_compute_pipeline** out_pipeline);
 
 /// 创建命令缓冲区
 METAL_BRIDGE_EXPORT metal_result metal_begin_command_buffer(
@@ -959,6 +974,12 @@ METAL_BRIDGE_EXPORT metal_result metal_begin_render_encoding(
     metal_render_pipeline* pipeline,
     metal_render_encoder** out_render_encoder);
 
+/// 开始 compute encoding
+METAL_BRIDGE_EXPORT metal_result metal_begin_compute_encoding(
+    metal_command_buffer* command_buffer,
+    metal_compute_pipeline* pipeline,
+    metal_compute_encoder** out_compute_encoder);
+
 /// 使用指定的渲染目标开始 render encoding（P4.3.7）
 /// 替代 metal_begin_render_encoding 的临时 1x1 附件，创建真实的
 /// MTLRenderPassDescriptor 并绑定颜色附件和可选的深度/模板附件。
@@ -998,6 +1019,31 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_set_fragment_sampler(
     uint32_t index,
     metal_sampler* sampler);
 
+METAL_BRIDGE_EXPORT metal_result metal_compute_encoder_set_buffer(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_buffer* buffer,
+    uint64_t offset);
+
+METAL_BRIDGE_EXPORT metal_result metal_compute_encoder_set_texture(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_texture* texture);
+
+METAL_BRIDGE_EXPORT metal_result metal_compute_encoder_set_sampler(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_sampler* sampler);
+
+METAL_BRIDGE_EXPORT metal_result metal_compute_encoder_dispatch_threadgroups(
+    metal_compute_encoder* encoder,
+    uint32_t groups_x,
+    uint32_t groups_y,
+    uint32_t groups_z,
+    uint32_t threads_x,
+    uint32_t threads_y,
+    uint32_t threads_z);
+
 METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_primitives(
     metal_render_encoder* encoder,
     metal_primitive_type primitive_type,
@@ -1019,6 +1065,9 @@ METAL_BRIDGE_EXPORT metal_result metal_render_encoder_draw_indexed_primitives(
 
 METAL_BRIDGE_EXPORT metal_result metal_end_render_encoding(
     metal_render_encoder* encoder);
+
+METAL_BRIDGE_EXPORT metal_result metal_end_compute_encoding(
+    metal_compute_encoder* encoder);
 
 METAL_BRIDGE_EXPORT metal_result metal_commit_command_buffer(
     metal_command_buffer* command_buffer);

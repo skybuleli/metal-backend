@@ -352,6 +352,100 @@ metal_result metal_create_render_pipeline(
     return METAL_RESULT_OK;
 }
 
+metal_result metal_create_compute_pipeline(
+    metal_device* device,
+    const metal_compute_pipeline_descriptor* descriptor,
+    metal_compute_pipeline** out_pipeline)
+{
+    if (device == nullptr || descriptor == nullptr || out_pipeline == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    if (device->device == nullptr)
+    {
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    if (descriptor->abi_version != METAL_BRIDGE_ABI_VERSION ||
+        descriptor->metallib_data == nullptr ||
+        descriptor->metallib_size == 0)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+
+    MTL::Library* library = create_library_from_metallib(
+        device->device,
+        descriptor->metallib_data,
+        descriptor->metallib_size);
+
+    if (library == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_COMPILE_FAILED;
+    }
+
+    const char* functionName = descriptor->function_name != nullptr ? descriptor->function_name : "main";
+    NS::String* entryName = NS::String::string(functionName, NS::UTF8StringEncoding);
+    MTL::Function* function = library->newFunction(entryName);
+
+    if (function == nullptr)
+    {
+        library->release();
+        pool->release();
+        return METAL_RESULT_COMPILE_FAILED;
+    }
+
+    NS::Error* error = nullptr;
+    MTL::ComputePipelineState* pipelineState = device->device->newComputePipelineState(function, &error);
+
+    function->release();
+    library->release();
+
+    if (pipelineState == nullptr)
+    {
+        if (error != nullptr)
+        {
+            const char* desc = error->localizedDescription() != nullptr
+                ? error->localizedDescription()->utf8String()
+                : nullptr;
+            const char* reason = error->localizedFailureReason() != nullptr
+                ? error->localizedFailureReason()->utf8String()
+                : nullptr;
+
+            if (desc != nullptr && reason != nullptr)
+            {
+                std::fprintf(stderr, "[metal_create_compute_pipeline] %s | %s\n", desc, reason);
+            }
+            else if (desc != nullptr)
+            {
+                std::fprintf(stderr, "[metal_create_compute_pipeline] %s\n", desc);
+            }
+        }
+
+        pool->release();
+        return METAL_RESULT_COMPILE_FAILED;
+    }
+
+    metal_compute_pipeline* pipeline = new (std::nothrow) metal_compute_pipeline();
+    if (pipeline == nullptr)
+    {
+        pipelineState->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    pipeline->base.type = METAL_HANDLE_TYPE_COMPUTE_PIPELINE;
+    pipeline->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    pipeline->pipeline_state = pipelineState;
+
+    pool->release();
+    *out_pipeline = pipeline;
+    return METAL_RESULT_OK;
+}
+
 // ════════════════════════════════════════════════════════════════
 // 深度/模板状态（P4.3.10）
 // ════════════════════════════════════════════════════════════════

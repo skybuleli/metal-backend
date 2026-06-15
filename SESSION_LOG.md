@@ -1061,3 +1061,25 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.6 已完成，视口和裁剪的状态换算已经独立成层
 - 下一步进入 `P5.7 DispatchCompute: MTLComputeCommandEncoder`
+
+## 2026-06-15 下午 | P5.7 DispatchCompute: MTLComputeCommandEncoder | ✅ 完成
+
+#### 任务目标
+- 打通 `MetalPipeline.DispatchCompute` 到 `MTLComputeCommandEncoder` 的真实执行链路
+- 补齐 compute pipeline、compute encoder、dispatch API 与相关的 C# / C++ 桥接
+- 让 compute shader 的 local size 能从 shader 元数据一路传到 Metal 线程组调度
+
+#### 本轮实现
+- 在 `Ryujinx.Graphics.GAL.ShaderInfo` 与 `ShaderProgramInfo` 中补入 compute local size 元数据
+- 在 `ShaderInfoBuilder`、`TranslatorContext`、`DiskCacheHostStorage` 中把 compute local size 贯通到缓存与生成路径
+- 在 `MetalShaderCompiler` / `MetalProgram` 中保存 compute local size，并在 `MetalPipeline.DispatchCompute` 中使用
+- 为 `libmetal_bridge` 增加 compute pipeline / compute encoder 的 handle、ABI、P/Invoke 和 Metal 实现
+- 让 `MetalPipeline` 具备 render / compute 双编码器切换能力
+
+#### 验证
+- `dotnet build src/ryubing/Ryujinx.sln -c Debug` ✅
+- 证据文件：`docs/evidence/P5.7-build.txt`
+
+#### 结论
+- P5.7 已完成，compute 调度链路已经从 GAL 到 Metal 侧闭环
+- 下一步进入 `P5.8 SetStorageBuffers + SetImage: Compute 资源绑定`

@@ -411,7 +411,14 @@ namespace Ryujinx.Graphics.Gpu.Shader
 
             builder.AddStageInfo(info);
 
-            return builder.Build(null, fromCache);
+            ShaderInfo shaderInfo = builder.Build(null, fromCache);
+            return new ShaderInfo(
+                shaderInfo.FragmentOutputMap,
+                shaderInfo.ResourceLayout,
+                info.ComputeLocalSizeX,
+                info.ComputeLocalSizeY,
+                info.ComputeLocalSizeZ,
+                fromCache);
         }
 
         /// <summary>
@@ -428,7 +435,14 @@ namespace Ryujinx.Graphics.Gpu.Shader
 
             builder.AddStageInfo(info, vertexAsCompute: true);
 
-            return builder.Build(null, fromCache);
+            ShaderInfo shaderInfo = builder.Build(null, fromCache);
+            return new ShaderInfo(
+                shaderInfo.FragmentOutputMap,
+                shaderInfo.ResourceLayout,
+                32,
+                32,
+                1,
+                fromCache);
         }
     }
 }

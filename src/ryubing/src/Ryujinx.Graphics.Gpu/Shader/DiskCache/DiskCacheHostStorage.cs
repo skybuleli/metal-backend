@@ -141,6 +141,21 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             public ShaderStage Stage;
 
             /// <summary>
+            /// Compute local group size X.
+            /// </summary>
+            public int ComputeLocalSizeX;
+
+            /// <summary>
+            /// Compute local group size Y.
+            /// </summary>
+            public int ComputeLocalSizeY;
+
+            /// <summary>
+            /// Compute local group size Z.
+            /// </summary>
+            public int ComputeLocalSizeZ;
+
+            /// <summary>
             /// Number of vertices that each output primitive has on a geometry shader.
             /// </summary>
             public byte GeometryVerticesPerPrimitive;
@@ -799,6 +814,9 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
                 textures,
                 images,
                 dataInfo.Stage,
+                dataInfo.ComputeLocalSizeX,
+                dataInfo.ComputeLocalSizeY,
+                dataInfo.ComputeLocalSizeZ,
                 dataInfo.GeometryVerticesPerPrimitive,
                 dataInfo.GeometryMaxOutputVertices,
                 dataInfo.ThreadsPerInputPrimitive,
@@ -829,6 +847,9 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
                 TexturesCount = (ushort)info.Textures.Count,
                 ImagesCount = (ushort)info.Images.Count,
                 Stage = info.Stage,
+                ComputeLocalSizeX = info.ComputeLocalSizeX,
+                ComputeLocalSizeY = info.ComputeLocalSizeY,
+                ComputeLocalSizeZ = info.ComputeLocalSizeZ,
                 GeometryVerticesPerPrimitive = (byte)info.GeometryVerticesPerPrimitive,
                 GeometryMaxOutputVertices = (ushort)info.GeometryMaxOutputVertices,
                 ThreadsPerInputPrimitive = (ushort)info.ThreadsPerInputPrimitive,

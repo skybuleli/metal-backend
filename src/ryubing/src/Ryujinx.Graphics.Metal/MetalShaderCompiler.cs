@@ -12,6 +12,7 @@ namespace Ryujinx.Graphics.Metal
     [SupportedOSPlatform("macos")]
     internal sealed class MetalShaderCompiler : IDisposable
     {
+        private const string EnableGlslDiagnosticBridgeEnv = "SWITCH_METAL_ENABLE_GLSL_DIAGNOSTIC_BRIDGE";
         private MetalDevice _device;
         private nint _compilerHandle;
         private MetalShaderCompilerConfig _config;
@@ -144,6 +145,15 @@ namespace Ryujinx.Graphics.Metal
                     continue;
                 }
 
+                if (sourceLanguage == "glsl" && !IsGlslDiagnosticBridgeEnabled())
+                {
+                    Console.Error.WriteLine(
+                        $"[MetalShaderCompiler] {stage}/{profile} 仅允许 Slang 原生语法作为主路径输入；" +
+                        $"GLSL 诊断桥接需显式设置 {EnableGlslDiagnosticBridgeEnv}=1。");
+                    compileFailed = true;
+                    continue;
+                }
+
                 MetalShaderCompileResult compileResult =
                     MetalNative.CompileShader(_compilerHandle, shader.Code, sourceLanguage, stageStr, "main", profile);
 
@@ -237,12 +247,26 @@ namespace Ryujinx.Graphics.Metal
             {
             }
         }
+
+        private static bool IsGlslDiagnosticBridgeEnabled()
+        {
+            string? value = Environment.GetEnvironmentVariable(EnableGlslDiagnosticBridgeEnv);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            return value != "0" && !value.Equals("false", StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     internal sealed class MetalProgram : IProgram
     {
         private readonly byte[] _binary;
         private readonly CompiledShader[] _compiledShaders;
+        private readonly int _computeLocalSizeX;
+        private readonly int _computeLocalSizeY;
+        private readonly int _computeLocalSizeZ;
 
         public ProgramLinkStatus LinkStatus { get; internal set; }
 
@@ -259,6 +283,9 @@ namespace Ryujinx.Graphics.Metal
         {
             _compiledShaders = compiledShaders ?? Array.Empty<CompiledShader>();
             FragmentOutputMap = info.FragmentOutputMap;
+            _computeLocalSizeX = info.ComputeLocalSizeX;
+            _computeLocalSizeY = info.ComputeLocalSizeY;
+            _computeLocalSizeZ = info.ComputeLocalSizeZ;
             ActiveWorkarounds = activeWorkarounds;
             LinkStatus = ProgramLinkStatus.Success;
 
@@ -274,6 +301,9 @@ namespace Ryujinx.Graphics.Metal
             _binary = binary;
             _compiledShaders = ParseMetallibs(binary);
             FragmentOutputMap = info.FragmentOutputMap;
+            _computeLocalSizeX = info.ComputeLocalSizeX;
+            _computeLocalSizeY = info.ComputeLocalSizeY;
+            _computeLocalSizeZ = info.ComputeLocalSizeZ;
             HasFragmentShader = hasFragmentShader;
             ActiveWorkarounds = activeWorkarounds;
             LinkStatus = ProgramLinkStatus.Success;
@@ -300,6 +330,14 @@ namespace Ryujinx.Graphics.Metal
                     return cs.Metallib;
             }
             return Array.Empty<byte>();
+        }
+
+        internal bool TryGetComputeLocalSize(out int x, out int y, out int z)
+        {
+            x = _computeLocalSizeX > 0 ? _computeLocalSizeX : 1;
+            y = _computeLocalSizeY > 0 ? _computeLocalSizeY : 1;
+            z = _computeLocalSizeZ > 0 ? _computeLocalSizeZ : 1;
+            return _computeLocalSizeX > 0 && _computeLocalSizeY > 0 && _computeLocalSizeZ > 0;
         }
 
         public void Dispose()

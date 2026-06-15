@@ -148,6 +148,16 @@ struct metal_render_pipeline
 static_assert(offsetof(struct metal_render_pipeline, pipeline_state) >= sizeof(metal_handle_base),
     "metal_render_pipeline.base 必须在最前面");
 
+/// metal_compute_pipeline 内部实现
+struct metal_compute_pipeline
+{
+    METAL_HANDLE_HEADER
+    MTL::ComputePipelineState* pipeline_state;  // Metal 计算管线状态
+};
+
+static_assert(offsetof(struct metal_compute_pipeline, pipeline_state) >= sizeof(metal_handle_base),
+    "metal_compute_pipeline.base 必须在最前面");
+
 /// metal_command_buffer 内部实现（P4.3.6）
 struct metal_command_buffer
 {
@@ -186,6 +196,18 @@ struct metal_render_encoder
 
 static_assert(offsetof(struct metal_render_encoder, encoder) >= sizeof(metal_handle_base),
     "metal_render_encoder.base 必须在最前面");
+
+/// metal_compute_encoder 内部实现
+struct metal_compute_encoder
+{
+    METAL_HANDLE_HEADER
+    metal_command_buffer* owner;              // 所属命令缓冲区
+    MTL::ComputeCommandEncoder* encoder;      // Metal 计算编码器
+    bool encoding_ended;                      // 追踪 endEncoding 状态
+};
+
+static_assert(offsetof(struct metal_compute_encoder, encoder) >= sizeof(metal_handle_base),
+    "metal_compute_encoder.base 必须在最前面");
 
 /// metal_depth_stencil_state 内部实现（P4.3.10）
 struct metal_depth_stencil_state

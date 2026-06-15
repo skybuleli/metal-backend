@@ -98,6 +98,52 @@ metal_result metal_begin_command_buffer(
     return METAL_RESULT_OK;
 }
 
+metal_result metal_begin_compute_encoding(
+    metal_command_buffer* command_buffer,
+    metal_compute_pipeline* pipeline,
+    metal_compute_encoder** out_compute_encoder)
+{
+    if (command_buffer == nullptr ||
+        pipeline == nullptr ||
+        out_compute_encoder == nullptr ||
+        command_buffer->command_buffer == nullptr ||
+        pipeline->pipeline_state == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    NS::AutoreleasePool* pool = NS::AutoreleasePool::alloc()->init();
+    MTL::ComputeCommandEncoder* encoder = command_buffer->command_buffer->computeCommandEncoder();
+
+    if (encoder == nullptr)
+    {
+        pool->release();
+        return METAL_RESULT_RUNTIME_ERROR;
+    }
+
+    encoder->setComputePipelineState(pipeline->pipeline_state);
+
+    metal_compute_encoder* handle = new (std::nothrow) metal_compute_encoder();
+    if (handle == nullptr)
+    {
+        encoder->endEncoding();
+        encoder->release();
+        pool->release();
+        return METAL_RESULT_OUT_OF_MEMORY;
+    }
+
+    handle->base.type = METAL_HANDLE_TYPE_COMPUTE_ENCODER;
+    handle->base.abi_version = METAL_BRIDGE_ABI_VERSION;
+    handle->owner = command_buffer;
+    handle->encoder = encoder;
+    handle->encoder->retain();
+    handle->encoding_ended = false;
+
+    *out_compute_encoder = handle;
+    pool->release();
+    return METAL_RESULT_OK;
+}
+
 // ════════════════════════════════════════════════════════════════════
 // P4.4.2 — SharedEvent 同步原语
 // 依据 metal-cpp:
@@ -536,6 +582,69 @@ metal_result metal_render_encoder_set_fragment_sampler(
     return METAL_RESULT_OK;
 }
 
+metal_result metal_compute_encoder_set_buffer(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_buffer* buffer,
+    uint64_t offset)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr || buffer == nullptr || buffer->buffer == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    encoder->encoder->setBuffer(buffer->buffer, offset, index);
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_compute_encoder_set_texture(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_texture* texture)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr || texture == nullptr || texture->texture == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    encoder->encoder->setTexture(texture->texture, index);
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_compute_encoder_set_sampler(
+    metal_compute_encoder* encoder,
+    uint32_t index,
+    metal_sampler* sampler)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr || sampler == nullptr || sampler->sampler_state == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    encoder->encoder->setSamplerState(sampler->sampler_state, index);
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_compute_encoder_dispatch_threadgroups(
+    metal_compute_encoder* encoder,
+    uint32_t groups_x,
+    uint32_t groups_y,
+    uint32_t groups_z,
+    uint32_t threads_x,
+    uint32_t threads_y,
+    uint32_t threads_z)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    MTL::Size threadgroups = MTL::Size::Make(groups_x, groups_y, groups_z);
+    MTL::Size threads = MTL::Size::Make(threads_x, threads_y, threads_z);
+    encoder->encoder->dispatchThreadgroups(threadgroups, threads);
+    return METAL_RESULT_OK;
+}
+
 metal_result metal_render_encoder_draw_primitives(
     metal_render_encoder* encoder,
     metal_primitive_type primitive_type,
@@ -604,6 +713,23 @@ metal_result metal_end_render_encoding(
         encoder->encoder->endEncoding();
         encoder->encoding_ended = true;
     }
+    return METAL_RESULT_OK;
+}
+
+metal_result metal_end_compute_encoding(
+    metal_compute_encoder* encoder)
+{
+    if (encoder == nullptr || encoder->encoder == nullptr)
+    {
+        return METAL_RESULT_INVALID_ARGUMENT;
+    }
+
+    if (!encoder->encoding_ended)
+    {
+        encoder->encoder->endEncoding();
+        encoder->encoding_ended = true;
+    }
+
     return METAL_RESULT_OK;
 }
 

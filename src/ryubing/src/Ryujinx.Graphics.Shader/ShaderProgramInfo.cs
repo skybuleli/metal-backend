@@ -11,6 +11,9 @@ namespace Ryujinx.Graphics.Shader
         public ReadOnlyCollection<TextureDescriptor> Images { get; }
 
         public ShaderStage Stage { get; }
+        public int ComputeLocalSizeX { get; }
+        public int ComputeLocalSizeY { get; }
+        public int ComputeLocalSizeZ { get; }
         public int GeometryVerticesPerPrimitive { get; }
         public int GeometryMaxOutputVertices { get; }
         public int ThreadsPerInputPrimitive { get; }
@@ -27,6 +30,9 @@ namespace Ryujinx.Graphics.Shader
             TextureDescriptor[] textures,
             TextureDescriptor[] images,
             ShaderStage stage,
+            int computeLocalSizeX,
+            int computeLocalSizeY,
+            int computeLocalSizeZ,
             int geometryVerticesPerPrimitive,
             int geometryMaxOutputVertices,
             int threadsPerInputPrimitive,
@@ -43,6 +49,9 @@ namespace Ryujinx.Graphics.Shader
             Images = Array.AsReadOnly(images);
 
             Stage = stage;
+            ComputeLocalSizeX = computeLocalSizeX;
+            ComputeLocalSizeY = computeLocalSizeY;
+            ComputeLocalSizeZ = computeLocalSizeZ;
             GeometryVerticesPerPrimitive = geometryVerticesPerPrimitive;
             GeometryMaxOutputVertices = geometryMaxOutputVertices;
             ThreadsPerInputPrimitive = threadsPerInputPrimitive;

@@ -32,6 +32,7 @@ namespace Ryujinx.Graphics.Metal
 
         private IProgram _program;
         private nint _pipelineHandle;
+        private nint _computePipelineHandle;
         private readonly nint _deviceHandle;
         private readonly nint _queueHandle;
         private readonly MetalBufferPool _buffers;
@@ -76,7 +77,9 @@ namespace Ryujinx.Graphics.Metal
         // 帧级 CommandBuffer 批处理：减少每 Draw 创建/提交开销
         private nint _currentCommandBuffer;
         private nint _currentRenderEncoder;
+        private nint _currentComputeEncoder;
         private bool _encoderActive;
+        private bool _computeEncoderActive;
         private bool _renderTargetsChanged;
 
         /// <summary>
@@ -90,6 +93,7 @@ namespace Ryujinx.Graphics.Metal
             _queueHandle = queueHandle;
             _buffers = buffers;
             _pipelineHandle = nint.Zero;
+            _computePipelineHandle = nint.Zero;
             _vertexAttribs = new VertexAttribDescriptor[MaxVertexAttributes];
             _vertexBuffers = new VertexBufferDescriptor[MaxVertexBufferBindings];
             _uniformBuffers = new MetalBufferBinding[MaxUniformBufferBindings];
@@ -162,6 +166,72 @@ namespace Ryujinx.Graphics.Metal
 
         public void DispatchCompute(int groupsX, int groupsY, int groupsZ)
         {
+            if (groupsX <= 0 || groupsY <= 0 || groupsZ <= 0)
+            {
+                return;
+            }
+
+            if (_currentProgram == null || _computePipelineHandle == nint.Zero || _queueHandle == nint.Zero)
+            {
+                return;
+            }
+
+            if (_encoderActive)
+            {
+                Flush();
+            }
+
+            try
+            {
+                if (!_computeEncoderActive)
+                {
+                    MetalResult result = MetalNative.BeginCommandBuffer(
+                        _queueHandle, out _currentCommandBuffer);
+                    if (result != MetalResult.Ok || _currentCommandBuffer == nint.Zero)
+                    {
+                        ThrowIfFailed(result, nameof(MetalNative.BeginCommandBuffer));
+                        return;
+                    }
+
+                    result = MetalNative.BeginComputeEncoding(
+                        _currentCommandBuffer,
+                        _computePipelineHandle,
+                        out _currentComputeEncoder);
+                    if (result != MetalResult.Ok || _currentComputeEncoder == nint.Zero)
+                    {
+                        Flush();
+                        ThrowIfFailed(result, nameof(MetalNative.BeginComputeEncoding));
+                        return;
+                    }
+
+                    _computeEncoderActive = true;
+                }
+
+                BindComputeResources(_currentComputeEncoder);
+
+                if (!_currentProgram.TryGetComputeLocalSize(out int threadX, out int threadY, out int threadZ))
+                {
+                    threadX = 1;
+                    threadY = 1;
+                    threadZ = 1;
+                }
+
+                MetalResult dispatchResult = MetalNative.ComputeEncoderDispatchThreadgroups(
+                    _currentComputeEncoder,
+                    (uint)groupsX,
+                    (uint)groupsY,
+                    (uint)groupsZ,
+                    (uint)threadX,
+                    (uint)threadY,
+                    (uint)threadZ);
+
+                ThrowIfFailed(dispatchResult, nameof(MetalNative.ComputeEncoderDispatchThreadgroups));
+            }
+            catch
+            {
+                Flush();
+                throw;
+            }
         }
 
         public void Draw(int vertexCount, int instanceCount, int firstVertex, int firstInstance)
@@ -365,14 +435,33 @@ namespace Ryujinx.Graphics.Metal
 
         public void SetImage(ShaderStage stage, int binding, ITexture texture)
         {
+            if (!TryGetShaderStageIndex(stage, out int stageIndex) ||
+                (uint)binding >= MaxTextureBindings)
+            {
+                return;
+            }
+
+            nint textureHandle = nint.Zero;
+            if (texture != null)
+            {
+                MetalTexture.TryGetNativeHandle(texture, out textureHandle);
+            }
+
+            _textureBindings[stageIndex, binding] = new MetalTextureBinding
+            {
+                TextureHandle = textureHandle,
+                SamplerHandle = nint.Zero,
+            };
         }
 
         public void SetImageArray(ShaderStage stage, int binding, IImageArray array)
         {
+            // 当前阶段仅支持逐槽绑定，数组绑定后续再按 concrete array 展开。
         }
 
         public void SetImageArraySeparate(ShaderStage stage, int setIndex, IImageArray array)
         {
+            // 当前阶段仅支持逐槽绑定，数组绑定后续再按 concrete array 展开。
         }
 
         public void SetIndexBuffer(BufferRange buffer, IndexType type)
@@ -448,6 +537,13 @@ namespace Ryujinx.Graphics.Metal
                 return;
             }
 
+            if (_encoderActive || _computeEncoderActive)
+            {
+                Flush();
+            }
+
+            ReleaseComputePipeline();
+
             // 程序变更：释放所有缓存的管线
             ReleaseAllPipelines();
             _program = program;
@@ -461,6 +557,12 @@ namespace Ryujinx.Graphics.Metal
             {
                 _currentProgram = metalProgram;
                 _pipelineHandle = GetOrCreatePipeline(metalProgram, _pipelineColorFormat, _pipelineDepthStencilFormat);
+                _computePipelineHandle = GetOrCreateComputePipeline(metalProgram);
+            }
+            else
+            {
+                _currentProgram = null;
+                _computePipelineHandle = nint.Zero;
             }
 
             if (_encoderActive)
@@ -583,6 +685,49 @@ namespace Ryujinx.Graphics.Metal
         }
 
         /// <summary>
+        /// 从 MetalProgram 创建 compute pipeline，compute 不依赖颜色格式。
+        /// </summary>
+        private nint GetOrCreateComputePipeline(MetalProgram program)
+        {
+            byte[] computeMetallib = program.GetShaderMetallib(ShaderStage.Compute);
+            if (computeMetallib == null || computeMetallib.Length == 0)
+            {
+                return nint.Zero;
+            }
+
+            GCHandle computeHandle = GCHandle.Alloc(computeMetallib, GCHandleType.Pinned);
+            try
+            {
+                MetalComputePipelineDescriptor descriptor = new()
+                {
+                    AbiVersion = MetalNative.AbiVersion,
+                    MetallibData = computeHandle.AddrOfPinnedObject(),
+                    MetallibSize = (ulong)computeMetallib.Length,
+                    FunctionName = "main",
+                    Reserved = 0,
+                };
+
+                MetalResult result = MetalNative.CreateComputePipeline(
+                    _deviceHandle,
+                    descriptor,
+                    out nint pipelineHandle);
+
+                if (result != MetalResult.Ok || pipelineHandle == nint.Zero)
+                {
+                    Console.Error.WriteLine(
+                        $"[MetalPipeline] CreateComputePipeline 失败：{result}");
+                    return nint.Zero;
+                }
+
+                return pipelineHandle;
+            }
+            finally
+            {
+                computeHandle.Free();
+            }
+        }
+
+        /// <summary>
         /// 释放单个管线句柄
         /// </summary>
         private void ReleasePipelineHandle(nint handle)
@@ -590,6 +735,15 @@ namespace Ryujinx.Graphics.Metal
             if (handle != nint.Zero)
             {
                 MetalNative.Release(handle);
+            }
+        }
+
+        private void ReleaseComputePipeline()
+        {
+            if (_computePipelineHandle != nint.Zero)
+            {
+                MetalNative.Release(_computePipelineHandle);
+                _computePipelineHandle = nint.Zero;
             }
         }
 
@@ -602,6 +756,12 @@ namespace Ryujinx.Graphics.Metal
             {
                 MetalNative.Release(_pipelineHandle);
                 _pipelineHandle = nint.Zero;
+            }
+
+            if (_computePipelineHandle != nint.Zero)
+            {
+                MetalNative.Release(_computePipelineHandle);
+                _computePipelineHandle = nint.Zero;
             }
         }
 
@@ -938,6 +1098,11 @@ namespace Ryujinx.Graphics.Metal
 
             try
             {
+                if (_computeEncoderActive)
+                {
+                    Flush();
+                }
+
                 // 当 encoder 已激活但有待处理的清除操作或渲染目标变更时，需重建 encoder
                 if (_encoderActive && (_renderTargetsChanged || _renderTargets.HasPending()))
                 {
@@ -1168,6 +1333,65 @@ namespace Ryujinx.Graphics.Metal
             }
         }
 
+        private void BindComputeResources(nint computeEncoder)
+        {
+            for (int binding = 0; binding < MaxUniformBufferBindings; binding++)
+            {
+                if (!TryGetUniformBufferBinding(binding, out nint handle, out ulong offset, out _))
+                {
+                    continue;
+                }
+
+                MetalResult result = MetalNative.ComputeEncoderSetBuffer(
+                    computeEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(result, nameof(MetalNative.ComputeEncoderSetBuffer));
+            }
+
+            for (int binding = 0; binding < MaxStorageBufferBindings; binding++)
+            {
+                if (!TryGetStorageBufferBinding(binding, out nint handle, out ulong offset, out _, out _))
+                {
+                    continue;
+                }
+
+                MetalResult result = MetalNative.ComputeEncoderSetBuffer(
+                    computeEncoder,
+                    (uint)binding,
+                    handle,
+                    offset);
+                ThrowIfFailed(result, nameof(MetalNative.ComputeEncoderSetBuffer));
+            }
+
+            for (int binding = 0; binding < MaxTextureBindings; binding++)
+            {
+                if (!TryGetTextureBinding(ShaderStage.Compute, binding, out nint textureHandle, out nint samplerHandle))
+                {
+                    continue;
+                }
+
+                if (textureHandle != nint.Zero)
+                {
+                    MetalResult textureResult = MetalNative.ComputeEncoderSetTexture(
+                        computeEncoder,
+                        (uint)binding,
+                        textureHandle);
+                    ThrowIfFailed(textureResult, nameof(MetalNative.ComputeEncoderSetTexture));
+                }
+
+                if (samplerHandle != nint.Zero)
+                {
+                    MetalResult samplerResult = MetalNative.ComputeEncoderSetSampler(
+                        computeEncoder,
+                        (uint)binding,
+                        samplerHandle);
+                    ThrowIfFailed(samplerResult, nameof(MetalNative.ComputeEncoderSetSampler));
+                }
+            }
+        }
+
         /// 提交当前帧的 CommandBuffer：结束编码器 + 提交命令缓冲。
         /// 由 Present 或渲染目标变更时调用。
         /// </summary>
@@ -1181,6 +1405,14 @@ namespace Ryujinx.Graphics.Metal
                 _currentRenderEncoder = nint.Zero;
             }
 
+            if (_currentComputeEncoder != nint.Zero)
+            {
+                MetalResult endResult = MetalNative.EndComputeEncoding(_currentComputeEncoder);
+                _ = endResult;
+                MetalNative.Release(_currentComputeEncoder);
+                _currentComputeEncoder = nint.Zero;
+            }
+
             if (_currentCommandBuffer != nint.Zero)
             {
                 MetalResult commitResult = MetalNative.CommitCommandBuffer(_currentCommandBuffer);
@@ -1190,6 +1422,7 @@ namespace Ryujinx.Graphics.Metal
             }
 
             _encoderActive = false;
+            _computeEncoderActive = false;
         }
 
         private void UpdateDepthStencilState()

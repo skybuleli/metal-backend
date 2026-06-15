@@ -1165,6 +1165,9 @@ namespace Ryujinx.Graphics.Metal
         private readonly ISampler[] _samplers;
         private readonly ITexture[] _textures;
 
+        internal ReadOnlySpan<ISampler> Samplers => _samplers;
+        internal ReadOnlySpan<ITexture> Textures => _textures;
+
         public bool IsBuffer { get; }
 
         public MetalTextureArray(int size, bool isBuffer)
@@ -1207,6 +1210,8 @@ namespace Ryujinx.Graphics.Metal
     internal sealed class MetalImageArray : IImageArray
     {
         private readonly ITexture[] _images;
+
+        internal ReadOnlySpan<ITexture> Images => _images;
 
         public bool IsBuffer { get; }
 
