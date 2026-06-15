@@ -1,0 +1,14 @@
+P5.10 纹理数据上传/下载: Buffer↔Texture
+
+构建命令:
+dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug
+
+结果:
+- 构建成功
+- 错误: 0
+- 警告: 177
+
+说明:
+- `MetalTexture.CopyTo(BufferRange)` 已接通纹理读回到缓冲区的真实路径
+- 深度/模板纹理上传改为通过 `TextureUploadViaBlit` 走 GPU blit
+- 回读逻辑已补齐临时共享缓冲分支，并修正目标缓冲不足时的越界风险

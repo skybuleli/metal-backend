@@ -257,6 +257,7 @@ namespace Ryujinx.Graphics.Metal
         private nint _handle;
         private readonly nint _deviceHandle;
         private readonly nint _queueHandle;
+        private readonly MetalBufferPool _buffers;
         private readonly MetalTextureInfo _textureInfo;
         private readonly MetalStorageMode _storageMode;
         private bool _released;
@@ -280,10 +281,21 @@ namespace Ryujinx.Graphics.Metal
             uint regionX, uint regionY, uint regionZ,
             uint regionWidth, uint regionHeight, uint bytesPerRow)
         {
-            // Blit 上传会导致 waitUntilCompleted 死锁（GPU 线程被阻塞），
-            // 暂时跳过深度/模板上传，后续排查同步问题后启用。
             if (Info.Format.IsDepthOrStencil)
             {
+                MetalNative.TextureUploadViaBlit(
+                    _queueHandle,
+                    textureHandle,
+                    bufferHandle,
+                    bufferOffset,
+                    layer,
+                    level,
+                    regionX,
+                    regionY,
+                    regionZ,
+                    regionWidth,
+                    regionHeight,
+                    bytesPerRow);
                 return;
             }
 
@@ -300,10 +312,11 @@ namespace Ryujinx.Graphics.Metal
         /// <summary>
         /// 创建 Metal 原生纹理。格式通过 MetalFormatMapping 映射表转换为 MetalPixelFormat。
         /// </summary>
-        public MetalTexture(nint deviceHandle, nint queueHandle, TextureCreateInfo info, MetalStorageMode storageMode)
+        public MetalTexture(nint deviceHandle, nint queueHandle, MetalBufferPool buffers, TextureCreateInfo info, MetalStorageMode storageMode)
         {
             _deviceHandle = deviceHandle;
             _queueHandle = queueHandle;
+            _buffers = buffers;
             _storageMode = storageMode;
             Info = info;
 
@@ -452,13 +465,131 @@ namespace Ryujinx.Graphics.Metal
 
         public void CopyTo(BufferRange range, int layer, int level, int stride)
         {
-            // TODO: 需要通过 MetalBufferPool 解析 BufferHandle → 原生 metal_buffer 句柄
+            if (_buffers == null || range.Handle == BufferHandle.Null || range.Size <= 0)
+            {
+                return;
+            }
+
+            if (!_buffers.TryGet(range.Handle, out MetalBuffer dstBuffer))
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[Metal] CopyTo(buffer) 找不到目标缓冲区: handle={range.Handle}");
+                return;
+            }
+
             ulong count = ++_diagnosticCopyToBufferCount;
+            int safeLevel = Math.Clamp(level, 0, Math.Max(Info.Levels - 1, 0));
+            int safeLayer = Math.Clamp(layer, 0, Math.Max(Info.GetDepthOrLayers() - 1, 0));
+            int levelHeight = Math.Max(1, Info.Height >> safeLevel);
+            int bytesPerRow = Math.Max(stride, Info.GetMipStride(safeLevel));
+            int safeOffset = Math.Clamp(range.Offset, 0, (int)dstBuffer.Size);
+            ulong readbackSize = (ulong)bytesPerRow * (ulong)levelHeight;
+            int availableBytes = Math.Max(0, (int)dstBuffer.Size - safeOffset);
+            int safeCopySize = (int)Math.Min(readbackSize, (ulong)availableBytes);
+
+            if (safeCopySize <= 0)
+            {
+                return;
+            }
+
+            bool canReadDirectly = (dstBuffer.StorageMode == MetalStorageMode.Private || dstBuffer.StorageMode == MetalStorageMode.Memoryless) == false
+                && safeCopySize == (int)readbackSize;
+
+            if (canReadDirectly)
+            {
+                MetalResult result = MetalNative.TextureReadback(
+                    _handle,
+                    dstBuffer.Handle,
+                    (ulong)safeOffset,
+                    (uint)safeLayer,
+                    (uint)safeLevel,
+                    (uint)bytesPerRow);
+
+                if (result != MetalResult.Ok)
+                {
+                    Logger.Warning?.PrintMsg(LogClass.Gpu,
+                        $"[Metal] TextureReadback(buffer direct) 失败: result={result}, layer={layer}, level={level}, stride={stride}");
+                }
+                return;
+            }
+
+            MetalResult tempResult = MetalNative.CreateBuffer(
+                _deviceHandle,
+                readbackSize,
+                MetalStorageMode.Shared,
+                out nint tempBuf);
+
+            if (tempResult != MetalResult.Ok)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Gpu,
+                    $"[Metal] CopyTo(buffer) 创建临时缓冲区失败: result={tempResult}");
+                return;
+            }
+
+            try
+            {
+                MetalResult readbackResult = MetalNative.TextureReadback(
+                    _handle,
+                    tempBuf,
+                    0,
+                    (uint)safeLayer,
+                    (uint)safeLevel,
+                    (uint)bytesPerRow);
+
+                if (readbackResult != MetalResult.Ok)
+                {
+                    Logger.Warning?.PrintMsg(LogClass.Gpu,
+                        $"[Metal] TextureReadback(temp) 失败: result={readbackResult}, layer={layer}, level={level}, stride={stride}");
+                    return;
+                }
+
+                MetalResult srcMapResult = MetalNative.MapBuffer(tempBuf, out nint srcPtr);
+                if (srcMapResult != MetalResult.Ok)
+                {
+                    Logger.Warning?.PrintMsg(LogClass.Gpu,
+                        $"[Metal] CopyTo(buffer) 映射临时缓冲区失败: result={srcMapResult}");
+                    return;
+                }
+
+                MetalResult dstMapResult = MetalNative.MapBuffer(dstBuffer.Handle, out nint dstPtr);
+                if (dstMapResult != MetalResult.Ok)
+                {
+                    Logger.Warning?.PrintMsg(LogClass.Gpu,
+                        $"[Metal] CopyTo(buffer) 映射目标缓冲区失败: result={dstMapResult}");
+                    return;
+                }
+
+                try
+                {
+                    unsafe
+                    {
+                        Buffer.MemoryCopy(
+                            (void*)srcPtr,
+                            (void*)(dstPtr + safeOffset),
+                            safeCopySize,
+                            safeCopySize);
+                    }
+                }
+                finally
+                {
+                    MetalNative.UnmapBuffer(dstBuffer.Handle);
+                    MetalNative.UnmapBuffer(tempBuf);
+                }
+
+                if (dstBuffer.StorageMode == MetalStorageMode.Managed)
+                {
+                    dstBuffer.Flush((ulong)safeOffset, (ulong)safeCopySize);
+                }
+            }
+            finally
+            {
+                MetalNative.Release(tempBuf);
+            }
 
             if (count <= 5 || (count % 100) == 0)
             {
                 Logger.Warning?.PrintMsg(LogClass.Gpu,
-                    $"[DIAG] Texture.CopyTo(buffer) 仍为 stub: count={count}, format={Info.Format}, layer={layer}, level={level}, stride={stride}, size={range.Size}");
+                    $"[DIAG] Texture.CopyTo(buffer) 已接通: count={count}, format={Info.Format}, layer={layer}, level={level}, stride={stride}, size={range.Size}");
             }
         }
 
@@ -496,7 +627,7 @@ namespace Ryujinx.Graphics.Metal
                     $"[DIAG] CreateTextureView 失败，回退为独立纹理: result={result}, format={info.Format}, target={info.Target}, size={info.Width}x{info.Height}, firstLayer={firstLayer}, firstLevel={firstLevel}, layers={numLayers}, levels={numLevels}");
 
                 // 回退：创建全新的纹理（不支持 view 的格式/类型组合时）
-                return new MetalTexture(_deviceHandle, _queueHandle, info, _storageMode);
+                return new MetalTexture(_deviceHandle, _queueHandle, _buffers, info, _storageMode);
             }
 
             // 创建轻量封装：传递 firstLayer/firstLevel 供区域上传计算父纹理偏移

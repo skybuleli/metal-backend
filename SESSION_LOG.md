@@ -1124,3 +1124,23 @@ Slang 直接编译 GLSL→DXIL（Slang C API 或 popen slangc CLI）产出 COLOR
 #### 结论
 - P5.9 已完成，buffer→buffer 的 blit 数据拷贝链路已经接通
 - 下一步进入 `P5.10 纹理数据上传/下载: Buffer↔Texture`
+
+## 2026-06-15 下午 | P5.10 纹理数据上传/下载: Buffer↔Texture | ✅ 完成
+
+#### 任务目标
+- 把纹理到缓冲区的读回链路接通，并让纹理上传在需要时能够走 GPU blit
+- 保持实现范围收敛在 `Buffer↔Texture`，不扩散到更大的命令映射重构
+
+#### 本轮实现
+- 在 `MetalRenderer.CreateTexture` 中把 `MetalBufferPool` 传入 `MetalTexture`
+- 为 `MetalTexture` 补入 `CopyTo(BufferRange)`，接通纹理读回到缓冲区的真实路径
+- 深度/模板纹理上传改为 `TextureUploadViaBlit`，避免再走被跳过的早期返回逻辑
+- 在读回实现中加入临时共享缓冲分支，并修正目标缓冲不足时的越界风险
+
+#### 验证
+- `dotnet build src/ryubing/src/Ryujinx.Graphics.Metal/Ryujinx.Graphics.Metal.csproj -c Debug` ✅
+- 证据文件：`docs/evidence/P5.10-build.txt`
+
+#### 结论
+- P5.10 已完成，纹理上传/下载的 Buffer↔Texture 主链路已经打通
+- 下一步将进入 `P5.11` 的后续命令映射任务

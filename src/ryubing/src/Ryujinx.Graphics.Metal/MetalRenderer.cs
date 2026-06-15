@@ -136,7 +136,7 @@ namespace Ryujinx.Graphics.Metal
 
         public ITexture CreateTexture(TextureCreateInfo info)
         {
-            return new MetalTexture(_device.Handle, _queueHandle, info, _defaultStorageMode);
+            return new MetalTexture(_device.Handle, _queueHandle, _buffers, info, _defaultStorageMode);
         }
 
         public ITextureArray CreateTextureArray(int size, bool isBuffer)
